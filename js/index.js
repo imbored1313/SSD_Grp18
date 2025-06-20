@@ -1,13 +1,138 @@
-// home.js - ElectraEdge Homepage JavaScript
+// home.js - ElectraEdge Homepage JavaScript with Session Management
 
 // Shopping cart functionality
 let cart = [];
 
-// Initialize cart count on page load
+// Session management
+let currentUser = null;
+
+// Initialize page on load
 document.addEventListener('DOMContentLoaded', function() {
     updateCartCount();
     loadCartFromStorage();
+    checkUserSession(); // Check if user is logged in
 });
+
+// Check user session and update UI accordingly
+async function checkUserSession() {
+    try {
+        const response = await fetch('php/check_session.php', {
+            method: 'GET',
+            credentials: 'include' // Include cookies in request
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success && result.user) {
+            // User is logged in
+            currentUser = result.user;
+            updateUIForLoggedInUser();
+        } else {
+            // User is not logged in
+            currentUser = null;
+            updateUIForLoggedOutUser();
+        }
+    } catch (error) {
+        console.error('Error checking session:', error);
+        // If there's an error, assume user is not logged in
+        currentUser = null;
+        updateUIForLoggedOutUser();
+    }
+}
+
+// Update UI for logged in user
+function updateUIForLoggedInUser() {
+    const navActions = document.querySelector('.nav-actions');
+    const loginButton = navActions.querySelector('a[href="login.html"]');
+    
+    if (loginButton) {
+        // Replace login button with user dropdown
+        loginButton.outerHTML = `
+            <div class="user-dropdown" style="position: relative;">
+                <button class="user-btn" onclick="toggleUserDropdown()" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; color: white; font-size: 1rem;">
+                    <span style="font-size: 1.5rem;">👤</span>
+                    <span>Hi, ${currentUser.username}</span>
+                    <span style="font-size: 0.8rem;">▼</span>
+                </button>
+                <div id="userDropdownMenu" class="dropdown-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); min-width: 200px; z-index: 1000;">
+                    <div style="padding: 1rem; border-bottom: 1px solid #eee; background: #f8f9fa; border-radius: 8px 8px 0 0;">
+                        <div style="font-weight: bold; color: #333;">${currentUser.username}</div>
+                        <div style="font-size: 0.9rem; color: #666;">${currentUser.email}</div>
+                    </div>
+                    <div style="padding: 0.5rem 0;">
+                        <a href="userprofile.html" style="display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                            👤 My Profile
+                        </a>
+                        <a href="order_history.html" style="display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                            📦 My Orders
+                        </a>
+                        <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid #eee;">
+                        <button onclick="logout()" style="display: block; width: 100%; padding: 0.75rem 1rem; color: #dc3545; text-decoration: none; background: none; border: none; text-align: left; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                            🚪 Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Update UI for logged out user
+function updateUIForLoggedOutUser() {
+    const navActions = document.querySelector('.nav-actions');
+    const userDropdown = navActions.querySelector('.user-dropdown');
+    
+    if (userDropdown) {
+        // Replace user dropdown with login button
+        userDropdown.outerHTML = '<a href="login.html" class="btn btn-outline">Login</a>';
+    }
+}
+
+// Toggle user dropdown menu
+function toggleUserDropdown() {
+    const dropdownMenu = document.getElementById('userDropdownMenu');
+    if (dropdownMenu) {
+        dropdownMenu.style.display = dropdownMenu.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const userDropdown = document.querySelector('.user-dropdown');
+    if (userDropdown && !userDropdown.contains(event.target)) {
+        const dropdownMenu = document.getElementById('userDropdownMenu');
+        if (dropdownMenu) {
+            dropdownMenu.style.display = 'none';
+        }
+    }
+});
+
+// Logout function
+async function logout() {
+    try {
+        const response = await fetch('php/logout.php', {
+            method: 'POST',
+            credentials: 'include'
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            // Clear current user and update UI
+            currentUser = null;
+            updateUIForLoggedOutUser();
+            showNotification('Logged out successfully!');
+            
+            // Optionally redirect to home page
+            // window.location.href = 'index.html';
+        } else {
+            showNotification('Error logging out. Please try again.');
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+        showNotification('Error logging out. Please try again.');
+    }
+}
 
 // Add item to cart
 function addToCart(event, productId, price) {
@@ -158,13 +283,27 @@ function checkout() {
         return;
     }
     
+    // Check if user is logged in before checkout
+    if (!currentUser) {
+        showNotification('Please login to continue with checkout');
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 1500);
+        return;
+    }
+    
     // For demo purposes. In real app, would redirect to checkout page
     showNotification('Redirecting to secure checkout...');
     
     // Simulate checkout process
     setTimeout(() => {
-        alert('Checkout functionality will be implemented in the next phase. Please create an account to continue.');
-        window.location.href = 'register.html';
+        alert('Thank you for your purchase, ' + currentUser.username + '! Your order has been placed.');
+        // Clear cart after successful checkout
+        cart = [];
+        updateCartCount();
+        updateCartDisplay();
+        saveCartToStorage();
+        toggleCart();
     }, 1000);
 }
 
@@ -270,6 +409,12 @@ window.addEventListener('resize', function() {
             modal.style.display = 'none';
         }
     }
+    
+    // Close user dropdown on resize
+    const dropdownMenu = document.getElementById('userDropdownMenu');
+    if (dropdownMenu) {
+        dropdownMenu.style.display = 'none';
+    }
 });
 
 // Close modal when clicking outside
@@ -286,6 +431,12 @@ document.addEventListener('keydown', function(e) {
         const modal = document.getElementById('cartModal');
         if (modal.style.display === 'flex') {
             toggleCart();
+        }
+        
+        // Close user dropdown with Escape key
+        const dropdownMenu = document.getElementById('userDropdownMenu');
+        if (dropdownMenu && dropdownMenu.style.display === 'block') {
+            dropdownMenu.style.display = 'none';
         }
     }
 });

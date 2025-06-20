@@ -1,5 +1,3 @@
-// register.js - Registration Page JavaScript
-
 // Password strength checker
 function checkPasswordStrength(password) {
     const strengthElement = document.getElementById('passwordStrength');
@@ -43,8 +41,33 @@ document.addEventListener('DOMContentLoaded', function() {
         checkPasswordStrength(e.target.value);
     });
     
+    // Real-time username validation
+    document.getElementById('username').addEventListener('input', function(e) {
+        const username = e.target.value;
+        const usernameError = document.getElementById('usernameError');
+        
+        if (username.length > 0) {
+            if (username.length < 3) {
+                usernameError.textContent = 'Username must be at least 3 characters';
+                e.target.classList.add('error');
+                e.target.classList.remove('success');
+            } else if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+                usernameError.textContent = 'Username can only contain letters, numbers, underscores, and hyphens';
+                e.target.classList.add('error');
+                e.target.classList.remove('success');
+            } else {
+                usernameError.textContent = '';
+                e.target.classList.remove('error');
+                e.target.classList.add('success');
+            }
+        } else {
+            usernameError.textContent = '';
+            e.target.classList.remove('error', 'success');
+        }
+    });
+    
     // Registration form submission
-    document.getElementById('registerForm').addEventListener('submit', function(e) {
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
         // Clear previous errors
@@ -58,105 +81,70 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Get form data
-        const formData = {
-            firstName: document.getElementById('firstName').value.trim(),
-            lastName: document.getElementById('lastName').value.trim(),
-            email: document.getElementById('email').value.trim(),
-            phone: document.getElementById('phone').value.trim(),
-            password: document.getElementById('password').value,
-            confirmPassword: document.getElementById('confirmPassword').value,
-            terms: document.getElementById('terms').checked
-        };
+        const formData = new FormData();
+        formData.append('username', document.getElementById('username').value.trim());
+        formData.append('firstName', document.getElementById('firstName').value.trim());
+        formData.append('lastName', document.getElementById('lastName').value.trim());
+        formData.append('email', document.getElementById('email').value.trim());
+        formData.append('phone', document.getElementById('phone').value.trim());
+        formData.append('password', document.getElementById('password').value);
+        formData.append('confirmPassword', document.getElementById('confirmPassword').value);
         
-        let isValid = true;
-        
-        // Validate first name
-        if (!formData.firstName) {
-            document.getElementById('firstNameError').textContent = 'First name is required';
-            document.getElementById('firstName').classList.add('error');
-            isValid = false;
-        } else {
-            document.getElementById('firstName').classList.add('success');
+        if (document.getElementById('terms').checked) {
+            formData.append('terms', '1');
         }
         
-        // Validate last name
-        if (!formData.lastName) {
-            document.getElementById('lastNameError').textContent = 'Last name is required';
-            document.getElementById('lastName').classList.add('error');
-            isValid = false;
-        } else {
-            document.getElementById('lastName').classList.add('success');
+        if (document.getElementById('newsletter').checked) {
+            formData.append('newsletter', '1');
         }
         
-        // Validate email
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!formData.email) {
-            document.getElementById('emailError').textContent = 'Email is required';
-            document.getElementById('email').classList.add('error');
-            isValid = false;
-        } else if (!emailRegex.test(formData.email)) {
-            document.getElementById('emailError').textContent = 'Please enter a valid email address';
-            document.getElementById('email').classList.add('error');
-            isValid = false;
-        } else {
-            document.getElementById('email').classList.add('success');
-        }
+        // Add loading state
+        const submitBtn = document.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.classList.add('loading');
+        submitBtn.textContent = 'Creating Account...';
+        submitBtn.disabled = true;
         
-        // Validate phone (optional but if provided, should be valid)
-        if (formData.phone && !/^[\+]?[1-9][\d]{0,15}$/.test(formData.phone.replace(/\s/g, ''))) {
-            document.getElementById('phoneError').textContent = 'Please enter a valid phone number';
-            document.getElementById('phone').classList.add('error');
-            isValid = false;
-        } else if (formData.phone) {
-            document.getElementById('phone').classList.add('success');
-        }
-        
-        // Validate password
-        if (!formData.password) {
-            document.getElementById('passwordError').textContent = 'Password is required';
-            document.getElementById('password').classList.add('error');
-            isValid = false;
-        } else if (formData.password.length < 8) {
-            document.getElementById('passwordError').textContent = 'Password must be at least 8 characters long';
-            document.getElementById('password').classList.add('error');
-            isValid = false;
-        } else {
-            document.getElementById('password').classList.add('success');
-        }
-        
-        // Validate confirm password
-        if (!formData.confirmPassword) {
-            document.getElementById('confirmPasswordError').textContent = 'Please confirm your password';
-            document.getElementById('confirmPassword').classList.add('error');
-            isValid = false;
-        } else if (formData.password !== formData.confirmPassword) {
-            document.getElementById('confirmPasswordError').textContent = 'Passwords do not match';
-            document.getElementById('confirmPassword').classList.add('error');
-            isValid = false;
-        } else {
-            document.getElementById('confirmPassword').classList.add('success');
-        }
-        
-        // Validate terms
-        if (!formData.terms) {
-            document.getElementById('termsError').textContent = 'You must agree to the Terms of Service';
-            isValid = false;
-        }
-        
-        if (isValid) {
-            // Add loading state
-            const submitBtn = document.querySelector('button[type="submit"]');
-            submitBtn.classList.add('loading');
-            submitBtn.textContent = 'Creating Account...';
+        try {
+            const response = await fetch('php/register_process.php', {
+                method: 'POST',
+                body: formData
+            });
             
-            // Simulate API call (replace with actual form submission)
-            setTimeout(() => {
-                // For demo - redirect to login page
-                // this.submit(); // Uncomment for actual form submission
-                alert('Account created successfully! Please check your email for verification.');
-                window.location.href = 'login.php';
-            }, 1500);
+            const result = await response.json();
+            
+            if (response.ok && result.success) {
+                // Success
+                alert('Account created successfully! You can now login.');
+                window.location.href = 'login.html';
+            } else {
+                // Handle errors
+                if (result.errors) {
+                    // Field-specific errors
+                    Object.keys(result.errors).forEach(field => {
+                        const errorElement = document.getElementById(field + 'Error');
+                        const inputElement = document.getElementById(field);
+                        
+                        if (errorElement) {
+                            errorElement.textContent = result.errors[field];
+                        }
+                        if (inputElement) {
+                            inputElement.classList.add('error');
+                        }
+                    });
+                } else {
+                    // General error
+                    alert('Registration failed: ' + (result.error || 'Unknown error'));
+                }
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            alert('Registration failed. Please try again.');
+        } finally {
+            // Reset button
+            submitBtn.classList.remove('loading');
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
         }
     });
-    
 });
