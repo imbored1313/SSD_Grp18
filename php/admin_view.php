@@ -23,31 +23,4 @@ while ($row = $stmt->fetch()) {
     echo "<tr><td>{$row['log_id']}</td><td>{$row['user_id']}</td><td>{$row['action']}</td><td>{$row['timestamp']}</td><td>{$row['ip_addr']}</td></tr>";
 }
 echo "</table>";
-
-// Products table
-echo "<h3>Products</h3>";
-$stmt = $db->query("SELECT product_id, name, description, price, stock, image_path, added_by FROM Products");
-echo "<table border='1'>
-<tr>
-  <th>ID</th>
-  <th>Name</th>
-  <th>Description</th>
-  <th>Price</th>
-  <th>Stock</th>
-  <th>Image Path</th>
-  <th>Added By</th>
-</tr>";
-while ($row = $stmt->fetch()) {
-    echo "<tr>
-      <td>{$row['product_id']}</td>
-      <td>{$row['name']}</td>
-      <td>{$row['description']}</td>
-      <td>{$row['price']}</td>
-      <td>{$row['stock']}</td>
-      <td>{$row['image_path']}</td>
-      <td>{$row['added_by']}</td>
-    </tr>";
-}
-echo "</table>";
-
 ?>
