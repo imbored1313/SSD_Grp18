@@ -1,0 +1,150 @@
+<?php
+session_start();
+require_once 'config.php';
+
+// Admin check
+if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admin') {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Forbidden']);
+    exit;
+}
+
+$database = new Database();
+$db = $database->getConnection();
+$action = $_GET['action'] ?? '';
+
+header('Content-Type: application/json');
+
+try {
+    switch ($action) {
+case 'list':
+    $stmt = $db->query("
+        SELECT p.*, u.username as added_by_username 
+        FROM Products p
+        LEFT JOIN Users u ON p.added_by = u.user_id
+        ORDER BY p.product_id DESC
+    ");
+    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Prepend server address to image paths if they're not already full URLs
+    foreach ($products as &$product) {
+        if (!empty($product['image_path']) && !filter_var($product['image_path'], FILTER_VALIDATE_URL)) {
+            $product['image_path'] = 'http://3.15.42.35/' . ltrim($product['image_path'], '/');
+        }
+    }
+    
+    echo json_encode($products);
+    break;
+case 'create':
+    $data = json_decode(file_get_contents('php://input'), true);
+    
+    $required = ['name', 'price', 'stock'];
+    foreach ($required as $field) {
+        if (empty($data[$field])) {
+            throw new Exception("Missing required field: $field");
+        }
+    }
+
+    $stmt = $db->prepare("
+        INSERT INTO Products 
+        (name, description, price, stock, image_path, added_by) 
+        VALUES (?, ?, ?, ?, ?, ?)
+    ");
+    
+    $success = $stmt->execute([
+        $data['name'],
+        $data['description'] ?? null,
+        $data['price'],
+        $data['stock'],
+        $data['image_path'] ?? null,
+        $_SESSION['user']['user_id']
+    ]);
+    
+    echo json_encode([
+        'success' => $success,
+        'product_id' => $db->lastInsertId()
+    ]);
+    break;
+
+    case 'get':
+    $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+    if (!$id) throw new Exception('Invalid product ID');
+    
+    $stmt = $db->prepare("SELECT * FROM Products WHERE product_id = ?");
+    $stmt->execute([$id]);
+    $product = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$product) {
+        throw new Exception('Product not found');
+    }
+    
+    // Prepend full URL to image_path if not a full URL
+    if (!empty($product['image_path']) && !filter_var($product['image_path'], FILTER_VALIDATE_URL)) {
+        $product['image_path'] = 'http://3.15.42.35/' . ltrim($product['image_path'], '/');
+    }
+    
+    echo json_encode($product);
+    break;
+
+
+case 'update':
+    $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+    if (!$id) throw new Exception('Invalid product ID');
+
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    $name = $data['name'] ?? null;
+    $description = $data['description'] ?? null;
+    $price = $data['price'] ?? null;
+    $stock = $data['stock'] ?? null;
+    $image_path = $data['image_path'] ?? null;
+
+    if (empty($name) || !is_numeric($price) || !is_numeric($stock)) {
+        throw new Exception('Invalid input data');
+    }
+
+    if (!$image_path) {
+        // fallback to existing image if no new image provided
+        $stmt = $db->prepare("SELECT image_path FROM Products WHERE product_id = ?");
+        $stmt->execute([$id]);
+        $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+        $image_path = $existing['image_path'] ?? null;
+    }
+
+    $stmt = $db->prepare("
+        UPDATE Products SET 
+        name = ?, description = ?, price = ?, stock = ?, image_path = ?
+        WHERE product_id = ?
+    ");
+
+    $success = $stmt->execute([
+        $name,
+        $description,
+        $price,
+        $stock,
+        $image_path,
+        $id
+    ]);
+
+    echo json_encode(['success' => $success]);
+    break;
+
+
+
+        case 'delete':
+            $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+            if (!$id) throw new Exception('Invalid product ID');
+            
+            $stmt = $db->prepare("DELETE FROM Products WHERE product_id = ?");
+            $success = $stmt->execute([$id]);
+            echo json_encode(['success' => $success]);
+            break;
+
+        default:
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid action']);
+    }
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+}
