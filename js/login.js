@@ -57,10 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const result = await response.json();
             
-            if (response.ok && result.success) {
-                // Success - redirect to dashboard/home
-                alert('Login successful! Welcome back, ' + result.user.username + '!');
-                // You can redirect to dashboard, home page, or user profile
+            if (result.success) {
                 window.location.href = 'index.html'; // or 'index.html' or wherever you want
             } else {
                 // Handle different error types
