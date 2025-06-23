@@ -1,4 +1,5 @@
 // userprofile.js - User Profile Page JavaScript with Database Integration
+//testing
 
 let currentUserData = null;
 
