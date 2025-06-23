@@ -1,5 +1,5 @@
 <?php
-// check_session.php - Check if user is logged in
+// check_session.php - Simple version that just checks PHP session
 session_start();
 
 header('Content-Type: application/json');
@@ -9,29 +9,45 @@ header('Access-Control-Allow-Headers: Content-Type');
 header('Access-Control-Allow-Credentials: true');
 
 try {
-    // Check if user is logged in
-    if (isset($_SESSION['user_id']) && isset($_SESSION['username'])) {
-        // User is logged in, return user data
+    // Check if user session exists - try array format first
+    if (isset($_SESSION['user']) && isset($_SESSION['user']['user_id'])) {
+        // User data stored in array format
+        echo json_encode([
+            'success' => true,
+            'user' => [
+                'id' => $_SESSION['user']['user_id'],
+                'user_id' => $_SESSION['user']['user_id'],
+                'username' => $_SESSION['user']['username'],
+                'email' => $_SESSION['user']['email'],
+                'first_name' => $_SESSION['user']['first_name'] ?? '',
+                'last_name' => $_SESSION['user']['last_name'] ?? '',
+                'role' => $_SESSION['user']['role'] ?? '',
+                'is_verified' => $_SESSION['user']['is_verified'] ?? false
+            ]
+        ]);
+    } else if (isset($_SESSION['user_id'])) {
+        // Fallback: User data stored in individual session variables
         echo json_encode([
             'success' => true,
             'user' => [
                 'id' => $_SESSION['user_id'],
-                'username' => $_SESSION['username'],
+                'user_id' => $_SESSION['user_id'],
+                'username' => $_SESSION['username'] ?? '',
                 'email' => $_SESSION['email'] ?? '',
                 'first_name' => $_SESSION['first_name'] ?? '',
                 'last_name' => $_SESSION['last_name'] ?? '',
-                'phone' => $_SESSION['phone'] ?? ''
+                'role' => $_SESSION['role'] ?? '',
+                'is_verified' => $_SESSION['is_verified'] ?? false
             ]
         ]);
     } else {
-        // User is not logged in
+        // No session data found
         echo json_encode([
             'success' => false,
             'message' => 'User not logged in'
         ]);
     }
 } catch (Exception $e) {
-    // Return error response
     http_response_code(500);
     echo json_encode([
         'success' => false,

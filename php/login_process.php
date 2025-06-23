@@ -1,6 +1,6 @@
 <?php
 session_start(); 
-// login_process.php - Updated to allow login with username OR email
+// login_process.php - Fixed session management
 require_once 'config.php';
 
 header('Content-Type: application/json');
@@ -62,18 +62,28 @@ try {
         $updateStmt->bindParam(':user_id', $user['user_id']);
         $updateStmt->execute();
 
-        // Create session
+        // Create session - regenerate for security
         session_regenerate_id(true);
-$_SESSION['user'] = [
-    'user_id' => $user['user_id'],
-    'username' => $user['username'],
-    'email' => $user['email'],
-    'first_name' => $user['first_name'],
-    'last_name' => $user['last_name'],
-    'role' => $user['role'],
-    'is_verified' => $user['is_verified']
-];
+        
+        // Store user data in session array (consistent structure)
+        $_SESSION['user'] = [
+            'user_id' => $user['user_id'],
+            'username' => $user['username'],
+            'email' => $user['email'],
+            'first_name' => $user['first_name'],
+            'last_name' => $user['last_name'],
+            'role' => $user['role'],
+            'is_verified' => $user['is_verified']
+        ];
 
+        // Also store individual session variables for backward compatibility
+        $_SESSION['user_id'] = $user['user_id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['email'] = $user['email'];
+        $_SESSION['first_name'] = $user['first_name'];
+        $_SESSION['last_name'] = $user['last_name'];
+        $_SESSION['role'] = $user['role'];
+        $_SESSION['is_verified'] = $user['is_verified'];
 
         // Create session record in Sessions table
         $sessionToken = bin2hex(random_bytes(32));
@@ -95,6 +105,9 @@ $_SESSION['user'] = [
         $logStmt->bindParam(':user_id', $user['user_id']);
         $logStmt->bindParam(':ip_addr', $_SERVER['REMOTE_ADDR']);
         $logStmt->execute();
+
+        // Log session creation for debugging
+        error_log("Session created for user: " . $user['username'] . ", Session ID: " . session_id());
 
         echo json_encode([
             'success' => true,
@@ -123,6 +136,7 @@ $_SESSION['user'] = [
     }
 
 } catch (Exception $e) {
+    error_log("Login process error: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
 }
