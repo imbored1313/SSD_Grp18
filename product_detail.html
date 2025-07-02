@@ -1,36 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <title>Product Detail - ElectraEdge</title>
-  <link rel="stylesheet" href="website.css" />
+    <meta charset="UTF-8" />
+    <title>Product Detail - ElectraEdge</title>
+    <link rel="stylesheet" href="website.css" />
 </head>
+
 <body>
-  <header>
-    <h1>Product Details</h1>
-    <nav>
-      <a href="catalog.html">Catalog</a> |
-      <a href="cart.html">Cart</a>
-    </nav>
-  </header>
+    <!-- Header -->
+    <div id="header-placeholder"></div>
 
-  <section class="container" style="margin-top: 2rem;">
-    <div class="product-detail" style="display: flex; gap: 2rem;">
-      <img src="https://via.placeholder.com/300?text=📱" alt="Product Image" style="max-width: 300px;">
-      <div>
-        <h2>ElectraPhone Pro Max</h2>
-        <p>Flagship smartphone with powerful performance and stunning display.</p>
-        <p><strong>Price: $1,299.00</strong></p>
-        <button class="btn btn-primary" onclick="addToCart()">Add to Cart</button>
-      </div>
-    </div>
-  </section>
+    <script>
+        fetch('header.html')
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById('header-placeholder').innerHTML = data;
+            });
+    </script>
 
-  <script>
-    function addToCart() {
-      alert("Item added to cart.");
-      // You can later store in localStorage or session
-    }
-  </script>
+
+    <section class="container" style="margin-top: 2rem;">
+        <div class="product-detail" style="display: flex; gap: 2rem;">
+            <img src="https://via.placeholder.com/300?text=📱" alt="Product Image" style="max-width: 300px;">
+            <div>
+                <h2>ElectraPhone Pro Max</h2>
+                <p>Flagship smartphone with powerful performance and stunning display.</p>
+                <p><strong>Price: $1,299.00</strong></p>
+                <button class="btn btn-primary" onclick="addToCart()">Add to Cart</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <div id="footer-placeholder"></div>
+
+    <script>
+        fetch("footer.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("footer-placeholder").innerHTML = data;
+            });
+    </script>
+
+    <script>
+        function addToCart() {
+            alert("Item added to cart.");
+            // You can later store in localStorage or session
+        }
+    </script>
 </body>
+
 </html>

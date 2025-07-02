@@ -1,30 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <title>Product Catalog - ElectraEdge</title>
-  <link rel="stylesheet" href="website.css" />
+    <meta charset="UTF-8" />
+    <title>Product Catalog - ElectraEdge</title>
+    <link rel="stylesheet" href="website.css" />
 </head>
+
 <body>
-  <header>
-    <h1>Product Catalog</h1>
-    <nav>
-      <a href="index.html">Home</a> |
-      <a href="cart.html">Cart</a>
-    </nav>
-  </header>
+    <!-- Header -->
+    <div id="header-placeholder"></div>
 
-  <section class="container">
-    <h2 style="text-align: center; margin: 2rem 0;">All Products</h2>
-    <div class="product-grid" id="productCatalog"></div>
-  </section>
+    <script>
+        fetch('header.html')
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById('header-placeholder').innerHTML = data;
+            });
+    </script>
 
-  <script>
-    fetch("get_products.php")
-      .then(res => res.json())
-      .then(products => {
-        const container = document.getElementById("productCatalog");
-        container.innerHTML = products.map(p => `
+
+    <section class="container">
+        <h2 style="text-align: center; margin: 2rem 0;">All Products</h2>
+        <div class="product-grid" id="productCatalog"></div>
+    </section>
+
+    <!-- Footer -->
+    <div id="footer-placeholder"></div>
+
+    <script>
+        fetch("footer.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("footer-placeholder").innerHTML = data;
+            });
+    </script>
+
+    <script>
+        fetch("get_products.php")
+            .then(res => res.json())
+            .then(products => {
+                const container = document.getElementById("productCatalog");
+                container.innerHTML = products.map(p => `
           <div class="product-card">
             <img src="${p.image_url}" alt="${p.name}" style="max-width:100%;">
             <h3>${p.name}</h3>
@@ -32,7 +49,8 @@
             <a href="product_detail.php?id=${p.id}" class="btn btn-primary w-100">View Details</a>
           </div>
         `).join("");
-      });
-  </script>
+            });
+    </script>
 </body>
+
 </html>

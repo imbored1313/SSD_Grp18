@@ -1,50 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <title>Shopping Cart - ElectraEdge</title>
-  <link rel="stylesheet" href="website.css" />
+    <meta charset="UTF-8" />
+    <title>Shopping Cart - ElectraEdge</title>
+    <link rel="stylesheet" href="website.css" />
 </head>
+
 <body>
-  <header>
-    <h1>Your Shopping Cart</h1>
-    <nav>
-      <a href="catalog.html">Continue Shopping</a>
-    </nav>
-  </header>
+    <!-- Header -->
+    <div id="header-placeholder"></div>
 
-  <section class="container" style="margin-top: 2rem;">
-    <table class="cart-table" style="width: 100%; border-collapse: collapse;">
-      <thead>
-        <tr>
-          <th style="padding: 0.5rem; text-align: left;">Product</th>
-          <th>Qty</th>
-          <th>Price</th>
-          <th>Remove</th>
-        </tr>
-      </thead>
-      <tbody id="cartItems">
-        <!-- Items inserted here by JS -->
-      </tbody>
-    </table>
-    <h3 id="totalPrice" style="margin-top: 1rem;">Total: $0.00</h3>
-    <button class="btn btn-primary">Checkout</button>
-  </section>
+    <script>
+        fetch('header.html')
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById('header-placeholder').innerHTML = data;
+            });
+    </script>
 
-  <script>
-    // Dummy cart logic with localStorage or static array
-    const cart = [
-      { name: "ElectraPhone Pro Max", qty: 1, price: 1299 },
-      { name: "BoomBox Smart Speaker", qty: 2, price: 249 }
-    ];
+    <section class="container" style="margin-top: 2rem;">
+        <table class="cart-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="padding: 0.5rem; text-align: left;">Product</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Remove</th>
+                </tr>
+            </thead>
+            <tbody id="cartItems">
+                <!-- Items inserted here by JS -->
+            </tbody>
+        </table>
+        <h3 id="totalPrice" style="margin-top: 1rem;">Total: $0.00</h3>
+        <button class="btn btn-primary">Checkout</button>
+    </section>
 
-    function renderCart() {
-      const tbody = document.getElementById("cartItems");
-      let total = 0;
-      tbody.innerHTML = cart.map((item, i) => {
-        const subtotal = item.qty * item.price;
-        total += subtotal;
-        return `
+    <!-- Footer -->
+    <div id="footer-placeholder"></div>
+
+    <script>
+        fetch("footer.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("footer-placeholder").innerHTML = data;
+            });
+    </script>
+
+    <script>
+        // Dummy cart logic with localStorage or static array
+        const cart = [
+            { name: "ElectraPhone Pro Max", qty: 1, price: 1299 },
+            { name: "BoomBox Smart Speaker", qty: 2, price: 249 }
+        ];
+
+        function renderCart() {
+            const tbody = document.getElementById("cartItems");
+            let total = 0;
+            tbody.innerHTML = cart.map((item, i) => {
+                const subtotal = item.qty * item.price;
+                total += subtotal;
+                return `
           <tr>
             <td>${item.name}</td>
             <td>${item.qty}</td>
@@ -52,16 +69,17 @@
             <td><button onclick="removeItem(${i})">Remove</button></td>
           </tr>
         `;
-      }).join("");
-      document.getElementById("totalPrice").textContent = `Total: $${total.toFixed(2)}`;
-    }
+            }).join("");
+            document.getElementById("totalPrice").textContent = `Total: $${total.toFixed(2)}`;
+        }
 
-    function removeItem(index) {
-      cart.splice(index, 1);
-      renderCart();
-    }
+        function removeItem(index) {
+            cart.splice(index, 1);
+            renderCart();
+        }
 
-    renderCart();
-  </script>
+        renderCart();
+    </script>
 </body>
+
 </html>

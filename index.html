@@ -1,32 +1,24 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ElectraEdge - Premium Electronics Store</title>
     <link rel="stylesheet" href="website.css">
 </head>
+
 <body>
     <!-- Header -->
-    <header class="header">
-        <nav class="nav-container">
-            <div class="logo">⚡ ElectraEdge</div>
-            <ul class="nav-menu">
-                <li><a href="home.html" style="color: #ffd700;">Home</a></li>
-                <li><a href="product_catalog.html">Products</a></li>
-                <li><a href="order_history.html">My Orders</a></li>
-                <!-- <li><a href="userprofile.html">Profile</a></li> -->
-            </ul>
-            <div class="nav-actions">
-                <div class="cart-icon" onclick="toggleCart()">
-                    🛒
-                    <span class="cart-count" id="cartCount">0</span>
-                </div>
-                <a href="login.html" class="btn btn-outline">Login</a>
-            </div>
-        </nav>
-    </header>
+    <div id="header-placeholder"></div>
+
+    <script>
+        fetch('header.html')
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById('header-placeholder').innerHTML = data;
+            });
+    </script>
 
     <!-- Hero Section -->
     <section class="hero">
@@ -44,7 +36,7 @@
     <section style="padding: 4rem 0; background: white;">
         <div class="container">
             <h2 style="text-align: center; margin-bottom: 3rem; font-size: 2.5rem; color: #333;">Featured Products</h2>
-            
+
             <div class="product-grid">
                 <div class="product-card" onclick="viewProduct('smartphone')">
                     <div class="product-image">📱</div>
@@ -55,7 +47,8 @@
                             <span>(324 reviews)</span>
                         </div>
                         <div class="product-price">$1,299</div>
-                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'smartphone', 1299)">Add to Cart</button>
+                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'smartphone', 1299)">Add to
+                            Cart</button>
                     </div>
                 </div>
 
@@ -68,7 +61,8 @@
                             <span>(156 reviews)</span>
                         </div>
                         <div class="product-price">$2,199</div>
-                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'laptop', 2199)">Add to Cart</button>
+                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'laptop', 2199)">Add to
+                            Cart</button>
                     </div>
                 </div>
 
@@ -81,7 +75,8 @@
                             <span>(89 reviews)</span>
                         </div>
                         <div class="product-price">$349</div>
-                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'headphones', 349)">Add to Cart</button>
+                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'headphones', 349)">Add to
+                            Cart</button>
                     </div>
                 </div>
 
@@ -94,7 +89,8 @@
                             <span>(267 reviews)</span>
                         </div>
                         <div class="product-price">$599</div>
-                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'smartwatch', 599)">Add to Cart</button>
+                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'smartwatch', 599)">Add to
+                            Cart</button>
                     </div>
                 </div>
 
@@ -107,7 +103,8 @@
                             <span>(198 reviews)</span>
                         </div>
                         <div class="product-price">$899</div>
-                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'tablet', 899)">Add to Cart</button>
+                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'tablet', 899)">Add to
+                            Cart</button>
                     </div>
                 </div>
 
@@ -120,7 +117,8 @@
                             <span>(143 reviews)</span>
                         </div>
                         <div class="product-price">$249</div>
-                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'speaker', 249)">Add to Cart</button>
+                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'speaker', 249)">Add to
+                            Cart</button>
                     </div>
                 </div>
             </div>
@@ -130,39 +128,40 @@
     <!-- Features Section -->
     <section style="padding: 4rem 0; background: #f8f9fa;">
         <div class="container">
-            <h2 style="text-align: center; margin-bottom: 3rem; font-size: 2.5rem; color: #333;">Why Choose ElectraEdge?</h2>
-            
+            <h2 style="text-align: center; margin-bottom: 3rem; font-size: 2.5rem; color: #333;">Why Choose ElectraEdge?
+            </h2>
+
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
                 <div style="text-align: center; padding: 2rem;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">🚚</div>
                     <h3 style="color: #333; margin-bottom: 1rem;">Free Shipping</h3>
                     <p style="color: #666;">Free delivery on orders over $50. Fast and secure shipping worldwide.</p>
                 </div>
-                
+
                 <div style="text-align: center; padding: 2rem;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
                     <h3 style="color: #333; margin-bottom: 1rem;">Secure Payment</h3>
                     <p style="color: #666;">Your payment information is protected with bank-level security.</p>
                 </div>
-                
+
                 <div style="text-align: center; padding: 2rem;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">🛡️</div>
                     <h3 style="color: #333; margin-bottom: 1rem;">2-Year Warranty</h3>
                     <p style="color: #666;">Comprehensive warranty coverage on all premium electronics.</p>
                 </div>
-                
+
                 <div style="text-align: center; padding: 2rem;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">⭐</div>
                     <h3 style="color: #333; margin-bottom: 1rem;">Premium Quality</h3>
                     <p style="color: #666;">Only the finest electronics from trusted global brands.</p>
                 </div>
-                
+
                 <div style="text-align: center; padding: 2rem;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">📞</div>
                     <h3 style="color: #333; margin-bottom: 1rem;">24/7 Support</h3>
                     <p style="color: #666;">Round-the-clock customer support for all your needs.</p>
                 </div>
-                
+
                 <div style="text-align: center; padding: 2rem;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">💎</div>
                     <h3 style="color: #333; margin-bottom: 1rem;">Elite Rewards</h3>
@@ -176,80 +175,52 @@
     <section style="padding: 4rem 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
         <div class="container" style="text-align: center;">
             <h2 style="margin-bottom: 1rem; font-size: 2.5rem;">Stay Connected</h2>
-            <p style="margin-bottom: 2rem; font-size: 1.2rem; opacity: 0.9;">Get the latest updates on new products and exclusive offers</p>
-            
+            <p style="margin-bottom: 2rem; font-size: 1.2rem; opacity: 0.9;">Get the latest updates on new products and
+                exclusive offers</p>
+
             <form id="newsletterForm" style="max-width: 500px; margin: 0 auto; display: flex; gap: 1rem;">
-                <input type="email" id="newsletterEmail" placeholder="Enter your email address" style="flex: 1; padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
-                <button type="submit" class="btn btn-secondary" style="background: white; color: #667eea; border: 2px solid white;">Subscribe</button>
+                <input type="email" id="newsletterEmail" placeholder="Enter your email address"
+                    style="flex: 1; padding: 1rem; border: none; border-radius: 8px; font-size: 1rem;">
+                <button type="submit" class="btn btn-secondary"
+                    style="background: white; color: #667eea; border: 2px solid white;">Subscribe</button>
             </form>
         </div>
     </section>
-
+    
     <!-- Footer -->
-    <footer style="background: #333; color: white; padding: 3rem 0 1rem;">
-        <div class="container">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
-                <div>
-                    <div class="logo" style="margin-bottom: 1rem;">⚡ ElectraEdge</div>
-                    <p style="color: #ccc; line-height: 1.6;">Your trusted partner for premium electronics. Power your world with cutting-edge technology.</p>
-                </div>
-                
-                <div>
-                    <h4 style="margin-bottom: 1rem;">Quick Links</h4>
-                    <ul style="list-style: none; line-height: 2;">
-                        <li><a href="product_catalog.html" style="color: #ccc; text-decoration: none;">Products</a></li>
-                        <li><a href="register.html" style="color: #ccc; text-decoration: none;">Sign Up</a></li>
-                        <li><a href="login.html" style="color: #ccc; text-decoration: none;">Login</a></li>
-                        <li><a href="#" style="color: #ccc; text-decoration: none;">Support</a></li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <h4 style="margin-bottom: 1rem;">Customer Service</h4>
-                    <ul style="list-style: none; line-height: 2;">
-                        <li><a href="#" style="color: #ccc; text-decoration: none;">Contact Us</a></li>
-                        <li><a href="#" style="color: #ccc; text-decoration: none;">Shipping Info</a></li>
-                        <li><a href="#" style="color: #ccc; text-decoration: none;">Returns</a></li>
-                        <li><a href="#" style="color: #ccc; text-decoration: none;">FAQ</a></li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <h4 style="margin-bottom: 1rem;">Follow Us</h4>
-                    <div style="display: flex; gap: 1rem;">
-                        <a href="#" style="color: #ccc; font-size: 1.5rem; text-decoration: none;">📘</a>
-                        <a href="#" style="color: #ccc; font-size: 1.5rem; text-decoration: none;">🐦</a>
-                        <a href="#" style="color: #ccc; font-size: 1.5rem; text-decoration: none;">📷</a>
-                        <a href="#" style="color: #ccc; font-size: 1.5rem; text-decoration: none;">💼</a>
-                    </div>
-                </div>
-            </div>
-            
-            <div style="border-top: 1px solid #555; padding-top: 2rem; text-align: center; color: #ccc;">
-                <p>&copy; 2024 ElectraEdge. All rights reserved. | <a href="#" style="color: #ccc;">Privacy Policy</a> | <a href="#" style="color: #ccc;">Terms of Service</a></p>
-            </div>
-        </div>
-    </footer>
+    <div id="footer-placeholder"></div>
+
+    <script>
+        fetch("footer.html")
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("footer-placeholder").innerHTML = data;
+            });
+    </script>
+
 
     <!-- Shopping Cart Modal -->
-    <div id="cartModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
-        <div style="background: white; padding: 2rem; border-radius: 15px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto;">
+    <div id="cartModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div
+            style="background: white; padding: 2rem; border-radius: 15px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                 <h3>Shopping Cart</h3>
-                <button onclick="toggleCart()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+                <button onclick="toggleCart()"
+                    style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
             </div>
-            
+
             <div id="cartItems">
                 <p style="text-align: center; color: #666; padding: 2rem;">Your cart is empty</p>
             </div>
-            
+
             <div id="cartTotal" style="border-top: 1px solid #eee; padding-top: 1rem; margin-top: 1rem;">
                 <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem;">
                     <span>Total: </span>
                     <span id="totalAmount">$0.00</span>
                 </div>
             </div>
-            
+
             <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                 <button class="btn btn-secondary w-100" onclick="toggleCart()">Continue Shopping</button>
                 <button class="btn btn-primary w-100" onclick="checkout()">Checkout</button>
@@ -258,10 +229,12 @@
     </div>
 
     <!-- Success Notification -->
-    <div id="notification" style="display: none; position: fixed; top: 20px; right: 20px; background: #28a745; color: white; padding: 1rem 2rem; border-radius: 8px; z-index: 3000; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+    <div id="notification"
+        style="display: none; position: fixed; top: 20px; right: 20px; background: #28a745; color: white; padding: 1rem 2rem; border-radius: 8px; z-index: 3000; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
         <span id="notificationText">Item added to cart!</span>
     </div>
 
     <script src="js/index.js"></script>
 </body>
+
 </html>
