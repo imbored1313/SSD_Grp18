@@ -84,13 +84,18 @@
 
 
         // Function to update quantity
-        function updateQty(index, value) {
-            const qty = parseInt(value);
-            if (!isNaN(qty) && qty > 0) {
-                cart[index].qty = qty;
+        function increaseQty(index) {
+            cart[index].qty++;
+            renderCart();
+        }
+
+        function decreaseQty(index) {
+            if (cart[index].qty > 1) {
+                cart[index].qty--;
                 renderCart();
             }
         }
+
 
         // Function to remove item from cart
         function removeItem(index) {
