@@ -26,7 +26,7 @@
                     <th style="padding: 0.5rem; text-align: left;">Product</th>
                     <th>Qty</th>
                     <th>Price</th>
-                    <th>Remove</th>
+                    <th>Edit</th>
                 </tr>
             </thead>
             <tbody id="cartItems">
@@ -58,21 +58,36 @@
         function renderCart() {
             const tbody = document.getElementById("cartItems");
             let total = 0;
+
             tbody.innerHTML = cart.map((item, i) => {
                 const subtotal = item.qty * item.price;
                 total += subtotal;
                 return `
-          <tr>
-            <td>${item.name}</td>
-            <td>${item.qty}</td>
-            <td>$${subtotal.toFixed(2)}</td>
-            <td><button onclick="removeItem(${i})">Remove</button></td>
-          </tr>
-        `;
+      <tr>
+        <td>${item.name}</td>
+        <td>
+          <input type="number" min="1" value="${item.qty}" onchange="updateQty(${i}, this.value)" style="width: 60px; padding: 4px;" />
+        </td>
+        <td>$${subtotal.toFixed(2)}</td>
+        <td style="text-align: center;">
+          <button onclick="removeItem(${i})" style="color: red; font-size: 1.2rem; border: none; background: transparent;">&times;</button>
+        </td>
+      </tr>`;
             }).join("");
+
             document.getElementById("totalPrice").textContent = `Total: $${total.toFixed(2)}`;
         }
 
+        // Function to update quantity
+        function updateQty(index, value) {
+            const qty = parseInt(value);
+            if (!isNaN(qty) && qty > 0) {
+                cart[index].qty = qty;
+                renderCart();
+            }
+        }
+
+        // Function to remove item from cart
         function removeItem(index) {
             cart.splice(index, 1);
             renderCart();
