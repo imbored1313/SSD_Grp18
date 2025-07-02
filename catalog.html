@@ -72,7 +72,11 @@
         <img src="${p.image_url}" alt="${p.name}" style="max-width:100%;">
         <h3>${p.name}</h3>
         <p>$${p.price}</p>
-        <a href="product_detail.html?id=${p.id}" class="btn btn-primary w-100">View Details</a>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="product_detail.html?id=${p.id}" class="btn btn-primary" style="flex: 1;">View Details</a>
+            <button onclick="addToCart(${p.id}, '${p.name}', ${p.price})" class="btn btn-outline" style="flex: 1;">🛒</button>
+        </div>
+
       </div>
     `).join("");
         }
@@ -100,6 +104,12 @@
 
         // Initial render
         renderCatalog(products);
+        
+        function addToCart(id, name, price) {
+            alert(`Added ${name} to cart for $${price}`);
+            // Later: store in localStorage or send to backend
+        }
+
     </script>
 
 </body>
