@@ -80,19 +80,23 @@ jobs:
         working-directory: php
 
       - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-progress --no-interaction
+        run: composer install --no-dev --optimize-autoloader
+        working-directory: php
+
+      - name: Composer audit
+        run: composer audit --format=json --no-interaction || true
         working-directory: php
 
       - name: Run PHP CodeSniffer
-        run: vendor/bin/phpcs --standard=PSR12 *.php
+        run: vendor/bin/phpcs --standard=PSR12 .
         working-directory: php
 
       - name: Run PHP Mess Detector
-        run: vendor/bin/phpmd *.php text cleancode,codesize,controversial,design,naming,unusedcode
+        run: vendor/bin/phpmd . text cleancode,codesize,controversial,design,naming,unusedcode
         working-directory: php
 
       - name: Run PHPStan Static Analysis
-        run: vendor/bin/phpstan analyse *.php --level=5
+        run: vendor/bin/phpstan analyse . --level=5
         working-directory: php
 
       - name: Check HTML validity
