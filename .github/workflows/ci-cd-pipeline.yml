@@ -22,6 +22,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up Docker Compose
+        uses: docker/setup-docker@v3
+        with:
+          version: '2.24.6'
+
       - name: Start application
         run: |
           docker-compose up -d
@@ -54,9 +62,7 @@ jobs:
           sarif_file: semgrep-results.sarif
 
       - name: Run PHP Security Checker
-        run: |
-          composer install --no-dev --optimize-autoloader
-          vendor/bin/security-checker security:check composer.lock
+        run: vendor/bin/security-checker security:check composer.lock
         working-directory: php
 
   # Code Quality and Linting
@@ -74,26 +80,24 @@ jobs:
           extensions: mbstring, intl, mysql, pdo_mysql
           coverage: xdebug
 
+      - name: Update Composer lock file
+        run: composer update --no-interaction
+        working-directory: php
+
       - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-progress
+        run: composer install --prefer-dist --no-progress --no-interaction
         working-directory: php
 
       - name: Run PHP CodeSniffer
-        run: |
-          composer require --dev squizlabs/php_codesniffer
-          vendor/bin/phpcs --standard=PSR12 php/
+        run: vendor/bin/phpcs --standard=PSR12 php/
         working-directory: php
 
       - name: Run PHP Mess Detector
-        run: |
-          composer require --dev phpmd/phpmd
-          vendor/bin/phpmd php/ text cleancode,codesize,controversial,design,naming,unusedcode
+        run: vendor/bin/phpmd php/ text cleancode,codesize,controversial,design,naming,unusedcode
         working-directory: php
 
       - name: Run PHPStan Static Analysis
-        run: |
-          composer require --dev phpstan/phpstan
-          vendor/bin/phpstan analyse php/ --level=5
+        run: vendor/bin/phpstan analyse php/ --level=5
         working-directory: php
 
       - name: Check HTML validity
@@ -143,9 +147,7 @@ jobs:
           mysql -h 127.0.0.1 -P 3306 -u root -proot electraedge_test < electraedge.sql
 
       - name: Run PHPUnit tests
-        run: |
-          composer require --dev phpunit/phpunit
-          vendor/bin/phpunit --testdox --coverage-text
+        run: vendor/bin/phpunit --testdox --coverage-text
         working-directory: php
 
       - name: Run JavaScript tests
