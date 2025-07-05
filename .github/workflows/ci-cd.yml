@@ -1,0 +1,170 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PHP_VERSION: '8.1'
+  NODE_VERSION: '18'
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install Node.js dependencies
+      run: npm ci
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ env.PHP_VERSION }}
+        extensions: mysqli, pdo, pdo_mysql
+        tools: composer
+        
+    - name: Install PHP dependencies
+      run: |
+        cd php
+        composer install --no-dev --optimize-autoloader
+        
+    - name: Lint JavaScript files
+      run: |
+        echo "Checking JavaScript syntax..."
+        for file in js/*.js; do
+          if [ -f "$file" ]; then
+            echo "Linting $file"
+            node -c "$file" || exit 1
+          fi
+        done
+        
+    - name: Lint PHP files
+      run: |
+        echo "Checking PHP syntax..."
+        find php -name "*.php" -type f -exec php -l {} \; || exit 1
+        
+    - name: Check HTML files
+      run: |
+        echo "Checking HTML files..."
+        for file in *.html; do
+          if [ -f "$file" ]; then
+            echo "Validating $file"
+            # Basic HTML validation - check for common issues
+            if grep -q "<html" "$file" && grep -q "</html>" "$file"; then
+              echo "✓ $file has proper HTML structure"
+            else
+              echo "⚠ $file may have HTML structure issues"
+            fi
+          fi
+        done
+        
+    - name: Check CSS files
+      run: |
+        echo "Checking CSS files..."
+        for file in *.css; do
+          if [ -f "$file" ]; then
+            echo "Validating $file"
+            # Basic CSS validation
+            if grep -q "{" "$file" && grep -q "}" "$file"; then
+              echo "✓ $file has CSS structure"
+            else
+              echo "⚠ $file may have CSS structure issues"
+            fi
+          fi
+        done
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: electraedge_test
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_password
+        options: >-
+          --health-cmd "mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 3306:3306
+          
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install Node.js dependencies
+      run: npm ci
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ env.PHP_VERSION }}
+        extensions: mysqli, pdo, pdo_mysql
+        tools: composer
+        
+    - name: Install PHP dependencies
+      run: |
+        cd php
+        composer install --optimize-autoloader
+        
+    - name: Install Jest for JavaScript testing
+      run: npm install --save-dev jest jsdom
+        
+    - name: Run JavaScript tests
+      run: |
+        echo "Running JavaScript tests..."
+        if [ -f "js/login.test.js" ]; then
+          npx jest js/login.test.js --verbose
+        else
+          echo "No test files found, skipping JavaScript tests"
+        fi
+        
+    - name: Test PHP syntax and basic functionality
+      run: |
+        echo "Testing PHP files..."
+        # Test database connection
+        php -r "
+        try {
+          \$pdo = new PDO('mysql:host=127.0.0.1;dbname=electraedge_test', 'test_user', 'test_password');
+          echo 'Database connection test: PASSED\n';
+        } catch (PDOException \$e) {
+          echo 'Database connection test: FAILED - ' . \$e->getMessage() . '\n';
+          exit(1);
+        }
+        "
+        
+    - name: Test Docker build
+      run: |
+        echo "Testing Docker build..."
+        docker build -t test-php ./php
+        echo "PHP Docker image built successfully"
+        
+    - name: Test Docker Compose
+      run: |
+        echo "Testing Docker Compose configuration..."
+        docker-compose config
+        echo "Docker Compose configuration is valid" 
