@@ -29,14 +29,6 @@ jobs:
           rules_file_name: '.zap/rules.tsv'
           cmd_options: '-a'
 
-      - name: Run Bandit Security Linter
-        uses: python-security/bandit-action@v1.0.0
-        with:
-          path: "."
-          level: "low"
-          format: "json"
-          output: "bandit-report.json"
-
       - name: Run Semgrep Security Analysis
         uses: returntocorp/semgrep-action@v1
         with:
@@ -57,6 +49,7 @@ jobs:
         run: |
           composer install --no-dev --optimize-autoloader
           vendor/bin/security-checker security:check composer.lock
+        working-directory: php
 
   # Code Quality and Linting
   code-quality:
@@ -74,23 +67,26 @@ jobs:
           coverage: xdebug
 
       - name: Install Composer dependencies
-        run: |
-          composer install --prefer-dist --no-progress
+        run: composer install --prefer-dist --no-progress
+        working-directory: php
 
       - name: Run PHP CodeSniffer
         run: |
           composer require --dev squizlabs/php_codesniffer
           vendor/bin/phpcs --standard=PSR12 php/
+        working-directory: php
 
       - name: Run PHP Mess Detector
         run: |
           composer require --dev phpmd/phpmd
           vendor/bin/phpmd php/ text cleancode,codesize,controversial,design,naming,unusedcode
+        working-directory: php
 
       - name: Run PHPStan Static Analysis
         run: |
           composer require --dev phpstan/phpstan
           vendor/bin/phpstan analyse php/ --level=5
+        working-directory: php
 
       - name: Check HTML validity
         run: |
@@ -131,6 +127,7 @@ jobs:
 
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress
+        working-directory: php
 
       - name: Create test database
         run: |
@@ -141,6 +138,7 @@ jobs:
         run: |
           composer require --dev phpunit/phpunit
           vendor/bin/phpunit --testdox --coverage-text
+        working-directory: php
 
       - name: Run JavaScript tests
         run: |
@@ -278,7 +276,6 @@ jobs:
           echo "" >> compliance-report.md
           echo "## Security Scans Completed" >> compliance-report.md
           echo "- OWASP ZAP Security Scan" >> compliance-report.md
-          echo "- Bandit Security Linter" >> compliance-report.md
           echo "- Semgrep Security Analysis" >> compliance-report.md
           echo "- PHP Security Checker" >> compliance-report.md
           echo "- Trivy Vulnerability Scanner" >> compliance-report.md
