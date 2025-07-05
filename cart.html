@@ -5,6 +5,8 @@
     <meta charset="UTF-8" />
     <title>Shopping Cart - ElectraEdge</title>
     <link rel="stylesheet" href="website.css" />
+    <!-- Load PayPal SDK with Sandbox Client ID -->
+    <script src="https://www.paypal.com/sdk/js?client-id=YOUR_SANDBOX_CLIENT_ID&currency=USGD"></script>
 </head>
 
 <body>
@@ -19,23 +21,65 @@
             });
     </script>
 
-    <section class="container" style="margin-top: 2rem;">
-        <table class="cart-table" style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr>
-                    <th style="padding: 0.5rem; text-align: left;">Product</th>
-                    <th>Qty</th>
-                    <th>Price</th>
-                    <th>Edit</th>
-                </tr>
-            </thead>
-            <tbody id="cartItems">
-                <!-- Items inserted here by JS -->
-            </tbody>
-        </table>
-        <h3 id="totalPrice" style="margin-top: 1rem;">Total: $0.00</h3>
-        <button class="btn btn-primary">Checkout</button>
-    </section>
+    <h1>Your Shopping Cart</h1>
+    <!-- Cart items rendering -->
+    <div id="cart-summary">
+        <!-- Example: Cart total -->
+        <p>Total: <strong id="total-amount">$0.00</strong></p>
+    </div>
+
+    <!-- PayPal button container -->
+    <div id="paypal-button-container"></div>
+
+    <script>
+        let total = 0;
+        fetch('get_products.php')
+            .then(r => r.json())
+            .then(products => {
+                const c = document.getElementById('cart-summary');
+                products.forEach(p => {
+                    c.innerHTML += `
+            <div>
+              <img src="${p.image_path}" width="100">
+              <h3>${p.name}</h3>
+              <p>${p.description}</p>
+              <p>Price: $${p.price}</p>
+            </div>`;
+                    total += parseFloat(p.price);
+                });
+                document.getElementById('total-amount').innerText = `$${total.toFixed(2)}`;
+            });
+            
+        paypal.Buttons({
+            createOrder: (data, actions) => {
+                const amount = document.getElementById('total-amount').innerText.replace('$', '');
+                return fetch('php/create-order.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount }) // passes cart total
+                })
+                    .then(res => res.json())
+                    .then(data => data.id);
+            },
+            onApprove: (data, actions) => {
+                return fetch('php/capture-order.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderID: data.orderID })
+                })
+                    .then(res => res.json())
+                    .then(details => {
+                        alert(`Payment complete! Thank you, ${details.payer.name.given_name}.`);
+                        window.location.href = 'order_cfm.php'; // redirect on success
+                    });
+            },
+            onCancel: () => alert('Payment cancelled.'),
+            onError: err => {
+                console.error(err);
+                alert('An error occurred during checkout.');
+            }
+        }).render('#paypal-button-container');
+    </script>
 
     <!-- Footer -->
     <div id="footer-placeholder"></div>
@@ -48,63 +92,6 @@
             });
     </script>
 
-    <script>
-        // Dummy cart logic with localStorage or static array
-        const cart = [
-            { name: "ElectraPhone Pro Max", qty: 1, price: 1299 },
-            { name: "BoomBox Smart Speaker", qty: 2, price: 249 }
-        ];
-
-        function renderCart() {
-            const tbody = document.getElementById("cartItems");
-            let total = 0;
-
-            tbody.innerHTML = cart.map((item, i) => {
-                const subtotal = item.qty * item.price;
-                total += subtotal;
-                return `
-      <tr>
-        <td>${item.name}</td>
-        <td>
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <button onclick="decreaseQty(${i})" style="padding: 4px 10px; font-size: 1rem;">−</button>
-            <span>${item.qty}</span>
-            <button onclick="increaseQty(${i})" style="padding: 4px 10px; font-size: 1rem;">+</button>
-          </div>
-        </td>
-        <td>$${subtotal.toFixed(2)}</td>
-        <td style="text-align: center;">
-          <button onclick="removeItem(${i})" style="color: red; font-size: 1.2rem; border: none; background: transparent;">&times;</button>
-        </td>
-      </tr>`;
-            }).join("");
-
-            document.getElementById("totalPrice").textContent = `Total: $${total.toFixed(2)}`;
-        }
-
-
-        // Function to update quantity
-        function increaseQty(index) {
-            cart[index].qty++;
-            renderCart();
-        }
-
-        function decreaseQty(index) {
-            if (cart[index].qty > 1) {
-                cart[index].qty--;
-                renderCart();
-            }
-        }
-
-
-        // Function to remove item from cart
-        function removeItem(index) {
-            cart.splice(index, 1);
-            renderCart();
-        }
-
-        renderCart();
-    </script>
 </body>
 
 </html>
