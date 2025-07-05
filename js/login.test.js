@@ -61,15 +61,16 @@ describe('Login Form Validation', () => {
     });
 
   test('should prevent form submission with invalid data', () => {
+        const form = document.getElementById('loginForm');
         const submitEvent = new Event('submit');
-        const preventDefaultSpy = jest.spyOn(submitEvent, 'preventDefault');
+        submitEvent.preventDefault = jest.fn(); // Mock preventDefault directly
 
         emailInput.value = 'invalid-email';
         passwordInput.value = '';
 
         form.dispatchEvent(submitEvent);
 
-        expect(preventDefaultSpy).toHaveBeenCalled();
+        expect(submitEvent.preventDefault).toHaveBeenCalled();
     });
 });
 
