@@ -22,12 +22,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Start application
+        run: |
+          docker-compose up -d
+          sleep 30
+
       - name: Run OWASP ZAP Security Scan
         uses: zaproxy/action-full-scan@v0.8.0
         with:
           target: 'http://localhost:8080'
-          rules_file_name: '.zap/rules.tsv'
           cmd_options: '-a'
+
+      - name: Stop application
+        if: always()
+        run: docker-compose down
 
       - name: Run Semgrep Security Analysis
         uses: returntocorp/semgrep-action@v1
