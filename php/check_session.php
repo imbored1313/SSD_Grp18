@@ -1,6 +1,6 @@
 <?php
-// check_session.php - Simple version that just checks PHP session
-session_start();
+require_once(__DIR__ . '/config.php');
+ensureSessionStarted();
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');

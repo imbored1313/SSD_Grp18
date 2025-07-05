@@ -1,6 +1,7 @@
 <?php
-session_start();
-require_once 'config.php';
+require_once(__DIR__ . '/config.php');
+ensureSessionStarted();
+
 if ($action == 'currentUser') {
     echo json_encode($_SESSION['user']);
     exit;

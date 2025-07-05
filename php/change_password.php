@@ -1,8 +1,7 @@
 <?php
+require_once(__DIR__ . '/config.php');
+ensureSessionStarted();
 // change_password.php - Change user password in database
-session_start();
-
-require_once 'config.php';
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');

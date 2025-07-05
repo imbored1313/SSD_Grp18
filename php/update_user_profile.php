@@ -1,8 +1,7 @@
 <?php
+require_once(__DIR__ . '/config.php');
+ensureSessionStarted();
 // update_user_profile.php - Update user profile data in database
-session_start();
-
-require_once 'config.php';
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');

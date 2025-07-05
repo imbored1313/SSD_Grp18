@@ -1,6 +1,6 @@
 <?php
-session_start();
-require_once 'config.php';
+require_once(__DIR__ . '/config.php');
+ensureSessionStarted();
 
 // Admin check
 if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admin') {

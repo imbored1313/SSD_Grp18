@@ -1,9 +1,9 @@
 <?php
-require_once 'config.php';
+require_once(__DIR__ . '/config.php');
+ensureSessionStarted();
 require_once 'email_config.php';
 
 header('Content-Type: application/json');
-session_start();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

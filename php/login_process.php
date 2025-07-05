@@ -1,7 +1,7 @@
 <?php
-session_start(); 
 // login_process.php - Fixed session management
-require_once 'config.php';
+require_once(__DIR__ . '/config.php');
+ensureSessionStarted();
 
 header('Content-Type: application/json');
 
@@ -62,9 +62,6 @@ try {
         $updateStmt->bindParam(':user_id', $user['user_id']);
         $updateStmt->execute();
 
-        // Create session - regenerate for security
-        session_regenerate_id(true);
-        
         // Store user data in session array (consistent structure)
         $_SESSION['user'] = [
             'user_id' => $user['user_id'],
@@ -88,12 +85,14 @@ try {
         // Create session record in Sessions table
         $sessionToken = bin2hex(random_bytes(32));
         $expiryTime = date('Y-m-d H:i:s', strtotime('+1 hour'));
-        
+        $sessionId = session_id();
+        $userId = $user['user_id'];
         $sessionQuery = "INSERT INTO Sessions (session_id, user_id, token, expiry_time, is_active) 
-                         VALUES (:session_id, :user_id, :token, :expiry_time, TRUE)";
+                         VALUES (:session_id, :user_id, :token, :expiry_time, TRUE)
+                         ON DUPLICATE KEY UPDATE token = :token, expiry_time = :expiry_time, is_active = TRUE, user_id = :user_id";
         $sessionStmt = $db->prepare($sessionQuery);
-        $sessionStmt->bindParam(':session_id', session_id());
-        $sessionStmt->bindParam(':user_id', $user['user_id']);
+        $sessionStmt->bindParam(':session_id', $sessionId);
+        $sessionStmt->bindParam(':user_id', $userId);
         $sessionStmt->bindParam(':token', $sessionToken);
         $sessionStmt->bindParam(':expiry_time', $expiryTime);
         $sessionStmt->execute();

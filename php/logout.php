@@ -1,8 +1,6 @@
 <?php
-// logout.php - Fixed to work with your session structure
-session_start();
-
-require_once 'config.php';
+require_once(__DIR__ . '/config.php');
+ensureSessionStarted();
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -32,26 +30,24 @@ try {
         $username = $_SESSION['user']['username'] ?? 'Unknown';
         
         // Deactivate session in database
+        $sessionId = session_id();
         $updateSessionQuery = "UPDATE Sessions SET is_active = FALSE WHERE session_id = :session_id";
         $updateStmt = $db->prepare($updateSessionQuery);
-        $updateStmt->bindParam(':session_id', session_id());
+        $updateStmt->bindParam(':session_id', $sessionId);
         $updateStmt->execute();
         
         // Log the logout
+        $ipAddr = $_SERVER['REMOTE_ADDR'];
         $logQuery = "INSERT INTO AuditLogs (user_id, action, timestamp, ip_addr) 
                      VALUES (:user_id, 'LOGOUT', NOW(), :ip_addr)";
         $logStmt = $db->prepare($logQuery);
         $logStmt->bindParam(':user_id', $userId);
-        $logStmt->bindParam(':ip_addr', $_SERVER['REMOTE_ADDR']);
+        $logStmt->bindParam(':ip_addr', $ipAddr);
         $logStmt->execute();
         
         // Clear session data
         session_unset();
         session_destroy();
-        
-        // Start a new session to clear any remaining data
-        session_start();
-        session_regenerate_id(true);
         
         echo json_encode([
             'success' => true,

@@ -1,0 +1,46 @@
+version: '3.8'
+services:
+  nginx:
+    image: nginx:latest
+    container_name: ssd_nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+  php:
+    build: ./php
+    container_name: ssd_php
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - db
+  db:
+    image: mysql:8.0
+    container_name: ssd_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: electraedge
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./electraedge.sql:/docker-entrypoint-initdb.d/electraedge.sql
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: ssd_phpmyadmin
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
+      PMA_USER: user
+      PMA_PASSWORD: password
+    ports:
+      - "8081:80"
+volumes:
+  db_data: 
