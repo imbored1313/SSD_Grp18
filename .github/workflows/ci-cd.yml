@@ -203,7 +203,7 @@ jobs:
       id: test_status
 
   summary:
-    name: Summary
+    name: Pipeline
     runs-on: ubuntu-latest
     needs: [lint, test]
     if: always()
