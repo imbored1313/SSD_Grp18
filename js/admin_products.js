@@ -16,7 +16,7 @@ async function loadProducts() {
         if (!response.ok) throw new Error('Network response was not ok');
         
         // 3. Parse the JSON data
-        let products = await response.json();
+        products = await response.json();
         
         // 4. TRANSFORM THE DATA to match your working test format
         products = products.map(product => ({

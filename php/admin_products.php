@@ -47,7 +47,7 @@ case 'create':
     $data = json_decode(file_get_contents('php://input'), true);
     $data = array_map('trim', $data);
     $data = array_map(function($v) {
-        return is_string($v) ? htmlspecialchars($v, ENT_QUOTES, 'UTF-8') : $v;
+        return is_string($v) ? trim($v) : $v;
     }, $data);
     
     $required = ['name', 'price', 'stock'];
@@ -106,7 +106,7 @@ case 'update':
     $data = json_decode(file_get_contents('php://input'), true);
     $data = array_map('trim', $data);
     $data = array_map(function($v) {
-        return is_string($v) ? htmlspecialchars($v, ENT_QUOTES, 'UTF-8') : $v;
+        return is_string($v) ? trim($v) : $v;
     }, $data);
 
     $name = $data['name'] ?? null;
