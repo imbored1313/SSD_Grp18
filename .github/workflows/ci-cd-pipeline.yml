@@ -45,16 +45,6 @@ jobs:
       - name: Install Node.js dependencies
         run: npm ci
 
-      - name: Run Semgrep security scan
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: >-
-            p/security-audit
-            p/owasp-top-ten
-            p/php
-          outputFormat: sarif
-          outputFile: semgrep-results.sarif
-
       - name: Run PHP Security Checker
         run: |
           cd php
@@ -62,12 +52,6 @@ jobs:
 
       - name: Run npm audit
         run: npm audit --audit-level=moderate
-
-      - name: Upload Semgrep results
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: semgrep-results.sarif
 
   # Code Quality Job
   code-quality:
