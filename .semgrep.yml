@@ -1,0 +1,71 @@
+rules:
+  # OWASP Top 10 Security Rules
+  - id: sql-injection
+    pattern: |
+      $QUERY = "SELECT ... FROM ... WHERE ... " . $_GET['...']
+    message: "Potential SQL injection vulnerability. Use prepared statements."
+    severity: ERROR
+    languages: [php]
+
+  - id: xss-vulnerability
+    pattern: |
+      echo $_GET['...']
+    message: "Potential XSS vulnerability. Sanitize user input before output."
+    severity: ERROR
+    languages: [php]
+
+  - id: hardcoded-password
+    pattern: |
+      $password = "..."
+    message: "Hardcoded password detected. Use environment variables."
+    severity: WARNING
+    languages: [php]
+
+  - id: weak-hashing
+    pattern: |
+      md5($...)
+    message: "MD5 is cryptographically weak. Use password_hash() or stronger algorithms."
+    severity: ERROR
+    languages: [php]
+
+  - id: file-upload-vulnerability
+    pattern: |
+      move_uploaded_file($_FILES['...']['tmp_name'], $...)
+    message: "File upload without proper validation. Check file type and size."
+    severity: WARNING
+    languages: [php]
+
+  - id: session-fixation
+    pattern: |
+      session_id($_GET['...'])
+    message: "Potential session fixation vulnerability."
+    severity: ERROR
+    languages: [php]
+
+  - id: directory-traversal
+    pattern: |
+      include($_GET['...'])
+    message: "Potential directory traversal vulnerability."
+    severity: ERROR
+    languages: [php]
+
+  - id: command-injection
+    pattern: |
+      exec($_GET['...'])
+    message: "Potential command injection vulnerability."
+    severity: ERROR
+    languages: [php]
+
+  - id: csrf-vulnerability
+    pattern: |
+      if ($_POST['...']) { ... }
+    message: "Missing CSRF protection. Implement CSRF tokens."
+    severity: WARNING
+    languages: [php]
+
+  - id: insecure-random
+    pattern: |
+      rand(...)
+    message: "Insecure random number generation. Use random_bytes() or random_int()."
+    severity: WARNING
+    languages: [php] 

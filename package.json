@@ -1,0 +1,44 @@
+{
+  "name": "electraedge-ecommerce",
+  "version": "1.0.0",
+  "description": "Secure Software Development Project - ElectraEdge E-commerce Platform",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint js/",
+    "lint:fix": "eslint js/ --fix",
+    "security": "npm audit",
+    "build": "echo 'Build completed'"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "eslint": "^8.55.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-n": "^16.3.0",
+    "eslint-plugin-promise": "^6.1.1"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "collectCoverageFrom": [
+      "js/**/*.js",
+      "!js/**/*.test.js"
+    ],
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ]
+  },
+  "eslintConfig": {
+    "extends": "standard",
+    "env": {
+      "browser": true,
+      "es2021": true
+    },
+    "globals": {
+      "jQuery": "readonly"
+    }
+  }
+} 

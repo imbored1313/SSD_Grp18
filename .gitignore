@@ -1,1 +1,52 @@
+# Database files
 electraedge.sql
+
+# Dependencies
+node_modules/
+vendor/
+composer.lock
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+logs/
+
+# Coverage reports
+coverage/
+*.lcov
+coverage.xml
+
+# Build artifacts
+build/
+dist/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Security scan results
+*.sarif
+bandit-report.json
+semgrep-results.sarif
+trivy-results.sarif
+
+# Docker
+.dockerignore
+
+# Cache
+.phpunit.cache/
+.cache/
