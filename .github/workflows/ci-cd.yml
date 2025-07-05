@@ -145,11 +145,7 @@ jobs:
     - name: Run JavaScript tests
       run: |
         echo "Running JavaScript tests..."
-        if [ -f "js/login.test.js" ]; then
-          npx jest js/login.test.js --verbose
-        else
-          echo "No test files found, skipping JavaScript tests"
-        fi
+        npx jest --verbose
         
     - name: Test PHP syntax and basic functionality
       run: |
