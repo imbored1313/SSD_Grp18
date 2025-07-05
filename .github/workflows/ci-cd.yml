@@ -39,6 +39,12 @@ jobs:
       run: |
         cd php
         composer install --no-dev --optimize-autoloader
+
+    - name: Install PHPStan
+      run: composer global require phpstan/phpstan
+
+    - name: Run PHPStan (level 4)
+      run: ~/.composer/vendor/bin/phpstan analyse php/ --level=4
         
     - name: Lint JavaScript files
       run: |
@@ -226,7 +232,6 @@ jobs:
           echo "- **Total:** ${{ needs.test.outputs.total_tests }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Passed:** ${{ needs.test.outputs.passed_tests }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Failed:** ${{ needs.test.outputs.failed_tests }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Coverage:** ${{ needs.test.outputs.coverage }}%" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
