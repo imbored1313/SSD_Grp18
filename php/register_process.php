@@ -1,9 +1,8 @@
 <?php
+
 // register_process.php - Updated with username and email
 require_once 'config.php';
-
 header('Content-Type: application/json');
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
@@ -11,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-    // Get and sanitize input
+// Get and sanitize input
     $username = sanitizeInput($_POST['username'] ?? '');
     $firstName = sanitizeInput($_POST['firstName'] ?? '');
     $lastName = sanitizeInput($_POST['lastName'] ?? '');
@@ -20,10 +19,8 @@ try {
     $password = $_POST['password'] ?? '';
     $confirmPassword = $_POST['confirmPassword'] ?? '';
     $terms = isset($_POST['terms']);
-
-    // Validate input
+// Validate input
     $errors = [];
-
     if (empty($username)) {
         $errors['username'] = 'Username is required';
     } elseif (strlen($username) < 3) {
@@ -72,7 +69,6 @@ try {
     // Database connection
     $database = new Database();
     $db = $database->getConnection();
-
     if (!$db) {
         http_response_code(500);
         echo json_encode(['error' => 'Database connection failed']);
@@ -85,7 +81,6 @@ try {
     $checkStmt->bindParam(':email', $email);
     $checkStmt->bindParam(':username', $username);
     $checkStmt->execute();
-
     if ($checkStmt->rowCount() > 0) {
         http_response_code(409);
         echo json_encode(['error' => 'Username or email already exists']);
@@ -94,11 +89,9 @@ try {
 
     // Hash password
     $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-
-    // Insert user
+// Insert user
     $insertQuery = "INSERT INTO Users (username, email, password_hash, first_name, last_name, phone, role, is_verified, created_at) 
                     VALUES (:username, :email, :password_hash, :first_name, :last_name, :phone, 'user', FALSE, NOW())";
-    
     $insertStmt = $db->prepare($insertQuery);
     $insertStmt->bindParam(':username', $username);
     $insertStmt->bindParam(':email', $email);
@@ -106,18 +99,15 @@ try {
     $insertStmt->bindParam(':first_name', $firstName);
     $insertStmt->bindParam(':last_name', $lastName);
     $insertStmt->bindParam(':phone', $phone);
-
     if ($insertStmt->execute()) {
         $userId = $db->lastInsertId();
-        
-        // Log successful registration in AuditLogs
+    // Log successful registration in AuditLogs
         $logQuery = "INSERT INTO AuditLogs (user_id, action, timestamp, ip_addr) 
                      VALUES (:user_id, 'USER_REGISTERED', NOW(), :ip_addr)";
         $logStmt = $db->prepare($logQuery);
         $logStmt->bindParam(':user_id', $userId);
         $logStmt->bindParam(':ip_addr', $_SERVER['REMOTE_ADDR']);
         $logStmt->execute();
-
         echo json_encode([
             'success' => true,
             'message' => 'Registration successful',
@@ -127,9 +117,7 @@ try {
         http_response_code(500);
         echo json_encode(['error' => 'Registration failed']);
     }
-
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
 }
-?>

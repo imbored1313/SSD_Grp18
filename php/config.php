@@ -1,4 +1,5 @@
 <?php
+
 // Set secure session cookie parameters for local development
 session_set_cookie_params([
     'lifetime' => 0,
@@ -10,21 +11,26 @@ session_set_cookie_params([
 ]);
 
 // config.php - Updated for your database schema
-class Database {
+class Database
+{
     private $host = 'db';
     private $db_name = 'electraedge';
     private $username = 'user';
     private $password = 'password';
     private $conn;
 
-    public function getConnection() {
+    public function getConnection()
+    {
         $this->conn = null;
         try {
-            $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, 
-                                $this->username, $this->password);
+            $this->conn = new PDO(
+                "mysql:host=" . $this->host . ";dbname=" . $this->db_name,
+                $this->username,
+                $this->password
+            );
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        } catch(PDOException $e) {
+        } catch (PDOException $e) {
             echo "Connection error: " . $e->getMessage();
         }
         return $this->conn;
@@ -32,14 +38,18 @@ class Database {
 }
 
 // Security functions
-function sanitizeInput($data) {
+function sanitizeInput($data)
+{
+
     $data = trim($data);
     $data = stripslashes($data);
     $data = htmlspecialchars($data);
     return $data;
 }
 
-function validatePassword($password) {
+function validatePassword($password)
+{
+
     if (strlen($password) < 8) {
         return "Password must be at least 8 characters long";
     }
@@ -58,15 +68,18 @@ function validatePassword($password) {
     return true;
 }
 
-function validateEmail($email) {
+function validateEmail($email)
+{
+
     return filter_var($email, FILTER_VALIDATE_EMAIL);
 }
 
 // Start session securely (call this function in scripts that need a session)
-function ensureSessionStarted() {
+function ensureSessionStarted()
+{
+
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
         session_regenerate_id(true);
     }
 }
-?>

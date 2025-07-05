@@ -5,23 +5,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewImage = document.getElementById('previewImage');
 
     // Image preview functionality
-    fileInput.addEventListener('change', function() {
+    fileInput.addEventListener('change', function () {
         const file = this.files[0];
         if (file) {
             const reader = new FileReader();
-            
-            reader.addEventListener('load', function() {
+
+            reader.addEventListener('load', function () {
                 previewImage.src = this.result;
                 previewContainer.style.display = 'block';
             });
-            
+
             reader.readAsDataURL(file);
         }
     });
 
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', async(e) => {
         e.preventDefault();
-        
+
         const formData = new FormData();
         const productData = {
             name: form.elements.name.value,
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Add JSON data as a field
         formData.append('productData', JSON.stringify(productData));
-        
+
         // Add file if selected
         if (fileInput.files.length > 0) {
             formData.append('productImage', fileInput.files[0]);
@@ -48,19 +48,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: formData,
                     credentials: 'include'
                 });
-                
+
                 const uploadResult = await uploadResponse.json();
-                
+
                 if (!uploadResult.success) {
                     throw new Error(uploadResult.message || 'Image upload failed');
                 }
-                
+
                 imagePath = uploadResult.imagePath;
             }
 
             // Then create product with image path
             productData.image_path = imagePath;
-            
+
             const response = await fetch('php/admin_products.php?action=create', {
                 method: 'POST',
                 headers: {
@@ -69,9 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(productData),
                 credentials: 'include'
             });
-            
+
             const result = await response.json();
-            
+
             if (result.success) {
                 alert('Product created successfully!');
                 window.location.href = 'admin_products.html';

@@ -1,69 +1,67 @@
 <?php
+
 // email_config.php - Gmail SMTP Configuration
 
 require_once 'vendor/autoload.php';
-
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
-class EmailService {
+class EmailService
+{
     private $mailer;
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         $this->mailer = new PHPMailer(true);
         $this->setupSMTP();
     }
-    
-    private function setupSMTP() {
+
+    private function setupSMTP()
+    {
         try {
-            // Server settings
+// Server settings
             $this->mailer->isSMTP();
             $this->mailer->Host       = 'smtp.gmail.com';
             $this->mailer->SMTPAuth   = true;
-            $this->mailer->Username   = 'bernicegoo16@gmail.com'; // Your Gmail address
-            $this->mailer->Password   = 'dwsd hwri leni oxji';     // Your 16-char app password
+            $this->mailer->Username   = 'bernicegoo16@gmail.com';
+// Your Gmail address
+            $this->mailer->Password   = 'dwsd hwri leni oxji';
+// Your 16-char app password
             $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $this->mailer->Port       = 587;
-            
-            // Default sender
+// Default sender
             $this->mailer->setFrom('bernicegoo16@gmail.com', 'ElectraEdge Team');
             $this->mailer->addReplyTo('bernicegoo16@gmail.com', 'ElectraEdge Support');
-            
         } catch (Exception $e) {
             error_log("SMTP Setup Error: " . $e->getMessage());
         }
     }
-    
-    public function sendPasswordResetEmail($toEmail, $username, $resetCode) {
+
+    public function sendPasswordResetEmail($toEmail, $username, $resetCode)
+    {
         try {
-            // Recipients
+// Recipients
             $this->mailer->addAddress($toEmail, $username);
-            
-            // Content
+// Content
             $this->mailer->isHTML(true);
             $this->mailer->Subject = 'ElectraEdge - Password Reset Code';
-            
-            // HTML email body
+// HTML email body
             $this->mailer->Body = $this->getPasswordResetHTML($username, $resetCode);
-            
-            // Plain text alternative
+// Plain text alternative
             $this->mailer->AltBody = $this->getPasswordResetText($username, $resetCode);
-            
             $result = $this->mailer->send();
-            
-            // Clear addresses for next email
+// Clear addresses for next email
             $this->mailer->clearAddresses();
-            
             return $result;
-            
         } catch (Exception $e) {
             error_log("Email Send Error: " . $e->getMessage());
             return false;
         }
     }
-    
-    private function getPasswordResetHTML($username, $resetCode) {
+
+    private function getPasswordResetHTML($username, $resetCode)
+    {
         return "
         <!DOCTYPE html>
         <html>
@@ -113,8 +111,9 @@ class EmailService {
         </body>
         </html>";
     }
-    
-    private function getPasswordResetText($username, $resetCode) {
+
+    private function getPasswordResetText($username, $resetCode)
+    {
         return "
 Hello {$username},
 
@@ -134,4 +133,3 @@ This is an automated message. Please do not reply.
         ";
     }
 }
-?>

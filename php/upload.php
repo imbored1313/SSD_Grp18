@@ -1,7 +1,7 @@
 <?php
+
 require_once(__DIR__ . '/config.php');
 ensureSessionStarted();
-
 // Admin check
 if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admin') {
     http_response_code(403);
@@ -13,12 +13,12 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
 $uploadDir = "/var/www/html/uploads/";
 $uploadPath = $uploadDir . "product_" . uniqid() . ".png";
 $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-$maxSize = 2 * 1024 * 1024; // 2MB
+$maxSize = 2 * 1024 * 1024;
+// 2MB
 
 header('Content-Type: application/json');
-
 try {
-    // Verify upload directory
+// Verify upload directory
     if (!file_exists($uploadDir)) {
         if (!mkdir($uploadDir, 0755, true)) {
             throw new Exception('Failed to create upload directory. Check permissions.');
@@ -35,8 +35,7 @@ try {
     }
 
     $file = $_FILES['productImage'];
-
-    // Verify upload was successful
+// Verify upload was successful
     if ($file['error'] !== UPLOAD_ERR_OK) {
         $phpFileUploadErrors = [
             0 => 'There is no error, the file uploaded with success',
@@ -55,7 +54,6 @@ try {
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mime = finfo_file($finfo, $file['tmp_name']);
     finfo_close($finfo);
-
     if (!in_array($mime, $allowedTypes)) {
         throw new Exception('Invalid file type. Only JPG, PNG, and GIF are allowed.');
     }
@@ -69,8 +67,7 @@ try {
     $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
     $filename = uniqid('product_', true) . '.' . strtolower($extension);
     $destination = $uploadDir . $filename;
-
-    // Move the file with error handling
+// Move the file with error handling
     if (!move_uploaded_file($file['tmp_name'], $destination)) {
         $error = error_get_last();
         throw new Exception('Failed to move uploaded file: ' . ($error['message'] ?? 'Unknown error'));
@@ -78,12 +75,10 @@ try {
 
     // Return relative path for web access
     $webPath = 'uploads/products/' . $filename;
-    
     echo json_encode([
         'success' => true,
         'imagePath' => $webPath
     ]);
-
 } catch (Exception $e) {
     http_response_code(400);
     echo json_encode([

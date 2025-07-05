@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<ruleset name="ElectraEdge Project Rules">
+    <!-- Use PSR12 as the base coding standard -->
+    <rule ref="PSR12"/>
+    <!-- Exclude third-party code from checks -->
+    <exclude-pattern>vendor/*</exclude-pattern>
+    <exclude-pattern>php/vendor/*</exclude-pattern>
+</ruleset> 

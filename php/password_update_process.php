@@ -1,4 +1,5 @@
 <?php
+
 require_once(__DIR__ . '/config.php');
 ensureSessionStarted();
 
@@ -13,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 try {
     $code = sanitizeInput($_POST['code'] ?? '');
     $newPassword = $_POST['newPassword'] ?? '';
-    
+
     // Validate input
     if (empty($code) || empty($newPassword)) {
         http_response_code(400);
@@ -84,9 +85,7 @@ try {
         http_response_code(500);
         echo json_encode(['error' => 'Failed to update password']);
     }
-
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
 }
-?>

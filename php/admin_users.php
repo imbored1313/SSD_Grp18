@@ -1,7 +1,7 @@
 <?php
+
 require_once(__DIR__ . '/config.php');
 ensureSessionStarted();
-
 if ($action == 'currentUser') {
     echo json_encode($_SESSION['user']);
     exit;
@@ -17,10 +17,9 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
 
 $database = new Database();
 $db = $database->getConnection();
-
 $action = $_GET['action'] ?? '';
-
-header('Content-Type: application/json');  // Always set JSON header
+header('Content-Type: application/json');
+// Always set JSON header
 
 if ($action == 'list') {
     $stmt = $db->query("SELECT user_id, username, email, first_name, last_name, role, is_verified, created_at FROM Users");

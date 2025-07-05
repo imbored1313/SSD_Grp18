@@ -21,9 +21,9 @@ class ConfigTest extends TestCase
         $configFile = __DIR__ . '/../../config.php';
         $output = [];
         $returnCode = 0;
-        
+
         exec("php -l $configFile 2>&1", $output, $returnCode);
-        
+
         $this->assertEquals(0, $returnCode, "Config file has syntax errors: " . implode("\n", $output));
     }
-} 
+}
