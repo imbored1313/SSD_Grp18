@@ -4,12 +4,12 @@
 
 // Mock DOM elements
 document.body.innerHTML = `
-  < form id = "loginForm" >
-    < input type = "email" id = "email" name = "email" /  >
-    < input type = "password" id = "password" name = "password" /  >
-    < button type = "submit" > Login < / button >
-  <  / form >
-  < div id = "errorMessage" > < / div >
+  <form id="loginForm">
+    <input type="email" id="email" name="email" />
+    <input type="password" id="password" name="password" />
+    <button type="submit">Login</button>
+  </form>
+  <div id="errorMessage"></div>
 `;
 
 // Import the login functionality
