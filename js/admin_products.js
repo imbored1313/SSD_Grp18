@@ -51,13 +51,13 @@ async function loadProducts()
 
 function escapeHTML(str)
 {
-    return str ? .replace(/[&<>"']/g, tag => ({
+    return (str?.replace(/[&<>"']/g, tag => ({
         '&': '&amp;',
         '<': '&lt;',
         '>': '&gt;',
         '"': '&quot;',
         "'": '&#39;'
-    }[tag])) ?  ? '';
+    }[tag]))) || '';
 }
 
 function renderProducts(products)
