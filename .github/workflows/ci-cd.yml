@@ -193,19 +193,49 @@ jobs:
     steps:
       - name: Write Pipeline Summary
         run: |
-          echo "## 📝 CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚦 CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Workflow:** Main Pipeline" >> $GITHUB_STEP_SUMMARY
           echo "**Run ID:** $GITHUB_RUN_ID" >> $GITHUB_STEP_SUMMARY
-          echo "**Trigger:** $GITHUB_EVENT_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** $GITHUB_EVENT_NAME" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** $GITHUB_REF_NAME" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** $GITHUB_SHA" >> $GITHUB_STEP_SUMMARY
+          echo "**Author:** $GITHUB_ACTOR" >> $GITHUB_STEP_SUMMARY
+          echo "**Started:** $(date -u -d @$(( $(date +%s) - $GITHUB_RUN_ATTEMPT )) '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Duration:** $(( ($(date +%s) - $GITHUB_RUN_STARTED_AT) / 60 ))m $(( ($(date +%s) - $GITHUB_RUN_STARTED_AT) % 60 ))s" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Job Results:" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🛠️ Job Results" >> $GITHUB_STEP_SUMMARY
           echo "- Lint: ${{ needs.lint.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Test: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🧪 Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total:** (see test logs)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Passed:** (see test logs)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Failed:** (see test logs)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Coverage:** (see test logs)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🛡️ Lint & Quality" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lint:** (see lint logs for errors/warnings)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Artifacts & Logs" >> $GITHUB_STEP_SUMMARY
+          echo "- [View Full Logs]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🏁 Final Status" >> $GITHUB_STEP_SUMMARY
           if [ "${{ needs.lint.result }}" = "success" ] && [ "${{ needs.test.result }}" = "success" ]; then
-            echo "✅ All checks have passed!" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **All checks have passed!**" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ Some checks have failed. Please review the logs above." >> $GITHUB_STEP_SUMMARY
-          fi 
+            echo "❌ **Some checks have failed. Please review the logs above.**" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*For help, contact @devops or see [CI/CD Docs](#).*" >> $GITHUB_STEP_SUMMARY 
