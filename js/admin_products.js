@@ -47,6 +47,15 @@ async function loadProducts() {
     }
 }
 
+function escapeHTML(str) {
+    return str?.replace(/[&<>"']/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[tag])) ?? '';
+}
 
 function renderProducts(products) {
     const tbody = document.querySelector('#productsTable tbody');
@@ -68,9 +77,9 @@ function renderProducts(products) {
         // Create cells for each column
         row.innerHTML = `
             <td>${product.product_id}</td>
-            <td>${product.name || 'No name'}</td>
+            <td>${escapeHTML(product.name) || 'No name'}</td>
             <td>${product.description ? 
-                (product.description.length > 50 ? 
+                escapeHTML(product.description.length > 50 ? 
                     product.description.substring(0, 47) + '...' : 
                     product.description) : 
                 'No description'}</td>

@@ -11,7 +11,15 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
 
 $database = new Database();
 $db = $database->getConnection();
+
+// Validate action parameter
+$allowedActions = ['list', 'create', 'get', 'update', 'delete'];
 $action = $_GET['action'] ?? '';
+if (!in_array($action, $allowedActions, true)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Invalid action']);
+    exit;
+}
 
 header('Content-Type: application/json');
 
@@ -29,7 +37,7 @@ case 'list':
     // Prepend server address to image paths if they're not already full URLs
     foreach ($products as &$product) {
         if (!empty($product['image_path']) && !filter_var($product['image_path'], FILTER_VALIDATE_URL)) {
-            $product['image_path'] = 'http://3.15.42.35/' . ltrim($product['image_path'], '/');
+            $product['image_path'] = 'http://3.15.42.35/' . rawurlencode(ltrim(basename($product['image_path']), '/'));
         }
     }
     
@@ -37,6 +45,10 @@ case 'list':
     break;
 case 'create':
     $data = json_decode(file_get_contents('php://input'), true);
+    $data = array_map('trim', $data);
+    $data = array_map(function($v) {
+        return is_string($v) ? htmlspecialchars($v, ENT_QUOTES, 'UTF-8') : $v;
+    }, $data);
     
     $required = ['name', 'price', 'stock'];
     foreach ($required as $field) {
@@ -56,7 +68,7 @@ case 'create':
         $data['description'] ?? null,
         $data['price'],
         $data['stock'],
-        $data['image_path'] ?? null,
+        isset($data['image_path']) ? basename($data['image_path']) : null,
         $_SESSION['user']['user_id']
     ]);
     
@@ -80,7 +92,7 @@ case 'create':
     
     // Prepend full URL to image_path if not a full URL
     if (!empty($product['image_path']) && !filter_var($product['image_path'], FILTER_VALIDATE_URL)) {
-        $product['image_path'] = 'http://3.15.42.35/' . ltrim($product['image_path'], '/');
+        $product['image_path'] = 'http://3.15.42.35/' . rawurlencode(ltrim(basename($product['image_path']), '/'));
     }
     
     echo json_encode($product);
@@ -92,6 +104,10 @@ case 'update':
     if (!$id) throw new Exception('Invalid product ID');
 
     $data = json_decode(file_get_contents('php://input'), true);
+    $data = array_map('trim', $data);
+    $data = array_map(function($v) {
+        return is_string($v) ? htmlspecialchars($v, ENT_QUOTES, 'UTF-8') : $v;
+    }, $data);
 
     $name = $data['name'] ?? null;
     $description = $data['description'] ?? null;
@@ -108,7 +124,7 @@ case 'update':
         $stmt = $db->prepare("SELECT image_path FROM Products WHERE product_id = ?");
         $stmt->execute([$id]);
         $existing = $stmt->fetch(PDO::FETCH_ASSOC);
-        $image_path = $existing['image_path'] ?? null;
+        $image_path = isset($existing['image_path']) ? basename($existing['image_path']) : null;
     }
 
     $stmt = $db->prepare("
