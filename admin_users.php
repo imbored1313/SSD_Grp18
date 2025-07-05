@@ -1,3 +1,10 @@
+<?php
+session_start();
+if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admin') {
+    header('Location: index.html'); // or a user dashboard page
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,8 +17,8 @@
     <aside class="admin-sidebar">
       <ul class="admin-nav">
         <li><a href="admin_dashboard.html">Dashboard</a></li>
-        <li><a href="admin_products.html">Products</a></li>
-        <li><a href="admin_users.html" class="active">Users</a></li>
+        <li><a href="admin_products.php">Products</a></li>
+        <li><a href="admin_users.php" class="active">Users</a></li>
       </ul>
     </aside>
 
