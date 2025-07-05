@@ -148,10 +148,6 @@ jobs:
             sleep 1
           done
 
-      - name: Setup test database
-        run: |
-          mysql -h 127.0.0.1 -P 3306 -u root -proot electraedge_test < electraedge.sql
-
       - name: Run PHP tests
         run: |
           cd php
