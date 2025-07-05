@@ -94,7 +94,6 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
     needs: lint
-    
     services:
       mysql:
         image: mysql:8.0
@@ -110,7 +109,11 @@ jobs:
           --health-retries 5
         ports:
           - 3306:3306
-          
+    outputs:
+      total_tests: ${{ steps.parse_jest.outputs.total_tests }}
+      passed_tests: ${{ steps.parse_jest.outputs.passed_tests }}
+      failed_tests: ${{ steps.parse_jest.outputs.failed_tests }}
+      coverage: ${{ steps.parse_jest.outputs.coverage }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -179,6 +182,20 @@ jobs:
         echo "Testing Docker Compose configuration..."
         docker-compose config
         echo "Docker Compose configuration is valid"
+    - name: Run Jest with JSON and Coverage
+      run: |
+        npx jest --json --outputFile=jest-results.json --coverage --coverageReporters=json-summary
+    - name: Parse Jest Results
+      id: parse_jest
+      run: |
+        total=$(jq '.numTotalTests' jest-results.json)
+        passed=$(jq '.numPassedTests' jest-results.json)
+        failed=$(jq '.numFailedTests' jest-results.json)
+        coverage=$(jq '.total.lines.pct' coverage/coverage-summary.json)
+        echo "total_tests=$total" >> $GITHUB_OUTPUT
+        echo "passed_tests=$passed" >> $GITHUB_OUTPUT
+        echo "failed_tests=$failed" >> $GITHUB_OUTPUT
+        echo "coverage=$coverage" >> $GITHUB_OUTPUT
     - name: Set Test Job Status
       if: always()
       run: |
@@ -186,23 +203,20 @@ jobs:
       id: test_status
 
   summary:
-    name: Pipeline Summary
+    name: Summary
     runs-on: ubuntu-latest
     needs: [lint, test]
     if: always()
     steps:
       - name: Write Pipeline Summary
         run: |
-          echo "## 🚦 CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Workflow:** Main Pipeline" >> $GITHUB_STEP_SUMMARY
           echo "**Run ID:** $GITHUB_RUN_ID" >> $GITHUB_STEP_SUMMARY
           echo "**Triggered by:** $GITHUB_EVENT_NAME" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** $GITHUB_REF_NAME" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** $GITHUB_SHA" >> $GITHUB_STEP_SUMMARY
           echo "**Author:** $GITHUB_ACTOR" >> $GITHUB_STEP_SUMMARY
-          echo "**Started:** $(date -u -d @$(( $(date +%s) - $GITHUB_RUN_ATTEMPT )) '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
-          echo "**Duration:** $(( ($(date +%s) - $GITHUB_RUN_STARTED_AT) / 60 ))m $(( ($(date +%s) - $GITHUB_RUN_STARTED_AT) % 60 ))s" >> $GITHUB_STEP_SUMMARY
+          echo "**Started:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -213,10 +227,10 @@ jobs:
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🧪 Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "- **Total:** (see test logs)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Passed:** (see test logs)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Failed:** (see test logs)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Coverage:** (see test logs)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total:** ${{ needs.test.outputs.total_tests }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Passed:** ${{ needs.test.outputs.passed_tests }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Failed:** ${{ needs.test.outputs.failed_tests }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Coverage:** ${{ needs.test.outputs.coverage }}%" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
