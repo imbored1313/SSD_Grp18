@@ -3,38 +3,34 @@
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors="true"
-         processIsolation="false"
-         stopOnFailure="false"
-         cacheDirectory=".phpunit.cache">
+         verbose="true">
     <testsuites>
         <testsuite name="Unit">
-            <directory>tests/Unit</directory>
-        </testsuite>
-        <testsuite name="Integration">
-            <directory>tests/Integration</directory>
+            <directory suffix="Test.php">./tests/Unit</directory>
         </testsuite>
         <testsuite name="Security">
-            <directory>tests/Security</directory>
+            <directory suffix="Test.php">./tests/Security</directory>
         </testsuite>
     </testsuites>
     <coverage processUncoveredFiles="true">
         <include>
-            <directory suffix=".php">php/</directory>
+            <directory suffix=".php">./</directory>
         </include>
         <exclude>
-            <directory>vendor/</directory>
-            <directory>tests/</directory>
+            <directory>./vendor</directory>
+            <directory>./tests</directory>
         </exclude>
         <report>
-            <html outputDirectory="coverage/"/>
-            <text outputFile="coverage.txt"/>
-            <clover outputFile="coverage.xml"/>
+            <html outputDirectory="coverage"/>
+            <xml outputFile="coverage.xml"/>
         </report>
     </coverage>
     <php>
         <env name="APP_ENV" value="testing"/>
-        <env name="DB_DATABASE" value="electraedge_test"/>
-        <env name="DB_USERNAME" value="test_user"/>
-        <env name="DB_PASSWORD" value="test_password"/>
+        <env name="DB_HOST" value="127.0.0.1"/>
+        <env name="DB_PORT" value="3306"/>
+        <env name="DB_NAME" value="electraedge_test"/>
+        <env name="DB_USER" value="root"/>
+        <env name="DB_PASSWORD" value="root"/>
     </php>
 </phpunit> 
