@@ -58,7 +58,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             
             if (result.success) {
-                window.location.href = 'index.html'; // or 'index.html' or wherever you want
+                if (result.user && result.user.role.toLowerCase() === 'admin') {
+                    window.location.href = 'admin_dashboard.php';
+                } else {
+                    window.location.href = 'index.html';
+                }
             } else {
                 // Handle different error types
                 if (response.status === 401) {
