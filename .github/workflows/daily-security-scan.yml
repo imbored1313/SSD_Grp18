@@ -42,9 +42,9 @@ jobs:
           echo "**Trigger:** Automated daily scan" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          echo "### 1. PHP Security Checker" >> $GITHUB_STEP_SUMMARY
+          echo "### 1. PHP Security Audit" >> $GITHUB_STEP_SUMMARY
           cd php
-          composer security-check || echo "No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          composer audit || echo "No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
           
           echo "### 2. npm Security Audit" >> $GITHUB_STEP_SUMMARY
           cd ..
@@ -68,7 +68,7 @@ jobs:
           echo "**Status:** ✅ PASSED" >> security-evidence.md
           echo "" >> security-evidence.md
           echo "### Scans Performed:" >> security-evidence.md
-          echo "- PHP Security Checker" >> security-evidence.md
+          echo "- PHP Security Audit" >> security-evidence.md
           echo "- npm Security Audit" >> security-evidence.md
           echo "- Dependency Vulnerability Scan" >> security-evidence.md
           echo "" >> security-evidence.md

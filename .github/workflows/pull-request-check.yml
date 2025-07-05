@@ -43,7 +43,7 @@ jobs:
           
           echo "### Security Checks:" >> $GITHUB_STEP_SUMMARY
           cd php
-          composer security-check || echo "✅ No PHP vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          composer audit || echo "✅ No PHP vulnerabilities" >> $GITHUB_STEP_SUMMARY
           cd ..
           npm audit --audit-level=high || echo "✅ No npm vulnerabilities" >> $GITHUB_STEP_SUMMARY
 

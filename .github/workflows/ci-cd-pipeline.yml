@@ -45,10 +45,10 @@ jobs:
       - name: Install Node.js dependencies
         run: npm ci
 
-      - name: Run PHP Security Checker
+      - name: Run PHP Security Audit
         run: |
           cd php
-          composer security-check
+          composer audit
 
       - name: Run npm audit
         run: npm audit --audit-level=moderate
