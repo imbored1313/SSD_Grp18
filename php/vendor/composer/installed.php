@@ -3,7 +3,7 @@
         'name' => 'ssd-group18/electraedge',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'b0cb8b5454cdd6b27d2d3b1c100005282bba30b6',
+        'reference' => '0f800e1e62d1a5c8eec8f4ba4cc21de982a5ea6c',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -22,7 +22,7 @@
         'ssd-group18/electraedge' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'b0cb8b5454cdd6b27d2d3b1c100005282bba30b6',
+            'reference' => '0f800e1e62d1a5c8eec8f4ba4cc21de982a5ea6c',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
