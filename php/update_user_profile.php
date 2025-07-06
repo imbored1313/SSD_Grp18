@@ -1,7 +1,8 @@
 <?php
 
 require_once(__DIR__ . '/config.php');
-ensureSessionStarted();
+session_start();
+session_regenerate_id(true);
 // update_user_profile.php - Update user profile data in database
 
 header('Content-Type: application/json');

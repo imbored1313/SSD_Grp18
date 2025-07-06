@@ -1,7 +1,8 @@
 <?php
 
 require_once(__DIR__ . '/config.php');
-ensureSessionStarted();
+session_start();
+session_regenerate_id(true);
 $action = $_GET['action'] ?? '';
 if ($action == 'currentUser') {
     echo json_encode($_SESSION['user']);
