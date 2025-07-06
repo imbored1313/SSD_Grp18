@@ -20,7 +20,7 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
     <div class="admin-dashboard">
         <aside class="admin-sidebar">
             <ul class="admin-nav">
-                <li><a href="admin_dashboard.html">Dashboard</a></li>
+                <li><a href="admin_dashboard.php">Dashboard</a></li>
                 <li><a href="admin_products.php">Products</a></li>
                 <li><a href="admin_users.php">Users</a></li>
             </ul>
