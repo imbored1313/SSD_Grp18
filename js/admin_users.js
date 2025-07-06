@@ -32,13 +32,16 @@ function loadUsers()
 }
 
 function escapeHTML(str) {
-    return (str?.replace(/[&<>"']/g, tag => ({
+    if (typeof str !== 'string') {
+        return str === undefined || str === null ? '' : String(str);
+    }
+    return str.replace(/[&<>"]'/g, tag => ({
         '&': '&amp;',
         '<': '&lt;',
         '>': '&gt;',
         '"': '&quot;',
         "'": '&#39;'
-    }[tag]))) || '';
+    }[tag]));
 }
 
 function deleteUser(id)

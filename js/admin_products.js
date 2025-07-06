@@ -49,15 +49,17 @@ async function loadProducts()
     }
 }
 
-function escapeHTML(str)
-{
-    return (str?.replace(/[&<>"']/g, tag => ({
+function escapeHTML(str) {
+    if (typeof str !== 'string') {
+        return str === undefined || str === null ? '' : String(str);
+    }
+    return str.replace(/[&<>"]'/g, tag => ({
         '&': '&amp;',
         '<': '&lt;',
         '>': '&gt;',
         '"': '&quot;',
         "'": '&#39;'
-    }[tag]))) || '';
+    }[tag]));
 }
 
 function renderProducts(products)

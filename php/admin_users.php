@@ -2,6 +2,7 @@
 
 require_once(__DIR__ . '/config.php');
 ensureSessionStarted();
+$action = $_GET['action'] ?? '';
 if ($action == 'currentUser') {
     echo json_encode($_SESSION['user']);
     exit;
@@ -17,7 +18,6 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
 
 $database = new Database();
 $db = $database->getConnection();
-$action = $_GET['action'] ?? '';
 header('Content-Type: application/json');
 // Always set JSON header
 
