@@ -72,6 +72,11 @@ try {
         $_SESSION['last_name'] = $user['last_name'];
         $_SESSION['role'] = $user['role'];
         $_SESSION['is_verified'] = $user['is_verified'];
+
+// Debug logging
+        error_log("Login successful - Session ID: " . session_id());
+        error_log("Login successful - Session data: " . print_r($_SESSION, true));
+
 // Create session record in Sessions table
         $sessionToken = bin2hex(random_bytes(32));
         $expiryTime = date('Y-m-d H:i:s', strtotime('+1 hour'));

@@ -7,6 +7,11 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET');
 header('Access-Control-Allow-Headers: Content-Type');
 header('Access-Control-Allow-Credentials: true');
+
+// Debug logging
+error_log("Session check - Session ID: " . session_id());
+error_log("Session check - Session data: " . print_r($_SESSION, true));
+
 try {
 // Check if user session exists - try array format first
     if (isset($_SESSION['user']) && isset($_SESSION['user']['user_id'])) {

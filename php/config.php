@@ -2,12 +2,12 @@
 
 // Set secure session cookie parameters for local development
 session_set_cookie_params([
-    'lifetime' => 0,
+    'lifetime' => 3600, // 1 hour session lifetime
     'path' => '/',
-    'domain' => '', // Use '' for localhost
+    'domain' => null, // Use null for localhost to ensure proper cookie handling
     'secure' => false, // Set to true if using HTTPS
     'httponly' => true,
-    'samesite' => 'Lax'
+    'samesite' => 'Lax' // Use Lax for local development
 ]);
 
 // config.php - Updated for your database schema
@@ -80,6 +80,10 @@ function ensureSessionStarted()
 
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
-        session_regenerate_id(true);
+        // Only regenerate session ID if it's a new session
+        if (!isset($_SESSION['initialized'])) {
+            session_regenerate_id(true);
+            $_SESSION['initialized'] = true;
+        }
     }
 }
