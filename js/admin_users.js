@@ -19,7 +19,7 @@ function loadUsers()
             <td>${escapeHTML(u.created_at)}</td>
             <td class="action-buttons">
               <button onclick="deleteUser(${u.user_id})" class="btn btn-danger btn-small">Delete</button>
-              <button onclick="toggleRole(${u.user_id}, '${u.role}')" class="btn btn-secondary btn-small">
+              <button onclick="toggleRole(${u.user_id}, '${escapeHTML(u.role)}')" class="btn btn-secondary btn-small">
                 ${u.role === 'admin' ? 'Demote to User' : 'Promote to Admin'}
               </button>
             </td>
@@ -35,7 +35,7 @@ function escapeHTML(str) {
     if (typeof str !== 'string') {
         return str === undefined || str === null ? '' : String(str);
     }
-    return str.replace(/[&<>"]'/g, tag => ({
+    return str.replace(/[&<>"']/g, tag => ({
         '&': '&amp;',
         '<': '&lt;',
         '>': '&gt;',
@@ -49,7 +49,7 @@ function deleteUser(id)
     if (!confirm('Are you sure you want to delete this user?')) {
         return;
     }
-    fetch(`php / admin_users.php ? action = delete & id = ${id}`, { credentials : 'include' })
+    fetch(`php/admin_users.php?action=delete&id=${id}`, { credentials: 'include' })
     .then(res => res.json())
     .then(result => {
         if (result.success) {
@@ -65,7 +65,7 @@ function deleteUser(id)
 function toggleRole(id, currentRole)
 {
     const newRole = currentRole === 'admin' ? 'user' : 'admin';
-    fetch(`php / admin_users.php ? action = changerole & id = ${id} & role = ${newRole}`, { credentials : 'include' })
+    fetch(`php/admin_users.php?action=changerole&id=${id}&role=${newRole}`, { credentials: 'include' })
     .then(res => res.json())
     .then(result => {
         if (result.success) {
