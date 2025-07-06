@@ -13,12 +13,12 @@ session_set_cookie_params([
 // config.php - Updated for your database schema
 class Database
 {
-    private $host = 'db';
+    private $host = 'localhost';
     private $db_name = 'electraedge';
     private $username = 'user';
-    private $password = 'password';
+    private $password = 'SSD@group18';
     private $conn;
-    // #TODO: Add database connection
+
     public function getConnection()
     {
         $this->conn = null;
