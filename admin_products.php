@@ -31,7 +31,7 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
         <main class="admin-content">
 <div class="admin-header">
     <h1>Product Management</h1>
-    <a id="addProductBtn" href="add_product.html" class="btn btn-primary">
+    <a id="addProductBtn" href="add_product.php" class="btn btn-primary">
         <i class="fas fa-plus"></i> Add Product
     </a>
 </div>
