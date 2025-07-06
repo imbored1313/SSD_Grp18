@@ -78,37 +78,42 @@ function renderProducts(products)
         const row = document.createElement('tr');
         row.dataset.id = product.product_id;
 
-        // Create cells for each column
+        // Ensure image_path is a full URL only if not already
+        let imageUrl = product.image_path;
+        if (imageUrl && !/^https?:\/\//.test(imageUrl)) {
+            imageUrl = `http://3.15.42.35/uploads/${escapeHTML(imageUrl.replace(/^.*[\\/]/, ''))}`;
+        }
+
         row.innerHTML = `
-            < td > ${product.product_id} < / td >
-            < td > ${escapeHTML(product.name) || 'No name'} < / td >
-            < td > ${product.description ?
+            <td>${escapeHTML(product.product_id)}</td>
+            <td>${escapeHTML(product.name) || 'No name'}</td>
+            <td>${product.description ?
                 escapeHTML(product.description.length > 50 ?
                     product.description.substring(0, 47) + '...' :
                     product.description) :
-                'No description'} < / td >
-            < td > $${parseFloat(product.price || 0).toFixed(2)} < / td >
-            < td > ${product.stock || 0} < / td >
-            < td class = "text-center" >
-                ${product.image_path ?
-                    ` < img src = "${product.image_path}"
-                          alt = "${product.name || 'Product image'}"
-                          class = "product-image"
-                          onerror = "this.style.display='none';this.parentElement.innerHTML='<span class=\'text-muted\'>Image missing</span>'" > ` :
+                'No description'}</td>
+            <td>$${parseFloat(product.price || 0).toFixed(2)}</td>
+            <td>${escapeHTML(product.stock)}</td>
+            <td class="text-center">
+                ${imageUrl ?
+                    `<img src="${imageUrl}"
+                          alt="${escapeHTML(product.name) || 'Product image'}"
+                          class="product-image"
+                          onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\'text-muted\'>Image missing</span>'">` :
                     '<span class="text-muted">No image</span>'}
-            <  / td >
-            < td > ${product.added_by_username || 'System'} < / td >
-            < td class = "action-buttons" >
-                < button class = "btn btn-sm btn-warning" data - action = "edit" >
-                    < i class = "fas fa-edit" > < / i > Edit
-                <  / button >
-                < button class = "btn btn-sm btn-danger" data - action = "delete" >
-                    < i class = "fas fa-trash" > < / i > Delete
-                <  / button >
-            <  / td >
+            </td>
+            <td>${escapeHTML(product.added_by_username) || 'System'}</td>
+            <td class="action-buttons">
+                <button class="btn btn-sm btn-warning" data-action="edit">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-danger" data-action="delete">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
             `;
 
-            tbody.appendChild(row);
+        tbody.appendChild(row);
     });
 }
 

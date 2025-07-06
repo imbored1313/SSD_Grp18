@@ -9,26 +9,36 @@ function loadUsers()
         tbody.innerHTML = '';
         data.forEach(u => {
             tbody.innerHTML += `
-            < tr >
-            < td > ${u.user_id} < / td >
-            < td > ${u.username} < / td >
-            < td > ${u.email} < / td >
-            < td > ${u.first_name} ${u.last_name} < / td >
-            < td > ${u.role} < / td >
-            < td > ${u.is_verified ? 'Yes' : 'No'} < / td >
-            < td > ${u.created_at} < / td >
-            < td class = "action-buttons" >
-              < button onclick = "deleteUser(${u.user_id})" class = "btn btn-danger btn-small" > Delete < / button >
-              < button onclick = "toggleRole(${u.user_id}, '${u.role}')" class = "btn btn-secondary btn-small" >
+            <tr>
+            <td>${escapeHTML(u.user_id)}</td>
+            <td>${escapeHTML(u.username)}</td>
+            <td>${escapeHTML(u.email)}</td>
+            <td>${escapeHTML(u.first_name)} ${escapeHTML(u.last_name)}</td>
+            <td>${escapeHTML(u.role)}</td>
+            <td>${u.is_verified ? 'Yes' : 'No'}</td>
+            <td>${escapeHTML(u.created_at)}</td>
+            <td class="action-buttons">
+              <button onclick="deleteUser(${u.user_id})" class="btn btn-danger btn-small">Delete</button>
+              <button onclick="toggleRole(${u.user_id}, '${u.role}')" class="btn btn-secondary btn-small">
                 ${u.role === 'admin' ? 'Demote to User' : 'Promote to Admin'}
-              <  / button >
-            <  / td >
-            <  / tr > `;
+              </button>
+            </td>
+            </tr>`;
         });
     })
     .catch(err => {
         alert('Failed to load users: ' + err.message);
     });
+}
+
+function escapeHTML(str) {
+    return (str?.replace(/[&<>"']/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[tag]))) || '';
 }
 
 function deleteUser(id)
