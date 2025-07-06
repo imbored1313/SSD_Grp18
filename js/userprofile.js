@@ -544,31 +544,31 @@ function updateUIForLoggedInUser()
     if (userNavigation) {
         // Replace login button with user dropdown
         userNavigation.innerHTML = `
-            < div class = "user-dropdown" style = "position: relative;" >
-                < button class = "user-btn" onclick = "toggleUserDropdown()" style = "background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; color: white; font-size: 1rem;" >
-                    < span style = "font-size: 1.5rem;" > 👤 < / span >
-                    < span > Hi, ${currentUserData.username} < / span >
-                    < span style = "font-size: 0.8rem;" > ▼ < / span >
-                <  / button >
-                < div id = "userDropdownMenu" class = "dropdown-menu" style = "display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); min-width: 200px; z-index: 1000;" >
-                    < div style = "padding: 1rem; border-bottom: 1px solid #eee; background: #f8f9fa; border-radius: 8px 8px 0 0;" >
-                        < div style = "font-weight: bold; color: #333;" > ${currentUserData.username} < / div >
-                        < div style = "font-size: 0.9rem; color: #666;" > ${currentUserData.email} < / div >
-                    <  / div >
-                    < div style = "padding: 0.5rem 0;" >
-                        < a href = "userprofile.html" style = "display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; transition: background 0.2s; background: #f0f0f0;" onmouseover = "this.style.background='#e0e0e0'" onmouseout = "this.style.background='#f0f0f0'" >
+            <div class="user-dropdown" style="position: relative;">
+                <button class="user-btn" onclick="toggleUserDropdown()" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; color: white; font-size: 1rem;">
+                    <span style="font-size: 1.5rem;">👤</span>
+                    <span>Hi, ${currentUserData.username}</span>
+                    <span style="font-size: 0.8rem;">▼</span>
+                </button>
+                <div id="userDropdownMenu" class="dropdown-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); min-width: 200px; z-index: 1000;">
+                    <div style="padding: 1rem; border-bottom: 1px solid #eee; background: #f8f9fa; border-radius: 8px 8px 0 0;">
+                        <div style="font-weight: bold; color: #333;">${currentUserData.username}</div>
+                        <div style="font-size: 0.9rem; color: #666;">${currentUserData.email}</div>
+                    </div>
+                    <div style="padding: 0.5rem 0;">
+                        <a href="userprofile.html" style="display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; transition: background 0.2s; background: #f0f0f0;" onmouseover="this.style.background='#e0e0e0'" onmouseout="this.style.background='#f0f0f0'">
                             👤 My Profile
-                        <  / a >
-                        < a href = "order_history.html" style = "display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; transition: background 0.2s;" onmouseover = "this.style.background='#f8f9fa'" onmouseout = "this.style.background='transparent'" >
+                        </a>
+                        <a href="order_history.html" style="display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
                             📦 My Orders
-                        <  / a >
-                        < hr style = "margin: 0.5rem 0; border: none; border-top: 1px solid #eee;" >
-                        < button onclick = "logout()" style = "display: block; width: 100%; padding: 0.75rem 1rem; color: #dc3545; text-decoration: none; background: none; border: none; text-align: left; cursor: pointer; transition: background 0.2s;" onmouseover = "this.style.background='#f8f9fa'" onmouseout = "this.style.background='transparent'" >
+                        </a>
+                        <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid #eee;">
+                        <button onclick="logout()" style="display: block; width: 100%; padding: 0.75rem 1rem; color: #dc3545; text-decoration: none; background: none; border: none; text-align: left; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
                             🚪 Logout
-                        <  / button >
-                    <  / div >
-                <  / div >
-            <  / div >
+                        </button>
+                    </div>
+                </div>
+            </div>
         `;
     }
 }
