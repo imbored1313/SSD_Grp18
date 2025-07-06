@@ -12,7 +12,7 @@
     "lint:php": "find php -name \"*.php\" -type f -exec php -l {} \\;"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
+    "jest": "^30.0.4",
     "jest-environment-jsdom": "^30.0.4",
     "jsdom": "^23.0.1"
   }
