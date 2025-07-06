@@ -1,3 +1,12 @@
+<?php
+session_start();
+
+// ✅ Admin-only access
+if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admin') {
+    header('Location: index.html');
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,15 +21,15 @@
         <aside class="admin-sidebar">
             <ul class="admin-nav">
                 <li><a href="admin_dashboard.html">Dashboard</a></li>
-                <li><a href="admin_products.html">Products</a></li>
-                <li><a href="admin_users.html">Users</a></li>
+                <li><a href="admin_products.php">Products</a></li>
+                <li><a href="admin_users.php">Users</a></li>
             </ul>
         </aside>
 
         <main class="admin-content">
             <div class="admin-header">
                 <h1>Add New Product</h1>
-                <a href="admin_products.html" class="btn btn-secondary">
+                <a href="admin_products.php" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back to Products
                 </a>
             </div>
