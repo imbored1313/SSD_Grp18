@@ -1,14 +1,14 @@
 <?php
 
-require __DIR__ . '/database/db_connect.php';
-$sql = "SELECT product_id, name, description, price, stock, image_path FROM products";
-$res = mysqli_query($conn, $sql);
-$products = [];
-if ($res) {
-    while ($r = mysqli_fetch_assoc($res)) {
-        $products[] = $r;
-    }
-}
-mysqli_close($conn);
+require_once __DIR__ . '/php/config.php';
+
+$database = new Database();
+$conn = $database->getConnection();
+
+$sql = "SELECT product_id, name, description, price, stock, image_path FROM Products";
+$stmt = $conn->prepare($sql);
+$stmt->execute();
+$products = $stmt->fetchAll();
+
 header('Content-Type: application/json');
 echo json_encode($products);

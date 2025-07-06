@@ -183,10 +183,10 @@ function filterProducts(searchTerm) {
     const lowerSearchTerm = searchTerm.toLowerCase();
     
     productCards.forEach(card => {
-        const productName = card.querySelector('h3').textContent.toLowerCase();
-        const productDescription = card.querySelector('p').textContent.toLowerCase();
+        const productName = card.querySelector('.product-title').textContent.toLowerCase();
+        const productInfo = card.querySelector('.product-info').textContent.toLowerCase();
         
-        if (productName.includes(lowerSearchTerm) || productDescription.includes(lowerSearchTerm)) {
+        if (productName.includes(lowerSearchTerm) || productInfo.includes(lowerSearchTerm)) {
             card.style.display = 'block';
         } else {
             card.style.display = 'none';
@@ -202,8 +202,8 @@ function sortProducts(sortOrder) {
     const productCards = Array.from(productGrid.querySelectorAll('.product-card'));
     
     productCards.sort((a, b) => {
-        const priceA = parseFloat(a.querySelector('p:nth-of-type(2)').textContent.replace('Price: $', ''));
-        const priceB = parseFloat(b.querySelector('p:nth-of-type(2)').textContent.replace('Price: $', ''));
+        const priceA = parseFloat(a.querySelector('.product-price').textContent.replace(/[^0-9.]/g, ''));
+        const priceB = parseFloat(b.querySelector('.product-price').textContent.replace(/[^0-9.]/g, ''));
         
         if (sortOrder === 'asc') {
             return priceA - priceB;
