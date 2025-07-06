@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error</title>
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      text-align: center;
+      padding: 40px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      font-size: 48px;
+      color: #dc3545;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 18px;
+      color: #333;
+    }
+    .code {
+      font-weight: bold;
+      font-size: 24px;
+      color: #6c757d;
+      margin: 20px 0;
+    }
+    a {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+    }
+    a:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Oops!</h1>
+    <div class="code">Error <span id="errorCode">Unknown</span></div>
+    <p id="errorMessage">Something went wrong. Please try again later.</p>
+    <p id="errorID"></p>
+    <a href="/index.html">Back to Home</a>
+  </div>
+
+  <script>
+    // Optionally populate error code and message dynamically
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code') || 'Unknown';
+    const messageMap = {
+      '400': 'Bad request. Please check the URL or form input.',
+      '401': 'Unauthorized access. Please login first.',
+      '403': 'Access denied. You do not have permission to view this page.',
+      '404': 'Page not found. It may have been moved or deleted.',
+      '500': 'Internal server error. We are working on it.'
+    };
+
+    const msg = messageMap[code] || 'Something went wrong. Please try again later.';
+    document.getElementById('errorCode').textContent = code;
+    document.getElementById('errorMessage').textContent = msg;
+
+    // Generate a basic error ID with timestamp
+    const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
+    document.getElementById('errorID').textContent = `Error ID: ERR-${timestamp}`;
+  </script>
+</body>
+</html>

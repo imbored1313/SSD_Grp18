@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admin') {
-    header('Location: index.html'); // or a user dashboard page
+    header('Location: error.html?code=403');
     exit;
 }
 ?>

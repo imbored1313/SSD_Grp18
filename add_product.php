@@ -3,7 +3,7 @@ session_start();
 
 // ✅ Admin-only access
 if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admin') {
-    header('Location: index.html');
+    header('Location: error.html?code=403');
     exit;
 }
 ?>
