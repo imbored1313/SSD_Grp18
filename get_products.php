@@ -1,6 +1,6 @@
 <?php
 
-require 'db_connect.php';
+require __DIR__ . '/database/db_connect.php';
 $sql = "SELECT product_id, name, description, price, stock, image_path FROM products";
 $res = mysqli_query($conn, $sql);
 $products = [];

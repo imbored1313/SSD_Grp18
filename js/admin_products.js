@@ -23,12 +23,7 @@ async function loadProducts()
 
         // 4. TRANSFORM THE DATA to match your working test format
         products = products.map(product => ({
-            ...product,
-            // Ensure image_path is a full URL
-            image_path: product.image_path
-            ? `http : //3.15.42.35/uploads/${product.image_path.replace(/^.*[\\/]/, '')}`
-            : null
-
+            ...product
         }));
 
         // 5. Render the transformed data
@@ -82,9 +77,6 @@ function renderProducts(products)
 
         // Ensure image_path is a full URL only if not already
         let imageUrl = product.image_path;
-        if (imageUrl && !/^https?:\/\//.test(imageUrl)) {
-            imageUrl = `http://3.15.42.35/uploads/${escapeHTML(imageUrl.replace(/^.*[\\/]/, ''))}`;
-        }
 
         row.innerHTML = `
             <td>${escapeHTML(product.product_id)}</td>
@@ -156,7 +148,7 @@ function setupEventListeners()
 async function deleteProduct(id)
 {
     try {
-        const response = await fetch(`php / admin_products.php ? action = delete & id = ${id}`, {
+        const response = await fetch(`php/admin_products.php?action=delete&id=${id}`, {
             credentials: 'include'
         });
 
@@ -177,24 +169,25 @@ async function showEditForm(id = null)
     const form = document.getElementById('productForm');
     const modal = new bootstrap.Modal(document.getElementById('productModal'));
     const previewContainer = document.getElementById('imagePreview');
+    const modalTitle = document.getElementById('modalTitle');
 
     form.reset();
     form.dataset.id = id || '';
 
     previewContainer.innerHTML = ''; // clear previous preview
 
+    // Set modal title
     if (id) {
+        modalTitle.textContent = 'Edit Product';
         try {
-                const response = await fetch(`php/admin_products.php?action=get&id=${id}`, {
+            const response = await fetch(`php/admin_products.php?action=get&id=${id}`, {
                 credentials: 'include'
             });
 
             const product = await response.json();
 
             // ✅ Apply same transformation for consistent URL:
-            product.image_path = product.image_path
-                ? `http : //3.15.42.35/uploads/${product.image_path.replace(/^.*[\\/]/, '')}`
-                : null;
+            product.image_path = product.image_path ? product.image_path : null;
 
             // Fill form:
             form.elements.name.value = product.name;
@@ -205,13 +198,25 @@ async function showEditForm(id = null)
             // ✅ Show the preview:
             if (product.image_path) {
                 previewContainer.innerHTML = `
-                    < img src = "${product.image_path}" alt = "Current Image" class = "img-thumbnail mt-2" style = "max-height: 150px;" >
+                    <label class="form-label">Current Image</label>
+                    <img src="${product.image_path}"
+                         alt="Current Image"
+                         class="img-thumbnail mt-2"
+                         style="max-height: 150px;"
+                         onerror="this.onerror=null;this.src='https://via.placeholder.com/150?text=No+Image';">
+                `;
+            } else {
+                previewContainer.innerHTML = `
+                    <label class="form-label">Current Image</label>
+                    <div class="text-muted">No image available</div>
                 `;
             }
         } catch (error) {
             showError('Failed to load product: ' + error.message);
             return;
         }
+    } else {
+        modalTitle.textContent = 'Add Product';
     }
 
     modal.show();
@@ -245,7 +250,13 @@ async function saveProduct()
                 credentials: 'include'
             });
 
-            const uploadResult = await uploadResponse.json();
+            const uploadText = await uploadResponse.text();
+            let uploadResult;
+            try {
+                uploadResult = JSON.parse(uploadText);
+            } catch (e) {
+                throw new Error('Image upload failed: ' + uploadText);
+            }
             if (!uploadResult.success) {
                 throw new Error(uploadResult.message || 'Image upload failed');
             }
@@ -257,7 +268,7 @@ async function saveProduct()
             productData.image_path = imagePath;
         }
 
-        const response = await fetch(`php / admin_products.php ? action = update & id = ${id}`, {
+        const response = await fetch(`php/admin_products.php?action=update&id=${id}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -266,7 +277,13 @@ async function saveProduct()
             credentials: 'include'
         });
 
-        const result = await response.json();
+        const resultText = await response.text();
+        let result;
+        try {
+            result = JSON.parse(resultText);
+        } catch (e) {
+            throw new Error('Product update failed: ' + resultText);
+        }
 
         if (result.success) {
             showSuccess(`Product updated successfully`);

@@ -12,31 +12,27 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Product Management</title>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <link rel="stylesheet" href="website.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="admin-dashboard">
-        <aside class="admin-sidebar">
+        <aside class="admin-sidebar gradient-bg">
             <ul class="admin-nav">
-                <li><a href="admin_dashboard.php">Dashboard</a></li>
-                <li><a href="admin_products.php" class="active">Products</a></li>
-                <li><a href="admin_users.php">Users</a></li>
+                <li><a href="admin_dashboard.php"><i class="fas fa-chart-line me-2"></i>Dashboard</a></li>
+                <li><a href="admin_products.php" class="active"><i class="fas fa-box-open me-2"></i>Products</a></li>
+                <li><a href="admin_users.php"><i class="fas fa-users me-2"></i>Users</a></li>
             </ul>
         </aside>
-
         <main class="admin-content">
-<div class="admin-header">
-    <h1>Product Management</h1>
-    <a id="addProductBtn" href="add_product.php" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Add Product
-    </a>
-</div>
-
-            <div class="data-table-container">
+            <div class="admin-header mb-4">
+                <h1>Manage Products</h1>
+            </div>
+            <a id="addProductBtn" href="add_product.php" class="btn btn-gradient btn-large mb-3">
+                <i class="fas fa-plus me-2"></i>Add Product
+            </a>
+            <div class="data-table">
                 <table class="table" id="productsTable">
                     <thead>
                         <tr>
@@ -55,8 +51,7 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
             </div>
         </main>
     </div>
-
-    <!-- Product Modal -->
+    <!-- Product Modal (restored) -->
     <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -84,12 +79,11 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
                                 <input type="number" class="form-control" id="stock" name="stock" min="0" required>
                             </div>
                         </div>
-<div class="mb-3">
-  <label for="image_file" class="form-label">Product Image</label>
-<input type="file" class="form-control" id="image_file" name="productImage" accept="image/*">
-  <div id="imagePreview"></div>
-</div>
-
+                        <div class="mb-3">
+                            <label for="image_file" class="form-label">Product Image</label>
+                            <input type="file" class="form-control" id="image_file" name="productImage" accept="image/*">
+                            <div id="imagePreview"></div>
+                        </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn btn-primary">Save Product</button>
@@ -99,7 +93,6 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
             </div>
         </div>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/admin_products.js"></script>
 </body>

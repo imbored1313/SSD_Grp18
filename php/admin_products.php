@@ -22,6 +22,9 @@ if (!in_array($action, $allowedActions, true)) {
 
 header('Content-Type: application/json');
 try {
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+
     switch ($action) {
         case 'list':
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       $stmt = $db->query("
@@ -34,7 +37,7 @@ try {
         // Prepend server address to image paths if they're not already full URLs
             foreach ($products as &$product) {
                 if (!empty($product['image_path']) && !filter_var($product['image_path'], FILTER_VALIDATE_URL)) {
-                            $product['image_path'] = 'http://3.15.42.35/' . rawurlencode(ltrim(basename($product['image_path']), '/'));
+                    $product['image_path'] = $protocol . '://' . $host . '/uploads/' . rawurlencode(ltrim(basename($product['image_path']), '/'));
                 }
             }
 
@@ -89,7 +92,7 @@ try {
 
         // Prepend full URL to image_path if not a full URL
             if (!empty($product['image_path']) && !filter_var($product['image_path'], FILTER_VALIDATE_URL)) {
-                $product['image_path'] = 'http://3.15.42.35/' . rawurlencode(ltrim(basename($product['image_path']), '/'));
+                $product['image_path'] = $protocol . '://' . $host . '/uploads/' . rawurlencode(ltrim(basename($product['image_path']), '/'));
             }
 
             echo json_encode($product);

@@ -74,7 +74,7 @@ try {
     }
 
     // Return relative path for web access
-    $webPath = 'uploads/products/' . $filename;
+    $webPath = 'uploads/' . $filename;
     echo json_encode([
         'success' => true,
         'imagePath' => $webPath
