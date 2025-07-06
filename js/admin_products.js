@@ -53,7 +53,7 @@ function escapeHTML(str) {
     if (typeof str !== 'string') {
         return str === undefined || str === null ? '' : String(str);
     }
-    return str.replace(/[&<>"]'/g, tag => ({
+    return str.replace(/[&<>"']/g, tag => ({
         '&': '&amp;',
         '<': '&lt;',
         '>': '&gt;',
@@ -185,7 +185,7 @@ async function showEditForm(id = null)
 
     if (id) {
         try {
-            const response = await fetch(`php / admin_products.php ? action = get & id = ${id}`, {
+                const response = await fetch(`php/admin_products.php?action=get&id=${id}`, {
                 credentials: 'include'
             });
 
