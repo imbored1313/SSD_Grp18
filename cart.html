@@ -6,7 +6,8 @@
     <title>Shopping Cart - ElectraEdge</title>
     <link rel="stylesheet" href="website.css" />
     <!-- Load PayPal SDK with Sandbox Client ID -->
-    <script src="https://www.paypal.com/sdk/js?client-id=AVyilJ6eWAp302gUQQDI6HVO19xtLy7OGAp7ZUDRwmKY__jhoV6M-Xvdb3-raWXW2uX7wLtLtEbj-nh4&currency=SGD"></script>
+    <script
+        src="https://www.paypal.com/sdk/js?client-id=AVyilJ6eWAp302gUQQDI6HVO19xtLy7OGAp7ZUDRwmKY__jhoV6M-Xvdb3-raWXW2uX7wLtLtEbj-nh4&currency=SGD"></script>
 </head>
 
 <body>
@@ -21,12 +22,18 @@
             });
     </script>
 
-    <h1>Your Shopping Cart</h1>
-    <!-- Cart items rendering -->
-    <div id="cart-summary">
-        <!-- Example: Cart total -->
-        <p>Total: <strong id="total-amount">$0.00</strong></p>
-    </div>
+    <section class="container" style="max-width: 600px; margin: 2rem auto; padding: 2rem; text-align: center;">
+        <h1>Your Shopping Cart</h1>
+
+        <!-- Cart items rendering -->
+        <div id="cart-summary" style="margin: 2rem 0;">
+            <!-- Example: Cart total -->
+            <p>Total: <strong id="total-amount">$0.00</strong></p>
+        </div>
+
+        <!-- PayPal button container -->
+        <div id="paypal-button-container" style="max-width: 400px; margin: 2rem auto;"></div>
+    </section>
 
     <!-- PayPal button container -->
     <div id="paypal-button-container"></div>
@@ -49,7 +56,7 @@
                 });
                 document.getElementById('total-amount').innerText = `$${total.toFixed(2)}`;
             });
-            
+
         paypal.Buttons({
             createOrder: (data, actions) => {
                 const amount = document.getElementById('total-amount').innerText.replace('$', '');

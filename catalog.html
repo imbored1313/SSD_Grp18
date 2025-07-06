@@ -39,7 +39,7 @@
 
 
     <script>
-        fetch('database/get_products.php')
+        fetch('get_products.php')
             .then(response => response.json())
             .then(products => {
                 const container = document.getElementById('productCatalog');
