@@ -18,7 +18,7 @@ class Database
     private $username = 'user';
     private $password = 'password';
     private $conn;
-
+    // #TODO: Add database connection
     public function getConnection()
     {
         $this->conn = null;
