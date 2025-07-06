@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (result.success) {
                 alert('Product created successfully!');
-                window.location.href = 'admin_products.html';
+                window.location.href = 'admin_products.php';
             } else {
                 throw new Error(result.message || 'Failed to create product');
             }
