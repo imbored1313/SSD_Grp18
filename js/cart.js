@@ -1,7 +1,7 @@
 // js/cart.js - FIXED version with session manager sync
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('=== CART PAGE LOADED ===');
-    
+
     // Debug: Check what session manager thinks initially
     if (window.sessionManager.isLoggedIn()) {
         const user = window.sessionManager.getUser();
@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Debug: Check what PHP thinks and sync with session manager
     console.log('🔍 Now checking what PHP thinks...');
-    
+
     try {
         const sessionCheck = await fetch('php/check_session.php', {
             method: 'GET',
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         const sessionResult = await sessionCheck.json();
         console.log('🟢 PHP check_session.php says:', sessionResult);
-        
+
         // SYNC SESSION MANAGER with PHP result
         if (sessionResult.success && sessionResult.user) {
             console.log('🔄 Syncing session manager with PHP session data...');
@@ -29,14 +29,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.sessionManager.sessionCheckComplete = true;
             console.log('✅ Session manager updated with user:', sessionResult.user.username);
         }
-        
+
     } catch (error) {
         console.log('🔴 Error checking PHP session:', error);
     }
 
     // Debug: Try to load cart and see what get_cart.php says
     console.log('🔍 Now trying to load cart...');
-    
+
     try {
         const cartResponse = await fetch('php/get_cart.php', {
             method: 'GET',
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         const cartResult = await cartResponse.json();
         console.log('🟢 PHP get_cart.php says:', cartResult);
-        
+
         if (cartResult.success) {
             if (cartResult.cart.length === 0) {
                 displayEmptyCart();
@@ -157,9 +157,42 @@ function displayCartItems(items) {
     `;
 
     cartContainer.innerHTML = cartHTML;
-    
+
     console.log('✅ Cart items successfully displayed!');
-}
+
+    // PAYPAL INITIALIZATION - NOW INSIDE THE FUNCTION! ✅
+    setTimeout(() => {
+        const paypalContainer = document.getElementById('paypal-button-container');
+        if (paypalContainer && total > 0) {
+            console.log('🚀 Initializing PayPal with total:', total);
+            paypalContainer.style.display = 'block';
+            paypalContainer.innerHTML = ''; // Clear existing buttons
+
+            // Set global total for PayPal
+            window.total = total;
+
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    return fetch('php/create-order.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ amount: total.toFixed(2) })
+                    }).then(res => res.json()).then(data => data.id);
+                },
+                onApprove: (data, actions) => {
+                    return fetch('php/capture-order.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderID: data.orderID })
+                    }).then(res => res.json()).then(details => {
+                        alert(`Payment complete! Thank you, ${details.payer.name.given_name}.`);
+                        window.location.href = 'order_cfm.php';
+                    });
+                }
+            }).render('#paypal-button-container');
+        }
+    }, 500);
+} // ← Function ends here
 
 function displayEmptyCart() {
     console.log('📭 Displaying empty cart');
@@ -206,14 +239,14 @@ async function updateQuantity(productId, newQty) {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                product_id: parseInt(productId), 
-                quantity: parseInt(newQty) 
+            body: JSON.stringify({
+                product_id: parseInt(productId),
+                quantity: parseInt(newQty)
             })
         });
 
         const data = await response.json();
-        
+
         if (data.success) {
             console.log('✅ Quantity updated successfully');
             showNotification('Quantity updated!', 'success');
@@ -243,7 +276,7 @@ async function removeItem(productId) {
         });
 
         const data = await response.json();
-        
+
         if (data.success) {
             console.log('✅ Item removed successfully');
             showNotification('Item removed from cart!', 'success');
@@ -263,17 +296,17 @@ async function removeItem(productId) {
 function showNotification(message, type = 'success') {
     const existing = document.getElementById('cart-notification');
     if (existing) existing.remove();
-    
+
     const notification = document.createElement('div');
     notification.id = 'cart-notification';
-    
+
     const colors = {
         success: '#28a745',
         error: '#dc3545',
         info: '#17a2b8',
         warning: '#ffc107'
     };
-    
+
     notification.style.cssText = `
         position: fixed;
         top: 20px;
@@ -287,10 +320,10 @@ function showNotification(message, type = 'success') {
         font-family: Arial, sans-serif;
         font-size: 14px;
     `;
-    
+
     notification.textContent = message;
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
         if (notification.parentNode) {
             notification.remove();

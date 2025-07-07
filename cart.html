@@ -8,7 +8,7 @@
     <!-- Load PayPal SDK with Sandbox Client ID -->
     <script
         src="https://www.paypal.com/sdk/js?client-id=AVyilJ6eWAp302gUQQDI6HVO19xtLy7OGAp7ZUDRwmKY__jhoV6M-Xvdb3-raWXW2uX7wLtLtEbj-nh4&currency=SGD">
-    </script>
+        </script>
     <script src="js/session_manager.js"></script>
 </head>
 
@@ -17,7 +17,7 @@
     <div id="header-placeholder"></div>
 
     <script src="js/header.js"></script>
-    
+
 
     <section class="container" style="max-width: 600px; margin: 2rem auto; padding: 2rem; text-align: center;">
         <h1>Your Shopping Cart</h1>
@@ -78,41 +78,165 @@
             }).render('#paypal-button-container');
         }
 
-        // Override the displayCartItems function to include PayPal initialization
+        // paypal
+
         function displayCartItems(cartItems) {
+            console.log('🎨 Displaying cart items for PayPal:', cartItems);
+
             const cartSummary = document.getElementById('cart-summary');
-            total = 0;
+            total = 0; // Reset total
             let cartHTML = '';
-            
+
             cartItems.forEach(item => {
                 const price = parseFloat(item.price);
-                total += price;
-                
+                const quantity = parseInt(item.quantity);
+                const itemTotal = price * quantity;
+                total += itemTotal; // Calculate running total
+
+                // Handle image path
+                let imageSrc = 'uploads/no-image.jpg';
+                if (item.image_path) {
+                    if (item.image_path.startsWith('http') || item.image_path.startsWith('/uploads/')) {
+                        imageSrc = item.image_path;
+                    } else {
+                        imageSrc = '/uploads/products/' + item.image_path;
+                    }
+                }
+
                 cartHTML += `
-                    <div class="cart-item" style="display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid #eee; gap: 1rem;">
-                        <img src="${item.image_path}" alt="${item.name}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
-                        <div style="flex: 1;">
-                            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;">${item.name}</h3>
-                            <p style="margin: 0; color: #666; font-size: 0.9rem;">${item.description}</p>
-                            <p style="margin: 0.5rem 0 0 0; font-weight: bold; color: #333;">$${price.toFixed(2)}</p>
-                        </div>
-                        <button onclick="removeFromCart('${item.product_id}')" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
-                            Remove
-                        </button>
-                    </div>
-                `;
-            });
-            
-            cartHTML += `
-                <div style="padding: 1rem; text-align: right; font-size: 1.2rem; font-weight: bold; border-top: 2px solid #333;">
-                    Total: <span id="total-amount">$${total.toFixed(2)}</span>
+            <div class="cart-item" style="display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid #eee; gap: 1rem;">
+                <img src="${imageSrc}" alt="${item.name}" 
+                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;"
+                     onerror="this.src='/assets/images/no-image.jpg'">
+                <div style="flex: 1;">
+                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;">${item.name}</h3>
+                    <p style="margin: 0; color: #666; font-size: 0.9rem;">${item.description || 'No description'}</p>
+                    <p style="margin: 0.5rem 0 0 0; font-weight: bold; color: #333;">$${price.toFixed(2)} × ${quantity}</p>
                 </div>
-            `;
-            
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <button onclick="updateQuantity(${item.product_id}, ${quantity - 1})" 
+                            style="background: #f8f9fa; border: 1px solid #ddd; padding: 0.5rem; border-radius: 4px; cursor: pointer; width: 35px; height: 35px;"
+                            ${quantity <= 1 ? 'disabled style="opacity: 0.5;"' : ''}>−</button>
+                    <span style="min-width: 40px; text-align: center; font-weight: bold;">${quantity}</span>
+                    <button onclick="updateQuantity(${item.product_id}, ${quantity + 1})" 
+                            style="background: #f8f9fa; border: 1px solid #ddd; padding: 0.5rem; border-radius: 4px; cursor: pointer; width: 35px; height: 35px;"
+                            ${quantity >= (item.stock || 999) ? 'disabled style="opacity: 0.5;"' : ''}>+</button>
+                </div>
+                <div style="font-weight: bold; min-width: 80px; text-align: right; font-size: 1.1rem;">$${itemTotal.toFixed(2)}</div>
+                <button onclick="removeItem(${item.product_id})" 
+                        style="background: #dc3545; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 4px; cursor: pointer;">×</button>
+            </div>
+        `;
+            });
+
+            cartHTML += `
+        <div style="padding: 1.5rem; text-align: right; font-size: 1.3rem; font-weight: bold; border-top: 2px solid #333; background: #f8f9fa;">
+            <div style="color: #666; font-size: 1rem; margin-bottom: 0.5rem;">Total (${cartItems.length} items):</div>
+            <div style="color: #2c5aa0;"><span id="total-amount">$${total.toFixed(2)}</span></div>
+        </div>
+    `;
+
             cartSummary.innerHTML = cartHTML;
-            
-            // Initialize PayPal after cart items are displayed
-            setTimeout(initializePayPal, 500);
+
+            console.log('✅ Cart HTML updated, total:', total);
+
+            // FORCE SHOW AND INITIALIZE PAYPAL
+            const paypalContainer = document.getElementById('paypal-button-container');
+            if (paypalContainer) {
+                console.log('📦 PayPal container found, showing and initializing...');
+
+                // Always show the container
+                paypalContainer.style.display = 'block';
+
+                // Clear any existing PayPal buttons
+                paypalContainer.innerHTML = '';
+
+                // Initialize PayPal with current total
+                setTimeout(() => {
+                    console.log('🚀 Initializing PayPal with total:', total);
+                    initializePayPalNow();
+                }, 100);
+            } else {
+                console.error('❌ PayPal container not found!');
+            }
+        }
+
+        // Add this new function for immediate PayPal initialization
+        function initializePayPalNow() {
+            const paypalContainer = document.getElementById('paypal-button-container');
+
+            if (!paypalContainer) {
+                console.error('❌ PayPal container not found');
+                return;
+            }
+
+            if (typeof paypal === 'undefined') {
+                console.error('❌ PayPal SDK not loaded');
+                return;
+            }
+
+            if (total <= 0) {
+                console.warn('⚠️ Total is 0, setting minimum amount');
+                total = 0.01; // Minimum PayPal amount
+            }
+
+            console.log('🔧 Creating PayPal buttons with amount:', total.toFixed(2));
+
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    const amount = total.toFixed(2);
+                    console.log('📝 Creating PayPal order with amount:', amount);
+
+                    return fetch('php/create-order.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ amount })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            console.log('✅ PayPal order created:', data.id);
+                            return data.id;
+                        })
+                        .catch(err => {
+                            console.error('❌ Error creating PayPal order:', err);
+                            throw err;
+                        });
+                },
+                onApprove: (data, actions) => {
+                    console.log('✅ PayPal payment approved:', data.orderID);
+
+                    return fetch('php/capture-order.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderID: data.orderID })
+                    })
+                        .then(res => res.json())
+                        .then(details => {
+                            console.log('✅ PayPal payment captured:', details);
+                            alert(`Payment complete! Thank you, ${details.payer.name.given_name}.`);
+                            localStorage.removeItem('cart');
+                            window.location.href = 'order_cfm.php';
+                        })
+                        .catch(err => {
+                            console.error('❌ Error capturing PayPal payment:', err);
+                            alert('Payment processing failed. Please try again.');
+                        });
+                },
+                onCancel: (data) => {
+                    console.log('⚠️ PayPal payment cancelled:', data);
+                    alert('Payment cancelled.');
+                },
+                onError: (err) => {
+                    console.error('❌ PayPal error:', err);
+                    alert('An error occurred during checkout. Please try again.');
+                }
+            }).render('#paypal-button-container')
+                .then(() => {
+                    console.log('🎉 PayPal buttons rendered successfully!');
+                })
+                .catch(err => {
+                    console.error('❌ Error rendering PayPal buttons:', err);
+                });
         }
 
         // Override the displayEmptyCart function
@@ -126,7 +250,7 @@
                     <a href="catalog.html" class="btn btn-primary">Browse Products</a>
                 </div>
             `;
-            
+
             // Hide PayPal button container
             document.getElementById('paypal-button-container').style.display = 'none';
         }
