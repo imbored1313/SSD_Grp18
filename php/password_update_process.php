@@ -35,7 +35,7 @@ try {
         $_SESSION['code_attempts'] = 0;
     }
     if ($_SESSION['code_attempts'] >= 5) {
-        unset($_SESSION['reset_code'], $_SESSION['reset_email'], $_SESSION['reset_user_id'], $_SESSION['reset_expires'], $_SESSION['code_attempts']);
+        unset($_SESSION['reset_code'], $_SESSION['reset_email'], $_SESSION['reset_user_id'], $_SESSION['reset_expires']);
         http_response_code(429);
         echo json_encode(['error' => 'Too many incorrect attempts. Please request a new code.']);
         exit;
