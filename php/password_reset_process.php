@@ -1,7 +1,8 @@
 <?php
 
 require_once(__DIR__ . '/config.php');
-ensureSessionStarted();
+session_start();
+session_regenerate_id(true);
 
 // Rate Limiting logic for reset request
 $now = time();

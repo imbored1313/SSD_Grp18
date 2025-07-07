@@ -1,7 +1,8 @@
 <?php
 
 require_once(__DIR__ . '/config.php');
-ensureSessionStarted();
+session_start();
+session_regenerate_id(true);
 // change_password.php - Change user password in database
 
 header('Content-Type: application/json');

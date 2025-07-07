@@ -1,7 +1,8 @@
 <?php
 
 require_once(__DIR__ . '/config.php');
-ensureSessionStarted();
+session_start();
+session_regenerate_id(true);
 // get_user_profile.php - Fetch user profile data from database
 
 header('Content-Type: application/json');

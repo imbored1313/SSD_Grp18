@@ -1,7 +1,8 @@
 <?php
 
 require_once(__DIR__ . '/config.php');
-ensureSessionStarted();
+session_start();
+session_regenerate_id(true);
 // Admin check
 if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admin') {
     http_response_code(403);
