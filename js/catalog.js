@@ -1,6 +1,8 @@
 // catalog.js - Product Catalog JavaScript with Session Management
 
 let currentUser = null;
+let sessionCheckInProgress = false;
+let sessionCheckComplete = false;
 
 // Initialize page on load
 document.addEventListener('DOMContentLoaded', function () {
@@ -62,6 +64,10 @@ async function checkUserSession() {
         console.error('❌ Error checking session:', error);
         currentUser = null;
         updateUIForLoggedOutUser();
+    }
+    finally {
+        sessionCheckInProgress = false;
+        sessionCheckComplete = true;
     }
 }
 
@@ -217,13 +223,41 @@ function sortProducts(sortOrder) {
     productCards.forEach(card => productGrid.appendChild(card));
 }
 
-// Add to cart function 
-function addToCart(productId) {
+// Add to cart function with proper session checking
+async function addToCart(productId) {
+    console.log('=== ADD TO CART CLICKED ===');
+    console.log('Session check complete:', sessionCheckComplete);
+    console.log('Session check in progress:', sessionCheckInProgress);
+    console.log('Current user:', currentUser);
+
+    // If session check is still in progress, wait for it to complete
+    if (sessionCheckInProgress) {
+        console.log('Session check in progress, waiting...');
+        showNotification('Checking login status...');
+        
+        // Wait up to 3 seconds for session check to complete
+        let attempts = 0;
+        while (sessionCheckInProgress && attempts < 30) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+    }
+
+    // If session check completed but user is still null, do a fresh check
+    if (sessionCheckComplete && !currentUser) {
+        console.log('Session check completed but no user found, doing fresh check...');
+        await checkUserSession();
+    }
+
+    // Now check if user is logged in
     if (!currentUser) {
+        console.log('User not logged in, redirecting to login');
         alert('Please log in to add items to your cart.');
         window.location.href = 'login.html';
         return;
     }
+
+    console.log('User is logged in, adding to cart');
 
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
     
