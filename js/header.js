@@ -9,9 +9,6 @@ document.addEventListener('DOMContentLoaded', function () {
             placeholder.innerHTML = data;
 
             highlightActiveTab();
-            if (typeof checkUserSession === 'function') {
-                checkUserSession();
-            }
         });
 
     function highlightActiveTab() {
