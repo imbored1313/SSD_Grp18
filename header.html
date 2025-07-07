@@ -1,7 +1,8 @@
 <header class="header">
     <nav class="nav-container">
-        //return to home page when clicked
+        <!-- return to home page when clicked -->
         <a href="index.html" class="logo">⚡ ElectraEdge</a>
+
 
         <ul class="nav-menu">
             <li><a href="index.html">Home</a></li>
@@ -19,15 +20,22 @@
     </nav>
 </header>
 
-<script>
-    const currentPage = window.location.pathname.split("/").pop();
+<style>
+    .nav-menu a.active {
+        color: #ffd700;
+    }
+</style>
 
-    const navLinks = document.querySelectorAll(".nav-menu a");
-    navLinks.forEach(link => {
-        if (link.getAttribute("href") === currentPage) {
-            link.style.color = "#ffd700"; // yellow for active page
+<script>
+    const currentPath = window.location.pathname;
+
+    document.querySelectorAll(".nav-menu a").forEach(link => {
+        const href = link.getAttribute("href");
+        if (currentPath.includes(href)) {
+            link.classList.add("active");
         } else {
-            link.style.color = ""; // reset others
+            link.classList.remove("active");
         }
     });
+
 </script>
