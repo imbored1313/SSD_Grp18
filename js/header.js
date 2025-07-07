@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(res => res.text())
         .then(data => {
             placeholder.innerHTML = data;
-
             highlightActiveTab();
+            updateCartCount(); // show count from localStorage
         });
 
     function highlightActiveTab() {
@@ -21,3 +21,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+// Make updateCartCount globally available
+function updateCartCount() {
+    const cartCountSpan = document.getElementById('cartCount');
+    if (cartCountSpan) {
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        cartCountSpan.textContent = cart.length;
+    }
+}
+
+// Make the function available globally so other scripts can call it
+window.updateCartCount = updateCartCount;

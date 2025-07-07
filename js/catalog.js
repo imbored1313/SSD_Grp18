@@ -3,12 +3,12 @@
 let currentUser = null;
 
 // Initialize page on load
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('=== CATALOG PAGE LOADED ===');
-    
+
     // Start session check immediately
     checkUserSession();
-    
+
     // Initialize catalog features
     initializeCatalogFeatures();
 });
@@ -18,15 +18,15 @@ function initializeCatalogFeatures() {
     // Search functionality
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        searchInput.addEventListener('input', function() {
+        searchInput.addEventListener('input', function () {
             filterProducts(this.value);
         });
     }
-    
+
     // Sort functionality
     const sortSelect = document.getElementById('sortSelect');
     if (sortSelect) {
-        sortSelect.addEventListener('change', function() {
+        sortSelect.addEventListener('change', function () {
             sortProducts(this.value);
         });
     }
@@ -35,20 +35,20 @@ function initializeCatalogFeatures() {
 // Check user session and update UI accordingly
 async function checkUserSession() {
     console.log('=== CHECKING USER SESSION ===');
-    
+
     try {
         console.log('Making request to php/check_session.php');
-        
+
         const response = await fetch('php/check_session.php', {
             method: 'GET',
             credentials: 'include'
         });
-        
+
         console.log('Response status:', response.status);
-        
+
         const result = await response.json();
         console.log('Response data:', result);
-        
+
         if (response.ok && result.success && result.user) {
             console.log('✅ User is logged in:', result.user.username);
             currentUser = result.user;
@@ -68,16 +68,16 @@ async function checkUserSession() {
 // Update UI for logged in user
 function updateUIForLoggedInUser() {
     console.log('=== UPDATING UI FOR LOGGED IN USER ===');
-    
+
     const navActions = document.querySelector('.nav-actions');
     console.log('Nav actions element found:', !!navActions);
-    
+
     const loginButton = navActions ? navActions.querySelector('a[href="login.html"]') : null;
     console.log('Login button found:', !!loginButton);
-    
+
     if (loginButton) {
         console.log('Replacing login button with user dropdown');
-        
+
         // Replace login button with user dropdown
         loginButton.outerHTML = `
             <div class="user-dropdown" style="position: relative;">
@@ -106,7 +106,7 @@ function updateUIForLoggedInUser() {
                 </div>
             </div>
         `;
-        
+
         console.log('✅ User dropdown created successfully');
     } else {
         console.log('❌ Could not find login button to replace');
@@ -116,10 +116,10 @@ function updateUIForLoggedInUser() {
 // Update UI for logged out user
 function updateUIForLoggedOutUser() {
     console.log('=== UPDATING UI FOR LOGGED OUT USER ===');
-    
+
     const navActions = document.querySelector('.nav-actions');
     const userDropdown = navActions ? navActions.querySelector('.user-dropdown') : null;
-    
+
     if (userDropdown) {
         console.log('Replacing user dropdown with login button');
         userDropdown.outerHTML = '<a href="login.html" class="btn btn-outline">Login</a>';
@@ -140,7 +140,7 @@ function toggleUserDropdown() {
 }
 
 // Close dropdown when clicking outside
-document.addEventListener('click', function(event) {
+document.addEventListener('click', function (event) {
     const userDropdown = document.querySelector('.user-dropdown');
     if (userDropdown && !userDropdown.contains(event.target)) {
         const dropdownMenu = document.getElementById('userDropdownMenu');
@@ -153,15 +153,15 @@ document.addEventListener('click', function(event) {
 // Logout function
 async function logout() {
     console.log('=== LOGGING OUT ===');
-    
+
     try {
         const response = await fetch('php/logout.php', {
             method: 'POST',
             credentials: 'include'
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             console.log('✅ Logout successful');
             currentUser = null;
@@ -181,11 +181,11 @@ async function logout() {
 function filterProducts(searchTerm) {
     const productCards = document.querySelectorAll('.product-card');
     const lowerSearchTerm = searchTerm.toLowerCase();
-    
+
     productCards.forEach(card => {
         const productName = card.querySelector('.product-title').textContent.toLowerCase();
         const productInfo = card.querySelector('.product-info').textContent.toLowerCase();
-        
+
         if (productName.includes(lowerSearchTerm) || productInfo.includes(lowerSearchTerm)) {
             card.style.display = 'block';
         } else {
@@ -197,21 +197,21 @@ function filterProducts(searchTerm) {
 // Sort products by price
 function sortProducts(sortOrder) {
     if (!sortOrder) return;
-    
+
     const productGrid = document.getElementById('productCatalog');
     const productCards = Array.from(productGrid.querySelectorAll('.product-card'));
-    
+
     productCards.sort((a, b) => {
         const priceA = parseFloat(a.querySelector('.product-price').textContent.replace(/[^0-9.]/g, ''));
         const priceB = parseFloat(b.querySelector('.product-price').textContent.replace(/[^0-9.]/g, ''));
-        
+
         if (sortOrder === 'asc') {
             return priceA - priceB;
         } else {
             return priceB - priceA;
         }
     });
-    
+
     // Clear and re-append sorted cards
     productCards.forEach(card => card.remove());
     productCards.forEach(card => productGrid.appendChild(card));
@@ -226,16 +226,59 @@ function addToCart(productId) {
     }
 
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
-    cart.push(productId);
-    localStorage.setItem('cart', JSON.stringify(cart));
-
-    alert(`Product ${productId} added to cart!`);
+    
+    // Convert productId to string to maintain consistency
+    const productIdStr = productId.toString();
+    
+    // Check if item is already in cart
+    if (!cart.includes(productIdStr)) {
+        cart.push(productIdStr);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        
+        // Update cart count in header if function exists
+        if (typeof updateCartCount === 'function') {
+            updateCartCount();
+        }
+        
+        // Show success message
+        showNotification(`Product added to cart!`);
+    } else {
+        showNotification(`Product is already in your cart!`);
+    }
 }
 
-// Handle Add to Cart button clicks
-document.addEventListener('click', function (event) {
-    if (event.target.classList.contains('add-to-cart-btn')) {
-        const productId = event.target.getAttribute('data-product-id');
-        addToCart(productId);
+// Add notification function
+function showNotification(message) {
+    // Create or update notification
+    let notification = document.getElementById('cart-notification');
+    if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'cart-notification';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            z-index: 3000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: opacity 0.3s ease;
+        `;
+        document.body.appendChild(notification);
     }
-});
+    
+    notification.textContent = message;
+    notification.style.opacity = '1';
+    
+    // Hide after 3 seconds
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}

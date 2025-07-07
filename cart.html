@@ -20,78 +20,113 @@
         <h1>Your Shopping Cart</h1>
 
         <!-- Cart items rendering -->
-        <div id="cart-summary" style="margin: 2rem 0;">
-            <!-- Example: Cart total -->
-            <p>Total: <strong id="total-amount">$0.00</strong></p>
+        <div id="cart-summary"
+            style="margin: 2rem 0; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <div style="text-align: center; padding: 2rem;">
+                <p>Loading cart...</p>
+            </div>
         </div>
 
         <!-- PayPal button container -->
         <div id="paypal-button-container" style="max-width: 400px; margin: 2rem auto;"></div>
     </section>
 
-    <!-- PayPal button container -->
-    <div id="paypal-button-container"></div>
 
     <script>
         let total = 0;
-        let cartIds = JSON.parse(localStorage.getItem('cart')) || [];
 
-        fetch('get_products.php')
-            .then(r => r.json())
-            .then(products => {
-                const c = document.getElementById('cart-summary');
-                const cartItems = products.filter(p => cartIds.includes(p.product_id));
-
-                if (cartItems.length === 0) {
-                    c.innerHTML = '<p>Your cart is empty.</p>';
-                    return;
-                }
-
-                cartItems.forEach(p => {
-                    c.innerHTML += `
-                <div>
-                  <img src="${p.image_path}" width="100">
-                  <h3>${p.name}</h3>
-                  <p>${p.description}</p>
-                  <p>Price: $${p.price}</p>
-                </div>`;
-                    total += parseFloat(p.price);
-                });
-
-                document.getElementById('total-amount').innerText = `$${total.toFixed(2)}`;
-            });
-
-
-        paypal.Buttons({
-            createOrder: (data, actions) => {
-                const amount = document.getElementById('total-amount').innerText.replace('$', '');
-                return fetch('php/create-order.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ amount }) // passes cart total
-                })
-                    .then(res => res.json())
-                    .then(data => data.id);
-            },
-            onApprove: (data, actions) => {
-                return fetch('php/capture-order.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderID: data.orderID })
-                })
-                    .then(res => res.json())
-                    .then(details => {
-                        alert(`Payment complete! Thank you, ${details.payer.name.given_name}.`);
-                        localStorage.removeItem('cart'); // clear cart
-                        window.location.href = 'order_cfm.php'; // redirect on success
-                    });
-            },
-            onCancel: () => alert('Payment cancelled.'),
-            onError: err => {
-                console.error(err);
-                alert('An error occurred during checkout.');
+        // Wait for cart items to load before initializing PayPal
+        function initializePayPal() {
+            // Only initialize PayPal if there are items in cart and total > 0
+            const totalAmount = document.getElementById('total-amount');
+            if (!totalAmount || total <= 0) {
+                return;
             }
-        }).render('#paypal-button-container');
+
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    const amount = total.toFixed(2);
+                    return fetch('php/create-order.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ amount })
+                    })
+                        .then(res => res.json())
+                        .then(data => data.id);
+                },
+                onApprove: (data, actions) => {
+                    return fetch('php/capture-order.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderID: data.orderID })
+                    })
+                        .then(res => res.json())
+                        .then(details => {
+                            alert(`Payment complete! Thank you, ${details.payer.name.given_name}.`);
+                            localStorage.removeItem('cart'); // clear cart
+                            window.location.href = 'order_cfm.php'; // redirect on success
+                        });
+                },
+                onCancel: () => alert('Payment cancelled.'),
+                onError: err => {
+                    console.error(err);
+                    alert('An error occurred during checkout.');
+                }
+            }).render('#paypal-button-container');
+        }
+
+        // Override the displayCartItems function to include PayPal initialization
+        function displayCartItems(cartItems) {
+            const cartSummary = document.getElementById('cart-summary');
+            total = 0;
+            let cartHTML = '';
+            
+            cartItems.forEach(item => {
+                const price = parseFloat(item.price);
+                total += price;
+                
+                cartHTML += `
+                    <div class="cart-item" style="display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid #eee; gap: 1rem;">
+                        <img src="${item.image_path}" alt="${item.name}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                        <div style="flex: 1;">
+                            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;">${item.name}</h3>
+                            <p style="margin: 0; color: #666; font-size: 0.9rem;">${item.description}</p>
+                            <p style="margin: 0.5rem 0 0 0; font-weight: bold; color: #333;">$${price.toFixed(2)}</p>
+                        </div>
+                        <button onclick="removeFromCart('${item.product_id}')" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                            Remove
+                        </button>
+                    </div>
+                `;
+            });
+            
+            cartHTML += `
+                <div style="padding: 1rem; text-align: right; font-size: 1.2rem; font-weight: bold; border-top: 2px solid #333;">
+                    Total: <span id="total-amount">$${total.toFixed(2)}</span>
+                </div>
+            `;
+            
+            cartSummary.innerHTML = cartHTML;
+            
+            // Initialize PayPal after cart items are displayed
+            setTimeout(initializePayPal, 500);
+        }
+
+        // Override the displayEmptyCart function
+        function displayEmptyCart() {
+            const cartSummary = document.getElementById('cart-summary');
+            cartSummary.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">🛒</div>
+                    <h3>Your cart is empty</h3>
+                    <p style="color: #666; margin-bottom: 2rem;">Start shopping to add items to your cart!</p>
+                    <a href="catalog.html" class="btn btn-primary">Browse Products</a>
+                </div>
+            `;
+            
+            // Hide PayPal button container
+            document.getElementById('paypal-button-container').style.display = 'none';
+        }
     </script>
 
     <!-- Footer -->
