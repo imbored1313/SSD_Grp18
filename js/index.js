@@ -1,25 +1,31 @@
-// index.js - ElectraEdge Homepage JavaScript with FINAL FIXES
+// index.js - ElectraEdge Homepage JavaScript SIMPLIFIED
 
 // Shopping cart functionality
 let cart = [];
-let currentUser = null;
-let sessionCheckComplete = false;
-let sessionCheckInProgress = false;
 
 // Initialize page on load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== HOME PAGE LOADED ===');
     
-    // Load cart from storage FIRST
+    // Load cart from storage
     loadCartFromStorage();
     updateCartCount();
     
-    // Start session check immediately
-    checkUserSession();
+    // Set up session change listeners
+    window.sessionManager.onSessionChange(handleSessionChange);
     
     // Initialize other features
     initializePageFeatures();
 });
+
+// Handle session changes
+function handleSessionChange(event, userData) {
+    if (event === 'login') {
+        updateUIForLoggedInUser(userData);
+    } else if (event === 'logout') {
+        updateUIForLoggedOutUser();
+    }
+}
 
 // Initialize page features (non-session dependent)
 function initializePageFeatures() {
@@ -75,71 +81,25 @@ function initializePageFeatures() {
     });
 }
 
-// Check user session and update UI accordingly
-async function checkUserSession() {
-    console.log('=== CHECKING USER SESSION (HOME) ===');
-    sessionCheckInProgress = true;
-    sessionCheckComplete = false;
-    
-    try {
-        console.log('Making request to php/check_session.php');
-        
-        const response = await fetch('php/check_session.php', {
-            method: 'GET',
-            credentials: 'include',
-            cache: 'no-cache'
-        });
-        
-        console.log('Response status:', response.status);
-        
-        const result = await response.json();
-        console.log('Response data:', result);
-        
-        if (response.ok && result.success && result.user) {
-            console.log('✅ User is logged in:', result.user.username);
-            currentUser = result.user;
-            updateUIForLoggedInUser();
-        } else {
-            console.log('❌ User not logged in:', result.message);
-            currentUser = null;
-            updateUIForLoggedOutUser();
-        }
-    } catch (error) {
-        console.error('❌ Error checking session:', error);
-        currentUser = null;
-        updateUIForLoggedOutUser();
-    } finally {
-        sessionCheckInProgress = false;
-        sessionCheckComplete = true;
-        console.log('✅ Session check completed (HOME). User:', currentUser ? currentUser.username : 'not logged in');
-    }
-}
-
 // Update UI for logged in user
-function updateUIForLoggedInUser() {
+function updateUIForLoggedInUser(user) {
     console.log('=== UPDATING UI FOR LOGGED IN USER (HOME) ===');
     
     const navActions = document.querySelector('.nav-actions');
-    console.log('Nav actions element found:', !!navActions);
-    
     const loginButton = navActions ? navActions.querySelector('a[href="login.html"]') : null;
-    console.log('Login button found:', !!loginButton);
     
-    if (loginButton) {
-        console.log('Replacing login button with user dropdown');
-        
-        // Replace login button with user dropdown
+    if (loginButton && user) {
         loginButton.outerHTML = `
             <div class="user-dropdown" style="position: relative;">
                 <button class="user-btn" onclick="toggleUserDropdown()" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; color: white; font-size: 1rem;">
                     <span style="font-size: 1.5rem;">👤</span>
-                    <span>Hi, ${currentUser.username}</span>
+                    <span>Hi, ${user.username}</span>
                     <span style="font-size: 0.8rem;">▼</span>
                 </button>
                 <div id="userDropdownMenu" class="dropdown-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); min-width: 200px; z-index: 1000;">
                     <div style="padding: 1rem; border-bottom: 1px solid #eee; background: #f8f9fa; border-radius: 8px 8px 0 0;">
-                        <div style="font-weight: bold; color: #333;">${currentUser.username}</div>
-                        <div style="font-size: 0.9rem; color: #666;">${currentUser.email}</div>
+                        <div style="font-weight: bold; color: #333;">${user.username}</div>
+                        <div style="font-size: 0.9rem; color: #666;">${user.email}</div>
                     </div>
                     <div style="padding: 0.5rem 0;">
                         <a href="userprofile.html" style="display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
@@ -156,10 +116,6 @@ function updateUIForLoggedInUser() {
                 </div>
             </div>
         `;
-        
-        console.log('✅ User dropdown created successfully');
-    } else {
-        console.log('❌ Could not find login button to replace');
     }
 }
 
@@ -171,21 +127,15 @@ function updateUIForLoggedOutUser() {
     const userDropdown = navActions ? navActions.querySelector('.user-dropdown') : null;
     
     if (userDropdown) {
-        console.log('Replacing user dropdown with login button');
         userDropdown.outerHTML = '<a href="login.html" class="btn btn-outline">Login</a>';
-        console.log('✅ Login button restored');
-    } else {
-        console.log('ℹ️ No user dropdown found (user already logged out)');
     }
 }
 
 // Toggle user dropdown menu
 function toggleUserDropdown() {
-    console.log('Toggling user dropdown');
     const dropdownMenu = document.getElementById('userDropdownMenu');
     if (dropdownMenu) {
         dropdownMenu.style.display = dropdownMenu.style.display === 'none' ? 'block' : 'none';
-        console.log('Dropdown display:', dropdownMenu.style.display);
     }
 }
 
@@ -200,91 +150,23 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// Logout function
+// Logout function using session manager
 async function logout() {
-    console.log('=== LOGGING OUT (HOME) ===');
-    
-    try {
-        const response = await fetch('php/logout.php', {
-            method: 'POST',
-            credentials: 'include'
-        });
-        
-        const result = await response.json();
-        console.log('Logout response:', result);
-        
-        if (response.ok && result.success) {
-            console.log('✅ Logout successful');
-            currentUser = null;
-            updateUIForLoggedOutUser();
-            showNotification('Logged out successfully!', 'success');
-        } else {
-            console.log('❌ Logout failed:', result.message);
-            showNotification('Error logging out. Please try again.', 'error');
-        }
-    } catch (error) {
-        console.error('❌ Logout error:', error);
-        showNotification('Error logging out. Please try again.', 'error');
-    }
+    await window.sessionManager.logout();
 }
 
-// 🔐 AUTHENTICATION LAYER: Add item to cart with authentication check
+// Add item to cart with authentication check
 async function addToCart(event, productId, price) {
     // Prevent card click event
     event.stopPropagation();
     
     console.log('=== ADD TO CART CLICKED (HOME PAGE) ===');
     console.log('Product ID:', productId, 'Price:', price);
-    console.log('Session state - Complete:', sessionCheckComplete, 'In Progress:', sessionCheckInProgress, 'User:', currentUser?.username || 'null');
     
-    // Wait for session check if in progress
-    if (sessionCheckInProgress) {
-        console.log('⏳ Waiting for session check to complete...');
-        showNotification('Checking login status...', 'info');
-        
-        let waitTime = 0;
-        while (sessionCheckInProgress && waitTime < 5000) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            waitTime += 100;
-        }
-        hideNotification();
-    }
-    
-    // Fresh session check if no cached user
-    if (!currentUser) {
-        console.log('🔄 No cached user, doing fresh session check...');
-        showNotification('Verifying login status...', 'info');
-        
-        try {
-            const response = await fetch('php/check_session.php', {
-                method: 'GET',
-                credentials: 'include',
-                cache: 'no-cache'
-            });
-
-            const result = await response.json();
-            
-            if (response.ok && result.success && result.user) {
-                console.log('✅ Fresh session check confirmed user:', result.user.username);
-                currentUser = result.user;
-                updateUIForLoggedInUser();
-            } else {
-                console.log('❌ Fresh session check: user not logged in');
-                hideNotification();
-                showNotification('Please login to add items to your cart', 'warning');
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 1500);
-                return;
-            }
-        } catch (error) {
-            console.error('❌ Error in verification check:', error);
-            hideNotification();
-            showNotification('Error checking login status. Please try again.', 'error');
-            return;
-        }
-        
-        hideNotification();
+    // Check if user is logged in using session manager
+    const loginRequired = await window.sessionManager.requireLogin();
+    if (!loginRequired) {
+        return; // Will redirect to login
     }
     
     // User is authenticated, proceed with adding to cart
@@ -308,8 +190,7 @@ async function addToCart(event, productId, price) {
         'speaker': '🔊'
     };
     
-    // FIXED: Add to both cart systems for compatibility
-    // 1. Add to homepage cart (for modal display)
+    // Add to homepage cart (for modal display)
     const existingItem = cart.find(item => item.id === productId);
     
     if (existingItem) {
@@ -326,7 +207,7 @@ async function addToCart(event, productId, price) {
         showNotification(`${productNames[productId]} added to cart!`, 'success');
     }
     
-    // 2. Add to shared cart storage (for catalog/cart pages)
+    // Add to shared cart storage (for catalog/cart pages)
     let sharedCart = JSON.parse(localStorage.getItem('cart')) || [];
     const productIdStr = productId.toString();
     
@@ -340,9 +221,8 @@ async function addToCart(event, productId, price) {
     saveCartToStorage();
 }
 
-// FIXED: Update cart count - use shared cart storage
+// Update cart count - use shared cart storage
 function updateCartCount() {
-    // Use the shared cart storage that other pages use
     const sharedCart = JSON.parse(localStorage.getItem('cart')) || [];
     const totalItems = sharedCart.length;
     
@@ -451,9 +331,6 @@ function viewProduct(productId) {
     };
     
     showNotification(`Viewing ${productNames[productId]} details...`, 'info');
-    
-    // In a real app, you would navigate to product detail page:
-    // window.location.href = `product-detail.html?id=${productId}`;
 }
 
 // Checkout function
@@ -464,7 +341,7 @@ function checkout() {
     }
     
     // Check if user is logged in before checkout
-    if (!currentUser) {
+    if (!window.sessionManager.isLoggedIn()) {
         showNotification('Please login to continue with checkout', 'warning');
         setTimeout(() => {
             window.location.href = 'login.html';
@@ -472,15 +349,15 @@ function checkout() {
         return;
     }
     
-    // For demo purposes. In real app, would redirect to checkout page
+    const user = window.sessionManager.getUser();
     showNotification('Redirecting to secure checkout...', 'info');
     
     // Simulate checkout process
     setTimeout(() => {
-        alert('Thank you for your purchase, ' + currentUser.username + '! Your order has been placed.');
+        alert('Thank you for your purchase, ' + user.username + '! Your order has been placed.');
         // Clear cart after successful checkout
         cart = [];
-        localStorage.removeItem('cart'); // Clear shared cart too
+        localStorage.removeItem('cart');
         updateCartCount();
         updateCartDisplay();
         saveCartToStorage();
@@ -488,65 +365,49 @@ function checkout() {
     }, 1000);
 }
 
-// 📢 NOTIFICATION SYSTEM: Show notification
+// Show notification
 function showNotification(message, type = 'success') {
     // Remove existing notification first
-    hideNotification();
+    const existing = document.getElementById('home-notification');
+    if (existing) existing.remove();
     
-    let notification = document.createElement('div');
+    const notification = document.createElement('div');
     notification.id = 'home-notification';
     
-    // Set colors based on type
-    let backgroundColor = '#28a745'; // success (green)
-    if (type === 'error') backgroundColor = '#dc3545'; // error (red)
-    if (type === 'info') backgroundColor = '#17a2b8'; // info (blue)
-    if (type === 'warning') backgroundColor = '#ffc107'; // warning (yellow)
+    const colors = {
+        success: '#28a745',
+        error: '#dc3545',
+        info: '#17a2b8',
+        warning: '#ffc107'
+    };
     
     notification.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
-        background: ${backgroundColor};
+        background: ${colors[type] || colors.info};
         color: white;
         padding: 1rem 2rem;
         border-radius: 8px;
         z-index: 3000;
         box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        transition: opacity 0.3s ease;
-        max-width: 300px;
-        word-wrap: break-word;
         font-family: Arial, sans-serif;
         font-size: 14px;
-        line-height: 1.4;
     `;
     
     notification.textContent = message;
-    notification.style.opacity = '1';
     document.body.appendChild(notification);
     
-    // Auto-hide after 3 seconds
     setTimeout(() => {
-        hideNotification();
+        if (notification.parentNode) {
+            notification.remove();
+        }
     }, 3000);
 }
 
-// Hide notification function
-function hideNotification() {
-    const notification = document.getElementById('home-notification');
-    if (notification && notification.parentNode) {
-        notification.style.opacity = '0';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }
-}
-
-// FIXED: Save cart to localStorage using consistent storage
+// Save cart to localStorage
 function saveCartToStorage() {
     try {
-        // Save homepage cart format for modal display
         localStorage.setItem('electraedge_cart', JSON.stringify(cart));
         console.log('✅ Homepage cart saved to storage');
     } catch (error) {
@@ -554,20 +415,29 @@ function saveCartToStorage() {
     }
 }
 
-// FIXED: Load cart from localStorage - sync with shared cart
+// Load cart from localStorage
 function loadCartFromStorage() {
     try {
-        // Load shared cart first (for consistency with other pages)
         const sharedCart = JSON.parse(localStorage.getItem('cart')) || [];
-        
-        // Load homepage cart format
         const savedCart = localStorage.getItem('electraedge_cart');
+        
         if (savedCart) {
             cart = JSON.parse(savedCart);
         }
         
         // Sync carts if they're out of sync
-        syncCartSystems();
+        if (sharedCart.length > 0 && cart.length === 0) {
+            sharedCart.forEach(productId => {
+                cart.push({
+                    id: productId,
+                    name: `Product ${productId}`,
+                    emoji: '📦',
+                    price: 0,
+                    quantity: 1
+                });
+            });
+            saveCartToStorage();
+        }
         
         updateCartCount();
         console.log('✅ Cart loaded from storage');
@@ -576,29 +446,8 @@ function loadCartFromStorage() {
     }
 }
 
-// Sync between homepage cart and shared cart
-function syncCartSystems() {
-    const sharedCart = JSON.parse(localStorage.getItem('cart')) || [];
-    
-    // If shared cart has items but homepage cart doesn't, create placeholder items
-    if (sharedCart.length > 0 && cart.length === 0) {
-        sharedCart.forEach(productId => {
-            // Create placeholder items for products in shared cart
-            cart.push({
-                id: productId,
-                name: `Product ${productId}`,
-                emoji: '📦',
-                price: 0, // Will be updated when actual product info is available
-                quantity: 1
-            });
-        });
-        saveCartToStorage();
-    }
-}
-
-// Handle window resize for responsive behavior
+// Handle window resize and modal interactions
 window.addEventListener('resize', function() {
-    // Close cart modal on mobile if window is resized
     if (window.innerWidth < 768) {
         const modal = document.getElementById('cartModal');
         if (modal && modal.style.display === 'flex') {
@@ -606,7 +455,6 @@ window.addEventListener('resize', function() {
         }
     }
     
-    // Close user dropdown on resize
     const dropdownMenu = document.getElementById('userDropdownMenu');
     if (dropdownMenu) {
         dropdownMenu.style.display = 'none';
@@ -627,55 +475,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Keyboard accessibility
 document.addEventListener('keydown', function(e) {
-    // Close cart modal with Escape key
     if (e.key === 'Escape') {
         const modal = document.getElementById('cartModal');
         if (modal && modal.style.display === 'flex') {
             toggleCart();
         }
         
-        // Close user dropdown with Escape key
         const dropdownMenu = document.getElementById('userDropdownMenu');
         if (dropdownMenu && dropdownMenu.style.display === 'block') {
             dropdownMenu.style.display = 'none';
         }
-    }
-});
-
-// 🔄 SESSION PERSISTENCE: Handle page navigation
-window.addEventListener('beforeunload', function() {
-    // Store session state in sessionStorage for quick recovery
-    if (currentUser) {
-        try {
-            sessionStorage.setItem('tempUserSession', JSON.stringify({
-                user: currentUser,
-                timestamp: Date.now()
-            }));
-        } catch (error) {
-            console.log('Cannot save temp session');
-        }
-    }
-});
-
-// Quick session recovery on page load
-document.addEventListener('DOMContentLoaded', function() {
-    try {
-        const tempSession = sessionStorage.getItem('tempUserSession');
-        if (tempSession) {
-            const sessionData = JSON.parse(tempSession);
-            const now = Date.now();
-            
-            // If temp session is less than 30 seconds old, use it temporarily
-            if (now - sessionData.timestamp < 30000) {
-                console.log('🔄 Using temporary session data');
-                currentUser = sessionData.user;
-                sessionCheckComplete = true;
-                
-                // Still do the real session check in background
-                setTimeout(checkUserSession, 500);
-            }
-        }
-    } catch (error) {
-        console.log('Cannot load temp session');
     }
 });

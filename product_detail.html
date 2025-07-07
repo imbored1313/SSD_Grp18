@@ -5,19 +5,16 @@
     <meta charset="UTF-8" />
     <title>Product Detail - ElectraEdge</title>
     <link rel="stylesheet" href="website.css" />
+    <script src="js/session_manager.js"></script>
 </head>
 
 <body>
     <!-- Header -->
     <div id="header-placeholder"></div>
 
-    <script>
-        fetch('header.html')
-            .then(res => res.text())
-            .then(data => {
-                document.getElementById('header-placeholder').innerHTML = data;
-            });
-    </script>
+    <script src="js/header.js"></script>
+
+    
 
 
     <section class="container" style="margin-top: 2rem;">

@@ -1,4 +1,4 @@
-// login.js - COMPLETE FIXED login JavaScript for username or email login
+// login.js - SIMPLIFIED login JavaScript using session manager
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log('=== LOGIN PAGE LOADED ===');
@@ -9,36 +9,32 @@ document.addEventListener('DOMContentLoaded', function () {
         loginForm.addEventListener('submit', handleLoginSubmit);
     }
 
-    // Check if user is already logged in
+    // Check if user is already logged in using session manager
     checkExistingSession();
 });
 
 // Check if user is already logged in and redirect if so
 async function checkExistingSession() {
-    try {
-        const response = await fetch('php/check_session.php', {
-            method: 'GET',
-            credentials: 'include',
-            cache: 'no-cache'
-        });
+    console.log('Checking existing session...');
+    
+    // Wait for session manager to complete its check
+    if (window.sessionManager.sessionCheckInProgress) {
+        await window.sessionManager.waitForSessionCheck();
+    }
+    
+    if (window.sessionManager.isLoggedIn()) {
+        const user = window.sessionManager.getUser();
+        console.log('✅ User already logged in, redirecting...');
+        showNotification('You are already logged in. Redirecting...', 'info');
 
-        const result = await response.json();
-
-        if (response.ok && result.success && result.user) {
-            console.log('✅ User already logged in, redirecting...');
-            showNotification('You are already logged in. Redirecting...', 'info');
-            
-            // Redirect based on user role
-            setTimeout(() => {
-                if (result.user.role && result.user.role.toLowerCase() === 'admin') {
-                    window.location.href = 'admin_dashboard.php';
-                } else {
-                    window.location.href = 'index.html';
-                }
-            }, 1000);
-        }
-    } catch (error) {
-        console.log('No existing session found, staying on login page');
+        // Redirect based on user role
+        setTimeout(() => {
+            if (user.role && user.role.toLowerCase() === 'admin') {
+                window.location.href = 'admin_dashboard.php';
+            } else {
+                window.location.href = 'index.html';
+            }
+        }, 1000);
     }
 }
 
@@ -93,10 +89,17 @@ async function handleLoginSubmit(e) {
         if (result.success) {
             console.log('✅ Login successful');
             showNotification('Login successful! Redirecting...', 'success');
-            
+
             // Clear form
             document.getElementById('loginForm').reset();
-            
+
+            // Sync localStorage cart to database after login
+            await syncCartAfterLogin();
+
+            // Update session manager with new user data
+            window.sessionManager.currentUser = result.user;
+            window.sessionManager.notifyCallbacks('login', result.user);
+
             // Redirect based on user role
             setTimeout(() => {
                 if (result.user && result.user.role && result.user.role.toLowerCase() === 'admin') {
@@ -109,12 +112,44 @@ async function handleLoginSubmit(e) {
             console.log('❌ Login failed:', result.error);
             handleLoginError(response.status, result.error);
         }
+
     } catch (error) {
         console.error('❌ Login error:', error);
         showNotification('Login failed. Please check your connection and try again.', 'error');
     } finally {
         // Reset button state
         setLoadingState(submitBtn, false, originalText);
+    }
+}
+
+// Sync cart after successful login
+async function syncCartAfterLogin() {
+    try {
+        const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+
+        if (localCart.length > 0) {
+            const formattedCart = localCart.map(productId => ({
+                product_id: productId,
+                quantity: 1
+            }));
+
+            const response = await fetch('php/sync_cart.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ cart: formattedCart })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('✅ Cart synced to database.');
+            } else {
+                console.log('❌ Cart sync failed:', data.message);
+            }
+        }
+    } catch (error) {
+        console.error('❌ Cart sync failed:', error);
     }
 }
 
@@ -169,11 +204,11 @@ function handleLoginError(status, errorMessage) {
 function showFieldError(fieldName, message) {
     const field = document.getElementById(fieldName);
     const errorElement = document.getElementById(fieldName + 'Error');
-    
+
     if (field) {
         field.classList.add('error');
     }
-    
+
     if (errorElement) {
         errorElement.textContent = message;
         errorElement.style.display = 'block';
@@ -209,68 +244,12 @@ function setLoadingState(button, loading, originalText = 'Sign In') {
     }
 }
 
-// 📢 NOTIFICATION SYSTEM: Show notification
+// Show notification using session manager's notification system
 function showNotification(message, type = 'success') {
-    // Remove existing notification first
-    hideNotification();
-    
-    let notification = document.createElement('div');
-    notification.id = 'login-notification';
-    
-    // Set colors based on type
-    let backgroundColor = '#28a745'; // success (green)
-    if (type === 'error') backgroundColor = '#dc3545'; // error (red)
-    if (type === 'info') backgroundColor = '#17a2b8'; // info (blue)
-    if (type === 'warning') backgroundColor = '#ffc107'; // warning (yellow)
-    
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${backgroundColor};
-        color: white;
-        padding: 1rem 2rem;
-        border-radius: 8px;
-        z-index: 3000;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        transition: opacity 0.3s ease;
-        max-width: 300px;
-        word-wrap: break-word;
-        font-family: Arial, sans-serif;
-        font-size: 14px;
-        line-height: 1.4;
-    `;
-    
-    notification.textContent = message;
-    notification.style.opacity = '1';
-    document.body.appendChild(notification);
-    
-    // Auto-hide after 4 seconds
-    setTimeout(() => {
-        hideNotification();
-    }, 4000);
+    window.sessionManager.showNotification(message, type);
 }
 
-// Hide notification function
-function hideNotification() {
-    const notification = document.getElementById('login-notification');
-    if (notification && notification.parentNode) {
-        notification.style.opacity = '0';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }
-}
-
-// Username/Email detection helper
-function detectInputType(input) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(input) ? 'email' : 'username';
-}
-
-// Form validation utilities (enhanced)
+// Form validation utilities
 const FormValidator = {
     username: function (username) {
         if (!username || username.length < 3) {
@@ -294,7 +273,6 @@ const FormValidator = {
         return null;
     },
 
-    // Enhanced password validation for registration
     strongPassword: function (password) {
         const minLength = password.length >= 8;
         const hasUpper = /[A-Z]/.test(password);
@@ -347,15 +325,14 @@ const FormValidator = {
 };
 
 // Real-time validation for better UX
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
 
     if (usernameInput) {
-        usernameInput.addEventListener('blur', function() {
+        usernameInput.addEventListener('blur', function () {
             const value = this.value.trim();
             if (value) {
-                // Clear any existing errors when user starts typing
                 const errorElement = document.getElementById('usernameError');
                 if (errorElement) {
                     errorElement.textContent = '';
@@ -365,15 +342,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        usernameInput.addEventListener('input', function() {
-            // Clear error state when user starts typing
+        usernameInput.addEventListener('input', function () {
             this.classList.remove('error');
         });
     }
 
     if (passwordInput) {
-        passwordInput.addEventListener('input', function() {
-            // Clear error state when user starts typing
+        passwordInput.addEventListener('input', function () {
             this.classList.remove('error');
             const errorElement = document.getElementById('passwordError');
             if (errorElement) {
@@ -385,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Handle Enter key press
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {
         const loginForm = document.getElementById('loginForm');
         if (loginForm) {

@@ -1,5 +1,4 @@
-// js/header.js - FINAL FIXED version with proper cart count
-
+// header.js - SIMPLIFIED using session manager
 document.addEventListener('DOMContentLoaded', function () {
     const placeholder = document.getElementById('header-placeholder');
 
@@ -9,11 +8,13 @@ document.addEventListener('DOMContentLoaded', function () {
             placeholder.innerHTML = data;
             highlightActiveTab();
             
-            // Update cart count immediately after header loads
-            updateCartCount();
+            // Set up session change listeners
+            window.sessionManager.onSessionChange(handleSessionChange);
             
-            // Set up periodic cart count updates
-            setupCartCountUpdater();
+            // Initial check for existing session
+            if (window.sessionManager.isLoggedIn()) {
+                handleSessionChange('login', window.sessionManager.getUser());
+            }
         })
         .catch(error => {
             console.error('Error loading header:', error);
@@ -28,106 +29,120 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // Cross-tab cart sync
+    window.addEventListener("storage", (event) => {
+        if (event.key === "cartUpdated" || event.key === "cart") {
+            fetchCartCount();
+        }
+    });
 });
 
-// FIXED: Enhanced cart count function with better error handling
-function updateCartCount() {
-    const cartCountSpan = document.getElementById('cartCount');
-    if (cartCountSpan) {
-        try {
-            // Use the shared cart storage that all pages use
-            const cart = JSON.parse(localStorage.getItem('cart')) || [];
-            const count = cart.length;
-            
-            cartCountSpan.textContent = count;
-            console.log('✅ Cart count updated to:', count);
-            
-            // Add visual feedback when count changes
-            if (count > 0) {
-                cartCountSpan.style.background = '#dc3545';
-                cartCountSpan.style.color = 'white';
-                cartCountSpan.style.display = 'inline-block';
-            } else {
-                cartCountSpan.style.background = '#6c757d';
-                cartCountSpan.style.color = 'white';
-                cartCountSpan.style.display = 'inline-block';
-            }
-        } catch (error) {
-            console.error('Error updating cart count:', error);
-            cartCountSpan.textContent = '0';
-        }
-    } else {
-        console.log('❌ Cart count element not found');
+// Handle session changes
+function handleSessionChange(event, userData) {
+    if (event === 'login' && userData) {
+        renderUserDropdown(userData);
+        fetchCartCount();
+    } else if (event === 'logout') {
+        renderLoginButton();
+        updateCartCount(0);
     }
 }
 
-// Set up periodic cart count updates
-function setupCartCountUpdater() {
-    // Update cart count every 2 seconds to catch changes from other scripts
-    setInterval(() => {
-        updateCartCount();
-    }, 2000);
-    
-    // Also listen for storage changes (when other tabs modify cart)
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'cart') {
-            console.log('🔄 Cart storage changed, updating count');
-            updateCartCount();
-        }
-    });
-    
-    // Listen for custom cart update events
-    window.addEventListener('cartUpdated', function() {
-        console.log('🔄 Cart updated event received');
-        updateCartCount();
-    });
+function fetchCartCount() {
+    if (!window.sessionManager.isLoggedIn()) {
+        updateCartCount(0);
+        return;
+    }
+
+    fetch('php/get_cart.php', {
+        method: 'GET',
+        credentials: 'include'
+    })
+    .then(res => res.json())
+    .then(data => {
+        const count = data.success ? data.cartCount || 0 : 0;
+        updateCartCount(count);
+    })
+    .catch(() => updateCartCount(0));
 }
 
-// Enhanced function to trigger cart updates across the application
-function triggerCartUpdate() {
-    updateCartCount();
-    
-    // Dispatch custom event for other parts of the application
-    window.dispatchEvent(new CustomEvent('cartUpdated'));
-    
-    console.log('✅ Cart update triggered');
+function updateCartCount(count = 0) {
+    const span = document.getElementById('cartCount');
+    if (span) {
+        span.textContent = count;
+    }
 }
 
-// Make functions available globally so other scripts can call them
-window.updateCartCount = updateCartCount;
-window.triggerCartUpdate = triggerCartUpdate;
+function renderUserDropdown(user) {
+    const nav = document.querySelector('.nav-actions');
+    if (!nav) return;
 
-// FIXED: Add cart count styling
-document.addEventListener('DOMContentLoaded', function() {
-    // Add styles for cart count badge
-    const style = document.createElement('style');
-    style.textContent = `
-        .cart-count {
-            background: #dc3545 !important;
-            color: white !important;
-            border-radius: 50% !important;
-            padding: 0.2rem 0.4rem !important;
-            font-size: 0.8rem !important;
-            font-weight: bold !important;
-            min-width: 1.5rem !important;
-            text-align: center !important;
-            display: inline-block !important;
-            line-height: 1 !important;
-            margin-left: 0.25rem !important;
-        }
-        
-        .cart-icon {
-            position: relative !important;
-            display: flex !important;
-            align-items: center !important;
-            text-decoration: none !important;
-            color: white !important;
-            font-size: 1.2rem !important;
-        }
-        
-        .cart-icon:hover {
-            color: #ffd700 !important;
-        }
+    // Find and preserve the cart link
+    const cartLink = nav.querySelector('a[href="cart.html"]');
+    const cartHTML = cartLink ? cartLink.outerHTML : '';
+
+    nav.innerHTML = `
+        ${cartHTML}
+        <div class="user-dropdown" style="position: relative;">
+            <button onclick="toggleUserDropdown()" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; color: white; font-size: 1rem;">
+                👤 ${user.username} ▼
+            </button>
+            <div id="userDropdownMenu" class="dropdown-menu" style="display:none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); min-width: 200px; z-index: 1000;">
+                <div style="padding: 1rem; border-bottom: 1px solid #eee; background: #f8f9fa; border-radius: 8px 8px 0 0;">
+                    <div style="font-weight: bold; color: #333;">${user.username}</div>
+                    <div style="font-size: 0.9rem; color: #666;">${user.email}</div>
+                </div>
+                <div style="padding: 0.5rem 0;">
+                    <a href="userprofile.html" style="display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                        👤 My Profile
+                    </a>
+                    <a href="order_history.html" style="display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                        📦 My Orders
+                    </a>
+                    <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid #eee;">
+                    <button onclick="logout()" style="display: block; width: 100%; padding: 0.75rem 1rem; color: #dc3545; text-decoration: none; background: none; border: none; text-align: left; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                        🚪 Logout
+                    </button>
+                </div>
+            </div>
+        </div>
     `;
-    document.head.appendChild(style);
+}
+
+function renderLoginButton() {
+    const nav = document.querySelector('.nav-actions');
+    if (!nav) return;
+
+    // Find and preserve the cart link
+    const cartLink = nav.querySelector('a[href="cart.html"]');
+    const cartHTML = cartLink ? cartLink.outerHTML : '';
+
+    nav.innerHTML = `
+        ${cartHTML}
+        <a href="login.html" class="btn btn-outline">Login</a>
+    `;
+}
+
+function toggleUserDropdown() {
+    const menu = document.getElementById('userDropdownMenu');
+    if (menu) {
+        menu.style.display = (menu.style.display === 'none') ? 'block' : 'none';
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const userDropdown = document.querySelector('.user-dropdown');
+    if (userDropdown && !userDropdown.contains(event.target)) {
+        const dropdownMenu = document.getElementById('userDropdownMenu');
+        if (dropdownMenu) {
+            dropdownMenu.style.display = 'none';
+        }
+    }
 });
+
+// Logout using session manager
+async function logout() {
+    await window.sessionManager.logout();
+}
