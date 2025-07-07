@@ -1,10 +1,13 @@
 <header class="header">
     <nav class="nav-container">
-        <div class="logo">⚡ ElectraEdge</div>
+        //return to home page when clicked
+        <a href="index.html" class="logo">⚡ ElectraEdge</a>
+
         <ul class="nav-menu">
-            <li><a href="index.html" style="color: #ffd700;">Home</a></li>
+            <li><a href="index.html">Home</a></li>
             <li><a href="catalog.html">Products</a></li>
             <li><a href="order_history.html">My Orders</a></li>
+
         </ul>
         <div class="nav-actions">
             <a href="cart.html" class="cart-icon">
@@ -15,3 +18,16 @@
         </div>
     </nav>
 </header>
+
+<script>
+    const currentPage = window.location.pathname.split("/").pop();
+
+    const navLinks = document.querySelectorAll(".nav-menu a");
+    navLinks.forEach(link => {
+        if (link.getAttribute("href") === currentPage) {
+            link.style.color = "#ffd700"; // yellow for active page
+        } else {
+            link.style.color = ""; // reset others
+        }
+    });
+</script>
