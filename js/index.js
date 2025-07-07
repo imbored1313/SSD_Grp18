@@ -1,16 +1,17 @@
-// home.js - ElectraEdge Homepage JavaScript with Optimized Session Management
+// index.js - ElectraEdge Homepage JavaScript with COMPLETE FIXED Session Management
 
 // Shopping cart functionality
 let cart = [];
 let currentUser = null;
+let sessionCheckComplete = false;
 
 // Initialize page on load
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('=== PAGE LOADED ===');
+    console.log('=== HOME PAGE LOADED ===');
     updateCartCount();
     loadCartFromStorage();
     
-    // Start session check immediately - no delay
+    // Start session check immediately
     checkUserSession();
     
     // Initialize other features
@@ -28,18 +29,18 @@ function initializePageFeatures() {
             const email = document.getElementById('newsletterEmail').value.trim();
             
             if (!email) {
-                showNotification('Please enter your email address');
+                showNotification('Please enter your email address', 'warning');
                 return;
             }
             
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
-                showNotification('Please enter a valid email address');
+                showNotification('Please enter a valid email address', 'error');
                 return;
             }
             
             // Simulate API call
-            showNotification('Thank you for subscribing to our newsletter!');
+            showNotification('Thank you for subscribing to our newsletter!', 'success');
             document.getElementById('newsletterEmail').value = '';
         });
     }
@@ -80,7 +81,8 @@ async function checkUserSession() {
         
         const response = await fetch('php/check_session.php', {
             method: 'GET',
-            credentials: 'include'
+            credentials: 'include',
+            cache: 'no-cache'
         });
         
         console.log('Response status:', response.status);
@@ -101,6 +103,8 @@ async function checkUserSession() {
         console.error('❌ Error checking session:', error);
         currentUser = null;
         updateUIForLoggedOutUser();
+    } finally {
+        sessionCheckComplete = true;
     }
 }
 
@@ -206,21 +210,34 @@ async function logout() {
             console.log('✅ Logout successful');
             currentUser = null;
             updateUIForLoggedOutUser();
-            showNotification('Logged out successfully!');
+            showNotification('Logged out successfully!', 'success');
         } else {
             console.log('❌ Logout failed:', result.message);
-            showNotification('Error logging out. Please try again.');
+            showNotification('Error logging out. Please try again.', 'error');
         }
     } catch (error) {
         console.error('❌ Logout error:', error);
-        showNotification('Error logging out. Please try again.');
+        showNotification('Error logging out. Please try again.', 'error');
     }
 }
 
-// Add item to cart
+// 🔐 AUTHENTICATION LAYER: Add item to cart with authentication check
 function addToCart(event, productId, price) {
     // Prevent card click event
     event.stopPropagation();
+    
+    console.log('=== ADD TO CART CLICKED (HOME PAGE) ===');
+    console.log('Product ID:', productId, 'Price:', price);
+    console.log('Current user:', currentUser?.username || 'not logged in');
+    
+    // Check if user is logged in
+    if (!currentUser) {
+        showNotification('Please login to add items to your cart', 'warning');
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 1500);
+        return;
+    }
     
     const productNames = {
         'smartphone': 'ElectraPhone Pro Max',
@@ -245,6 +262,7 @@ function addToCart(event, productId, price) {
     
     if (existingItem) {
         existingItem.quantity += 1;
+        showNotification(`Increased quantity of ${productNames[productId]}!`, 'info');
     } else {
         cart.push({
             id: productId,
@@ -253,11 +271,11 @@ function addToCart(event, productId, price) {
             price: price,
             quantity: 1
         });
+        showNotification(`${productNames[productId]} added to cart!`, 'success');
     }
     
     updateCartCount();
     saveCartToStorage();
-    showNotification(`${productNames[productId]} added to cart!`);
 }
 
 // Update cart count in header
@@ -345,12 +363,11 @@ function removeFromCart(productId) {
     updateCartCount();
     updateCartDisplay();
     saveCartToStorage();
-    showNotification('Item removed from cart');
+    showNotification('Item removed from cart', 'info');
 }
 
 // View product details
 function viewProduct(productId) {
-    // For demo purposes, show alert. In real app, would navigate to product detail page
     const productNames = {
         'smartphone': 'ElectraPhone Pro Max',
         'laptop': 'UltraBook Elite X1',
@@ -360,7 +377,7 @@ function viewProduct(productId) {
         'speaker': 'BoomBox Smart Speaker'
     };
     
-    showNotification(`Viewing ${productNames[productId]} details...`);
+    showNotification(`Viewing ${productNames[productId]} details...`, 'info');
     
     // In a real app, you would navigate to product detail page:
     // window.location.href = `product-detail.html?id=${productId}`;
@@ -369,13 +386,13 @@ function viewProduct(productId) {
 // Checkout function
 function checkout() {
     if (cart.length === 0) {
-        showNotification('Your cart is empty!');
+        showNotification('Your cart is empty!', 'warning');
         return;
     }
     
     // Check if user is logged in before checkout
     if (!currentUser) {
-        showNotification('Please login to continue with checkout');
+        showNotification('Please login to continue with checkout', 'warning');
         setTimeout(() => {
             window.location.href = 'login.html';
         }, 1500);
@@ -383,7 +400,7 @@ function checkout() {
     }
     
     // For demo purposes. In real app, would redirect to checkout page
-    showNotification('Redirecting to secure checkout...');
+    showNotification('Redirecting to secure checkout...', 'info');
     
     // Simulate checkout process
     setTimeout(() => {
@@ -397,19 +414,58 @@ function checkout() {
     }, 1000);
 }
 
-// Show notification
-function showNotification(message) {
-    const notification = document.getElementById('notification');
-    const notificationText = document.getElementById('notificationText');
+// 📢 NOTIFICATION SYSTEM: Show notification
+function showNotification(message, type = 'success') {
+    // Remove existing notification first
+    hideNotification();
     
-    if (notification && notificationText) {
-        notificationText.textContent = message;
-        notification.style.display = 'block';
-        
-        // Auto-hide after 3 seconds
+    let notification = document.createElement('div');
+    notification.id = 'home-notification';
+    
+    // Set colors based on type
+    let backgroundColor = '#28a745'; // success (green)
+    if (type === 'error') backgroundColor = '#dc3545'; // error (red)
+    if (type === 'info') backgroundColor = '#17a2b8'; // info (blue)
+    if (type === 'warning') backgroundColor = '#ffc107'; // warning (yellow)
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${backgroundColor};
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        z-index: 3000;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        transition: opacity 0.3s ease;
+        max-width: 300px;
+        word-wrap: break-word;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.4;
+    `;
+    
+    notification.textContent = message;
+    notification.style.opacity = '1';
+    document.body.appendChild(notification);
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+        hideNotification();
+    }, 3000);
+}
+
+// Hide notification function
+function hideNotification() {
+    const notification = document.getElementById('home-notification');
+    if (notification && notification.parentNode) {
+        notification.style.opacity = '0';
         setTimeout(() => {
-            notification.style.display = 'none';
-        }, 3000);
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
     }
 }
 

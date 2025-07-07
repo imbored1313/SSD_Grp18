@@ -1,4 +1,4 @@
-// cart.js - Shopping Cart JavaScript with Session Management
+// cart.js - Shopping Cart JavaScript with COMPLETE FIXED Session Management
 
 let currentUser = null;
 let sessionCheckComplete = false;
@@ -30,7 +30,8 @@ async function checkUserSession() {
 
         const response = await fetch('php/check_session.php', {
             method: 'GET',
-            credentials: 'include'
+            credentials: 'include',
+            cache: 'no-cache'
         });
 
         console.log('Response status:', response.status);
@@ -46,7 +47,9 @@ async function checkUserSession() {
             console.log('❌ User not logged in:', result.message);
             currentUser = null;
             updateUIForLoggedOutUser();
-            // Only redirect after a delay to allow cart items to load for guests
+            
+            // Show message and redirect after delay
+            showNotification('Please login to view your cart', 'warning');
             setTimeout(() => {
                 window.location.href = 'login.html';
             }, 2000);
@@ -55,7 +58,9 @@ async function checkUserSession() {
         console.error('❌ Error checking session:', error);
         currentUser = null;
         updateUIForLoggedOutUser();
-        // Only redirect after a delay on error
+        
+        // Show error and redirect after delay
+        showNotification('Error checking login status', 'error');
         setTimeout(() => {
             window.location.href = 'login.html';
         }, 2000);
@@ -73,22 +78,51 @@ function loadCartItems() {
         return;
     }
 
+    // Show loading state
+    const cartSummary = document.getElementById('cart-summary');
+    if (cartSummary) {
+        cartSummary.innerHTML = `
+            <div style="text-align: center; padding: 2rem;">
+                <p>Loading cart items...</p>
+            </div>
+        `;
+    }
+
     // Fetch product details for cart items
     fetch('get_products.php')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch products');
+            }
+            return response.json();
+        })
         .then(products => {
             const cartItems = products.filter(p => cartIds.includes(p.product_id.toString()));
-            displayCartItems(cartItems);
+            if (cartItems.length > 0) {
+                displayCartItems(cartItems);
+            } else {
+                displayEmptyCart();
+            }
         })
         .catch(error => {
             console.error('Error loading cart items:', error);
-            displayEmptyCart();
+            const cartSummary = document.getElementById('cart-summary');
+            if (cartSummary) {
+                cartSummary.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #dc3545;">
+                        <p>Error loading cart items. Please try again.</p>
+                        <button onclick="loadCartItems()" class="btn btn-primary">Retry</button>
+                    </div>
+                `;
+            }
         });
 }
 
-// Display cart items (this will be overridden by cart.html)
+// Display cart items
 function displayCartItems(cartItems) {
     const cartSummary = document.getElementById('cart-summary');
+    if (!cartSummary) return;
+
     let total = 0;
     let cartHTML = '';
 
@@ -98,13 +132,13 @@ function displayCartItems(cartItems) {
 
         cartHTML += `
             <div class="cart-item" style="display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid #eee; gap: 1rem;">
-                <img src="${item.image_path}" alt="${item.name}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                <img src="${item.image_path}" alt="${item.name}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjZjhmOWZhIi8+CjxwYXRoIGQ9Ik00MCAyMEM0OC4yODQzIDIwIDU1IDI2LjcxNTcgNTUgMzVDNTUgNDMuMjg0MyA0OC4yODQzIDUwIDQwIDUwQzMxLjcxNTcgNTAgMjUgNDMuMjg0MyAyNSAzNUMyNSAyNi43MTU3IDMxLjcxNTcgMjAgNDAgMjBaIiBmaWxsPSIjZGVlMmU2Ii8+Cjwvc3ZnPgo='">
                 <div style="flex: 1;">
-                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;">${item.name}</h3>
-                    <p style="margin: 0; color: #666; font-size: 0.9rem;">${item.description}</p>
+                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: #333;">${item.name}</h3>
+                    <p style="margin: 0; color: #666; font-size: 0.9rem;">${item.description || 'No description available'}</p>
                     <p style="margin: 0.5rem 0 0 0; font-weight: bold; color: #333;">$${price.toFixed(2)}</p>
                 </div>
-                <button onclick="removeFromCart('${item.product_id}')" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                <button onclick="removeFromCart('${item.product_id}')" style="background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.background='#c82333'" onmouseout="this.style.background='#dc3545'">
                     Remove
                 </button>
             </div>
@@ -112,32 +146,58 @@ function displayCartItems(cartItems) {
     });
 
     cartHTML += `
-        <div style="padding: 1rem; text-align: right; font-size: 1.2rem; font-weight: bold; border-top: 2px solid #333;">
-            Total: $${total.toFixed(2)}
+        <div style="padding: 1rem; text-align: right; font-size: 1.2rem; font-weight: bold; border-top: 2px solid #333; background: #f8f9fa;">
+            Total: <span id="total-amount">$${total.toFixed(2)}</span>
         </div>
     `;
 
     cartSummary.innerHTML = cartHTML;
+
+    // Store total for other functions (like PayPal integration)
+    window.cartTotal = total;
 }
 
-// Display empty cart message (this will be overridden by cart.html)
+// Display empty cart message
 function displayEmptyCart() {
     const cartSummary = document.getElementById('cart-summary');
+    if (!cartSummary) return;
+
     cartSummary.innerHTML = `
         <div style="text-align: center; padding: 2rem;">
             <div style="font-size: 4rem; margin-bottom: 1rem;">🛒</div>
-            <h3>Your cart is empty</h3>
+            <h3 style="color: #333; margin-bottom: 1rem;">Your cart is empty</h3>
             <p style="color: #666; margin-bottom: 2rem;">Start shopping to add items to your cart!</p>
             <a href="catalog.html" class="btn btn-primary">Browse Products</a>
         </div>
     `;
+
+    // Hide PayPal button container if it exists
+    const paypalContainer = document.getElementById('paypal-button-container');
+    if (paypalContainer) {
+        paypalContainer.style.display = 'none';
+    }
+
+    // Clear total
+    window.cartTotal = 0;
 }
 
 // Remove item from cart
 function removeFromCart(productId) {
+    console.log('Removing product from cart:', productId);
+    
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const originalLength = cart.length;
+    
     cart = cart.filter(id => id !== productId.toString());
     localStorage.setItem('cart', JSON.stringify(cart));
+
+    if (cart.length < originalLength) {
+        showNotification('Item removed from cart', 'info');
+        console.log('✅ Product removed from cart');
+    } else {
+        showNotification('Item not found in cart', 'warning');
+        console.log('⚠️ Product was not in cart');
+    }
 
     // Reload cart items
     loadCartItems();
@@ -249,13 +309,71 @@ async function logout() {
             console.log('✅ Logout successful');
             currentUser = null;
             updateUIForLoggedOutUser();
-            window.location.href = 'index.html';
+            showNotification('Logged out successfully!', 'success');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
         } else {
             console.error('❌ Logout failed:', result.error);
-            alert('Logout failed. Please try again.');
+            showNotification('Logout failed. Please try again.', 'error');
         }
     } catch (error) {
         console.error('❌ Logout error:', error);
-        alert('Logout failed. Please try again.');
+        showNotification('Logout failed. Please try again.', 'error');
+    }
+}
+
+// 📢 NOTIFICATION SYSTEM: Improved notification function
+function showNotification(message, type = 'success') {
+    // Remove existing notification first
+    hideNotification();
+    
+    let notification = document.createElement('div');
+    notification.id = 'cart-notification';
+    
+    // Set colors based on type
+    let backgroundColor = '#28a745'; // success (green)
+    if (type === 'error') backgroundColor = '#dc3545'; // error (red)
+    if (type === 'info') backgroundColor = '#17a2b8'; // info (blue)
+    if (type === 'warning') backgroundColor = '#ffc107'; // warning (yellow)
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${backgroundColor};
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        z-index: 3000;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        transition: opacity 0.3s ease;
+        max-width: 300px;
+        word-wrap: break-word;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.4;
+    `;
+    
+    notification.textContent = message;
+    notification.style.opacity = '1';
+    document.body.appendChild(notification);
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+        hideNotification();
+    }, 3000);
+}
+
+// Hide notification function
+function hideNotification() {
+    const notification = document.getElementById('cart-notification');
+    if (notification && notification.parentNode) {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
     }
 }
