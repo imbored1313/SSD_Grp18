@@ -1,8 +1,8 @@
-// js/cart.js - DEBUG version to find session mismatch
+// js/cart.js - FIXED version with session manager sync
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('=== CART PAGE LOADED ===');
     
-    // Debug: Check what session manager thinks
+    // Debug: Check what session manager thinks initially
     if (window.sessionManager.isLoggedIn()) {
         const user = window.sessionManager.getUser();
         console.log('🟢 Session Manager says user IS logged in:', user);
@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('🔴 Session Manager says user is NOT logged in');
     }
 
-    // Debug: Check what PHP thinks
+    // Debug: Check what PHP thinks and sync with session manager
     console.log('🔍 Now checking what PHP thinks...');
     
     try {
@@ -21,6 +21,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         const sessionResult = await sessionCheck.json();
         console.log('🟢 PHP check_session.php says:', sessionResult);
+        
+        // SYNC SESSION MANAGER with PHP result
+        if (sessionResult.success && sessionResult.user) {
+            console.log('🔄 Syncing session manager with PHP session data...');
+            window.sessionManager.currentUser = sessionResult.user;
+            window.sessionManager.sessionCheckComplete = true;
+            console.log('✅ Session manager updated with user:', sessionResult.user.username);
+        }
+        
     } catch (error) {
         console.log('🔴 Error checking PHP session:', error);
     }
@@ -41,6 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 displayEmptyCart();
             } else {
                 displayCartItems(cartResult.cart);
+                console.log('🎉 SUCCESS: Cart displaying', cartResult.cart.length, 'items!');
             }
             updateCartCount(cartResult.cartCount || 0);
         } else {
@@ -84,12 +94,13 @@ function loadCartFromDB() {
 }
 
 function displayCartItems(items) {
-    console.log('Displaying cart items:', items);
+    console.log('🎨 Displaying cart items:', items);
 
-    // This function is overridden in cart.html for PayPal integration
-    // Default implementation for other pages
-    const cartContainer = document.getElementById('cart-items');
-    if (!cartContainer) return;
+    const cartContainer = document.getElementById('cart-items') || document.getElementById('cart-summary');
+    if (!cartContainer) {
+        console.error('❌ Cart container not found!');
+        return;
+    }
 
     let cartHTML = '';
     let total = 0;
@@ -100,50 +111,70 @@ function displayCartItems(items) {
         const itemTotal = price * quantity;
         total += itemTotal;
 
+        // Handle image path
+        let imageSrc = '/assets/images/no-image.jpg';
+        if (item.image_path) {
+            if (item.image_path.startsWith('http') || item.image_path.startsWith('/uploads/')) {
+                imageSrc = item.image_path;
+            } else {
+                imageSrc = '/uploads/products/' + item.image_path;
+            }
+        }
+
         cartHTML += `
-            <div class="cart-item" style="display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid #eee; gap: 1rem;">
-                <img src="${item.image_path}" alt="${item.name}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+            <div class="cart-item" data-product-id="${item.product_id}" style="display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid #eee; gap: 1rem;">
+                <img src="${imageSrc}" alt="${item.name}" 
+                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;"
+                     onerror="this.src='/assets/images/no-image.jpg'">
                 <div style="flex: 1;">
-                    <h3 style="margin: 0 0 0.5rem 0;">${item.name}</h3>
-                    <p style="margin: 0; color: #666;">${item.description}</p>
-                    <p style="margin: 0.5rem 0 0 0; font-weight: bold;">$${price.toFixed(2)} × ${quantity}</p>
+                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: #333;">${item.name}</h3>
+                    <p style="margin: 0; color: #666; font-size: 0.9rem;">${item.description || 'No description'}</p>
+                    <p style="margin: 0.5rem 0 0 0; font-weight: bold; color: #2c5aa0;">$${price.toFixed(2)} × ${quantity}</p>
+                    ${item.stock < 10 ? `<p style="margin: 0.25rem 0 0 0; color: #dc3545; font-size: 0.8rem;">Only ${item.stock} left in stock</p>` : ''}
                 </div>
-                <div style="text-align: center;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <button onclick="updateQuantity(${item.product_id}, ${quantity - 1})" 
-                            style="background: #f8f9fa; border: 1px solid #ddd; padding: 0.25rem 0.5rem; margin: 0 0.25rem;">-</button>
-                    <span style="margin: 0 0.5rem;">${quantity}</span>
+                            style="background: #f8f9fa; border: 1px solid #ddd; padding: 0.5rem; border-radius: 4px; cursor: pointer; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;"
+                            ${quantity <= 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>−</button>
+                    <span style="min-width: 40px; text-align: center; font-weight: bold; font-size: 1.1rem;">${quantity}</span>
                     <button onclick="updateQuantity(${item.product_id}, ${quantity + 1})" 
-                            style="background: #f8f9fa; border: 1px solid #ddd; padding: 0.25rem 0.5rem; margin: 0 0.25rem;">+</button>
+                            style="background: #f8f9fa; border: 1px solid #ddd; padding: 0.5rem; border-radius: 4px; cursor: pointer; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;"
+                            ${quantity >= item.stock ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>+</button>
                 </div>
-                <div style="font-weight: bold; min-width: 80px; text-align: right;">$${itemTotal.toFixed(2)}</div>
+                <div style="font-weight: bold; min-width: 80px; text-align: right; font-size: 1.1rem; color: #2c5aa0;">$${itemTotal.toFixed(2)}</div>
                 <button onclick="removeItem(${item.product_id})" 
-                        style="background: #dc3545; color: white; border: none; padding: 0.5rem; border-radius: 4px;">×</button>
+                        style="background: #dc3545; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 1rem;"
+                        title="Remove item">×</button>
             </div>
         `;
     });
 
     cartHTML += `
-        <div style="padding: 1rem; text-align: right; font-size: 1.2rem; font-weight: bold; border-top: 2px solid #333;">
-            Total: $${total.toFixed(2)}
+        <div class="cart-total" style="padding: 1.5rem; text-align: right; font-size: 1.3rem; font-weight: bold; border-top: 2px solid #2c5aa0; background: #f8f9fa;">
+            <div style="color: #666; font-size: 1rem; margin-bottom: 0.5rem;">Total (${items.length} items):</div>
+            <div style="color: #2c5aa0;">$${total.toFixed(2)}</div>
         </div>
     `;
 
     cartContainer.innerHTML = cartHTML;
+    
+    console.log('✅ Cart items successfully displayed!');
 }
 
 function displayEmptyCart() {
-    console.log('Displaying empty cart');
+    console.log('📭 Displaying empty cart');
 
-    // This function is overridden in cart.html
     const cartContainer = document.getElementById('cart-items') || document.getElementById('cart-summary');
     if (!cartContainer) return;
 
     cartContainer.innerHTML = `
-        <div style="text-align: center; padding: 2rem;">
-            <div style="font-size: 4rem; margin-bottom: 1rem;">🛒</div>
-            <h3>Your cart is empty</h3>
-            <p style="color: #666; margin-bottom: 2rem;">Start shopping to add items to your cart!</p>
-            <a href="catalog.html" class="btn btn-primary">Browse Products</a>
+        <div class="empty-cart" style="text-align: center; padding: 3rem 2rem;">
+            <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.7;">🛒</div>
+            <h3 style="color: #666; margin-bottom: 1rem;">Your cart is empty</h3>
+            <p style="color: #888; margin-bottom: 2rem; font-size: 1rem;">Discover our amazing products and start shopping!</p>
+            <a href="catalog.html" class="btn btn-primary" style="display: inline-block; background: #2c5aa0; color: white; padding: 1rem 2rem; text-decoration: none; border-radius: 8px; font-weight: bold; transition: background 0.3s;">
+                Browse Products
+            </a>
         </div>
     `;
 
@@ -156,57 +187,113 @@ function updateCartCount(count) {
         cartCount.textContent = count;
     }
 
-    // Update global cart manager if it exists
-    if (window.cartManager && window.cartManager.updateCount) {
-        window.cartManager.updateCount(count);
+    // Update session manager's count if available
+    if (window.sessionManager && typeof window.sessionManager.updateCartCount === 'function') {
+        window.sessionManager.updateCartCount(count);
     }
 }
 
-function updateQuantity(productId, newQty) {
+async function updateQuantity(productId, newQty) {
     if (newQty < 1) {
         removeItem(productId);
         return;
     }
 
-    fetch('php/update_cart.php', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product_id: productId, quantity: newQty })
-    })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                loadCartFromDB(); // Refresh cart
-            } else {
-                alert("Update failed: " + (data.message || 'Unknown error'));
-            }
-        })
-        .catch(err => {
-            console.error('Update quantity error:', err);
-            alert("Failed to update quantity");
+    console.log(`🔄 Updating quantity for product ${productId} to ${newQty}`);
+
+    try {
+        const response = await fetch('php/update_cart.php', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                product_id: parseInt(productId), 
+                quantity: parseInt(newQty) 
+            })
         });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('✅ Quantity updated successfully');
+            showNotification('Quantity updated!', 'success');
+            // Reload cart to get fresh data
+            await loadCartFromDB();
+        } else {
+            console.error('❌ Update failed:', data.message);
+            showNotification('Update failed: ' + (data.message || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('💥 Update quantity error:', error);
+        showNotification('Failed to update quantity', 'error');
+    }
 }
 
-function removeItem(productId) {
-    if (!confirm("Remove this item from cart?")) return;
+async function removeItem(productId) {
+    if (!confirm("Are you sure you want to remove this item from your cart?")) return;
 
-    fetch('php/delete_cart_item.php', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product_id: productId })
-    })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                loadCartFromDB(); // Refresh cart
-            } else {
-                alert("Failed to remove item: " + (data.message || 'Unknown error'));
-            }
-        })
-        .catch(err => {
-            console.error('Remove item error:', err);
-            alert("Failed to remove item");
+    console.log(`🗑️ Removing product ${productId} from cart`);
+
+    try {
+        const response = await fetch('php/delete_cart_item.php', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product_id: parseInt(productId) })
         });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('✅ Item removed successfully');
+            showNotification('Item removed from cart!', 'success');
+            // Reload cart to get fresh data
+            await loadCartFromDB();
+        } else {
+            console.error('❌ Remove failed:', data.message);
+            showNotification('Failed to remove item: ' + (data.message || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('💥 Remove item error:', error);
+        showNotification('Failed to remove item', 'error');
+    }
+}
+
+// Notification function
+function showNotification(message, type = 'success') {
+    const existing = document.getElementById('cart-notification');
+    if (existing) existing.remove();
+    
+    const notification = document.createElement('div');
+    notification.id = 'cart-notification';
+    
+    const colors = {
+        success: '#28a745',
+        error: '#dc3545',
+        info: '#17a2b8',
+        warning: '#ffc107'
+    };
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${colors[type] || colors.info};
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        z-index: 3000;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+    `;
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 3000);
 }
