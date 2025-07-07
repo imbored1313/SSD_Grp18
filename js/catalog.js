@@ -37,6 +37,8 @@ function initializeCatalogFeatures() {
 // Check user session and update UI accordingly
 async function checkUserSession() {
     console.log('=== CHECKING USER SESSION ===');
+    sessionCheckInProgress = true; // FIX: Set this at the start
+    sessionCheckComplete = false;   // FIX: Reset this
 
     try {
         console.log('Making request to php/check_session.php');
@@ -64,10 +66,10 @@ async function checkUserSession() {
         console.error('❌ Error checking session:', error);
         currentUser = null;
         updateUIForLoggedOutUser();
-    }
-    finally {
+    } finally {
         sessionCheckInProgress = false;
         sessionCheckComplete = true;
+        console.log('✅ Session check completed. User:', currentUser ? currentUser.username : 'not logged in');
     }
 }
 
@@ -223,41 +225,30 @@ function sortProducts(sortOrder) {
     productCards.forEach(card => productGrid.appendChild(card));
 }
 
-// Add to cart function with proper session checking
+// IMPROVED: Add to cart function with better session handling
 async function addToCart(productId) {
     console.log('=== ADD TO CART CLICKED ===');
-    console.log('Session check complete:', sessionCheckComplete);
-    console.log('Session check in progress:', sessionCheckInProgress);
-    console.log('Current user:', currentUser);
+    console.log('Initial state - sessionCheckComplete:', sessionCheckComplete, 'sessionCheckInProgress:', sessionCheckInProgress, 'currentUser:', currentUser?.username || 'null');
 
-    // If session check is still in progress, wait for it to complete
-    if (sessionCheckInProgress) {
-        console.log('Session check in progress, waiting...');
-        showNotification('Checking login status...');
-        
-        // Wait up to 3 seconds for session check to complete
-        let attempts = 0;
-        while (sessionCheckInProgress && attempts < 30) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            attempts++;
-        }
-    }
-
-    // If session check completed but user is still null, do a fresh check
-    if (sessionCheckComplete && !currentUser) {
-        console.log('Session check completed but no user found, doing fresh check...');
+    // Strategy: Always do a fresh session check before adding to cart
+    // This ensures we have the most up-to-date session state
+    if (!currentUser || !sessionCheckComplete) {
+        console.log('🔄 Doing fresh session check before adding to cart...');
+        showNotification('Verifying login status...');
         await checkUserSession();
     }
 
-    // Now check if user is logged in
+    // Double-check: If still no user after fresh check, definitely not logged in
     if (!currentUser) {
-        console.log('User not logged in, redirecting to login');
+        console.log('❌ User not logged in after fresh check');
+        hideNotification(); // Hide the "verifying" message
         alert('Please log in to add items to your cart.');
         window.location.href = 'login.html';
         return;
     }
 
-    console.log('User is logged in, adding to cart');
+    console.log('✅ User confirmed logged in:', currentUser.username);
+    hideNotification(); // Hide the "verifying" message
 
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
     
@@ -306,13 +297,23 @@ function showNotification(message) {
     notification.textContent = message;
     notification.style.opacity = '1';
     
-    // Hide after 3 seconds
-    setTimeout(() => {
+    // Auto-hide after 3 seconds (except for "verifying" messages)
+    if (!message.toLowerCase().includes('verifying') && !message.toLowerCase().includes('checking')) {
+        setTimeout(() => {
+            hideNotification();
+        }, 3000);
+    }
+}
+
+// Hide notification function
+function hideNotification() {
+    const notification = document.getElementById('cart-notification');
+    if (notification) {
         notification.style.opacity = '0';
         setTimeout(() => {
             if (notification.parentNode) {
                 notification.parentNode.removeChild(notification);
             }
         }, 300);
-    }, 3000);
+    }
 }
