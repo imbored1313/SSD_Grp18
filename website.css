@@ -66,6 +66,10 @@ body {
     font-weight: 500;
 }
 
+.nav-menu a.active {
+  color: #ffd700;
+}
+
 .nav-menu a:hover {
     color: #ffd700;
 }
