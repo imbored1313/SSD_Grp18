@@ -1,4 +1,4 @@
-// cart.js - Shopping Cart JavaScript with COMPLETE FIXED Session Management
+// cart.js - Shopping Cart JavaScript with FINAL FIXES
 
 let currentUser = null;
 let sessionCheckComplete = false;
@@ -7,12 +7,57 @@ let sessionCheckComplete = false;
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== CART PAGE LOADED ===');
 
+    // Quick session recovery first
+    quickSessionRecovery();
+
     // Start session check immediately
     checkUserSession();
 
     // Initialize cart features
     initializeCartFeatures();
 });
+
+// Quick session recovery from sessionStorage
+function quickSessionRecovery() {
+    try {
+        const tempSession = sessionStorage.getItem('tempUserSession');
+        if (tempSession) {
+            const sessionData = JSON.parse(tempSession);
+            const now = Date.now();
+            
+            // If temp session is less than 30 seconds old, use it temporarily
+            if (now - sessionData.timestamp < 30000) {
+                console.log('🔄 Using temporary session data for quick recovery');
+                currentUser = sessionData.user;
+                sessionCheckComplete = true;
+                
+                // Update UI immediately with temp data
+                updateUIForLoggedInUser();
+                
+                console.log('✅ Quick session recovery successful for:', currentUser.username);
+                return true;
+            }
+        }
+    } catch (error) {
+        console.log('Cannot load temp session');
+    }
+    return false;
+}
+
+// Store session for quick recovery
+function storeSessionForQuickRecovery() {
+    if (currentUser) {
+        try {
+            sessionStorage.setItem('tempUserSession', JSON.stringify({
+                user: currentUser,
+                timestamp: Date.now()
+            }));
+            console.log('✅ Session stored for quick recovery');
+        } catch (error) {
+            console.log('Cannot save temp session');
+        }
+    }
+}
 
 // Initialize cart features
 function initializeCartFeatures() {
@@ -23,7 +68,7 @@ function initializeCartFeatures() {
 
 // Check user session and update UI accordingly
 async function checkUserSession() {
-    console.log('=== CHECKING USER SESSION ===');
+    console.log('=== CHECKING USER SESSION (CART) ===');
 
     try {
         console.log('Making request to php/check_session.php');
@@ -43,10 +88,20 @@ async function checkUserSession() {
             console.log('✅ User is logged in:', result.user.username);
             currentUser = result.user;
             updateUIForLoggedInUser();
+            
+            // Store fresh session for quick recovery
+            storeSessionForQuickRecovery();
         } else {
             console.log('❌ User not logged in:', result.message);
             currentUser = null;
             updateUIForLoggedOutUser();
+            
+            // Clear any temp session data
+            try {
+                sessionStorage.removeItem('tempUserSession');
+            } catch (error) {
+                console.log('Cannot clear temp session');
+            }
             
             // Show message and redirect after delay
             showNotification('Please login to view your cart', 'warning');
@@ -56,14 +111,18 @@ async function checkUserSession() {
         }
     } catch (error) {
         console.error('❌ Error checking session:', error);
-        currentUser = null;
-        updateUIForLoggedOutUser();
         
-        // Show error and redirect after delay
-        showNotification('Error checking login status', 'error');
-        setTimeout(() => {
-            window.location.href = 'login.html';
-        }, 2000);
+        // If we had quick recovery data and real check fails, keep using it temporarily
+        if (!currentUser) {
+            currentUser = null;
+            updateUIForLoggedOutUser();
+            
+            // Show error and redirect after delay
+            showNotification('Error checking login status', 'error');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2000);
+        }
     } finally {
         sessionCheckComplete = true;
     }
@@ -181,7 +240,7 @@ function displayEmptyCart() {
     window.cartTotal = 0;
 }
 
-// Remove item from cart
+// FIXED: Remove item from cart with proper cart count update
 function removeFromCart(productId) {
     console.log('Removing product from cart:', productId);
     
@@ -202,15 +261,22 @@ function removeFromCart(productId) {
     // Reload cart items
     loadCartItems();
 
-    // Update cart count in header if function exists
-    if (typeof updateCartCount === 'function') {
+    // FIXED: Update cart count in header using the proper function
+    if (typeof window.updateCartCount === 'function') {
+        window.updateCartCount();
+    } else if (typeof updateCartCount === 'function') {
         updateCartCount();
+    }
+
+    // Trigger cart update event
+    if (typeof window.triggerCartUpdate === 'function') {
+        window.triggerCartUpdate();
     }
 }
 
 // Update UI for logged in user
 function updateUIForLoggedInUser() {
-    console.log('=== UPDATING UI FOR LOGGED IN USER ===');
+    console.log('=== UPDATING UI FOR LOGGED IN USER (CART) ===');
 
     const navActions = document.querySelector('.nav-actions');
     console.log('Nav actions element found:', !!navActions);
@@ -258,7 +324,7 @@ function updateUIForLoggedInUser() {
 
 // Update UI for logged out user
 function updateUIForLoggedOutUser() {
-    console.log('=== UPDATING UI FOR LOGGED OUT USER ===');
+    console.log('=== UPDATING UI FOR LOGGED OUT USER (CART) ===');
 
     const navActions = document.querySelector('.nav-actions');
     const userDropdown = navActions ? navActions.querySelector('.user-dropdown') : null;
@@ -295,7 +361,7 @@ document.addEventListener('click', function (event) {
 
 // Logout function
 async function logout() {
-    console.log('=== LOGGING OUT ===');
+    console.log('=== LOGGING OUT (CART) ===');
 
     try {
         const response = await fetch('php/logout.php', {
@@ -308,6 +374,14 @@ async function logout() {
         if (result.success) {
             console.log('✅ Logout successful');
             currentUser = null;
+            
+            // Clear temp session
+            try {
+                sessionStorage.removeItem('tempUserSession');
+            } catch (error) {
+                console.log('Cannot clear temp session');
+            }
+            
             updateUIForLoggedOutUser();
             showNotification('Logged out successfully!', 'success');
             setTimeout(() => {
@@ -377,3 +451,11 @@ function hideNotification() {
         }, 300);
     }
 }
+
+// 🔄 SESSION PERSISTENCE: Handle page navigation
+window.addEventListener('beforeunload', function() {
+    // Store session state in sessionStorage for quick recovery
+    if (currentUser) {
+        storeSessionForQuickRecovery();
+    }
+});

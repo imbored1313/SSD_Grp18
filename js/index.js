@@ -1,15 +1,18 @@
-// index.js - ElectraEdge Homepage JavaScript with COMPLETE FIXED Session Management
+// index.js - ElectraEdge Homepage JavaScript with FINAL FIXES
 
 // Shopping cart functionality
 let cart = [];
 let currentUser = null;
 let sessionCheckComplete = false;
+let sessionCheckInProgress = false;
 
 // Initialize page on load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== HOME PAGE LOADED ===');
-    updateCartCount();
+    
+    // Load cart from storage FIRST
     loadCartFromStorage();
+    updateCartCount();
     
     // Start session check immediately
     checkUserSession();
@@ -74,7 +77,9 @@ function initializePageFeatures() {
 
 // Check user session and update UI accordingly
 async function checkUserSession() {
-    console.log('=== CHECKING USER SESSION ===');
+    console.log('=== CHECKING USER SESSION (HOME) ===');
+    sessionCheckInProgress = true;
+    sessionCheckComplete = false;
     
     try {
         console.log('Making request to php/check_session.php');
@@ -104,13 +109,15 @@ async function checkUserSession() {
         currentUser = null;
         updateUIForLoggedOutUser();
     } finally {
+        sessionCheckInProgress = false;
         sessionCheckComplete = true;
+        console.log('✅ Session check completed (HOME). User:', currentUser ? currentUser.username : 'not logged in');
     }
 }
 
 // Update UI for logged in user
 function updateUIForLoggedInUser() {
-    console.log('=== UPDATING UI FOR LOGGED IN USER ===');
+    console.log('=== UPDATING UI FOR LOGGED IN USER (HOME) ===');
     
     const navActions = document.querySelector('.nav-actions');
     console.log('Nav actions element found:', !!navActions);
@@ -158,7 +165,7 @@ function updateUIForLoggedInUser() {
 
 // Update UI for logged out user
 function updateUIForLoggedOutUser() {
-    console.log('=== UPDATING UI FOR LOGGED OUT USER ===');
+    console.log('=== UPDATING UI FOR LOGGED OUT USER (HOME) ===');
     
     const navActions = document.querySelector('.nav-actions');
     const userDropdown = navActions ? navActions.querySelector('.user-dropdown') : null;
@@ -195,7 +202,7 @@ document.addEventListener('click', function(event) {
 
 // Logout function
 async function logout() {
-    console.log('=== LOGGING OUT ===');
+    console.log('=== LOGGING OUT (HOME) ===');
     
     try {
         const response = await fetch('php/logout.php', {
@@ -222,22 +229,66 @@ async function logout() {
 }
 
 // 🔐 AUTHENTICATION LAYER: Add item to cart with authentication check
-function addToCart(event, productId, price) {
+async function addToCart(event, productId, price) {
     // Prevent card click event
     event.stopPropagation();
     
     console.log('=== ADD TO CART CLICKED (HOME PAGE) ===');
     console.log('Product ID:', productId, 'Price:', price);
-    console.log('Current user:', currentUser?.username || 'not logged in');
+    console.log('Session state - Complete:', sessionCheckComplete, 'In Progress:', sessionCheckInProgress, 'User:', currentUser?.username || 'null');
     
-    // Check if user is logged in
-    if (!currentUser) {
-        showNotification('Please login to add items to your cart', 'warning');
-        setTimeout(() => {
-            window.location.href = 'login.html';
-        }, 1500);
-        return;
+    // Wait for session check if in progress
+    if (sessionCheckInProgress) {
+        console.log('⏳ Waiting for session check to complete...');
+        showNotification('Checking login status...', 'info');
+        
+        let waitTime = 0;
+        while (sessionCheckInProgress && waitTime < 5000) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            waitTime += 100;
+        }
+        hideNotification();
     }
+    
+    // Fresh session check if no cached user
+    if (!currentUser) {
+        console.log('🔄 No cached user, doing fresh session check...');
+        showNotification('Verifying login status...', 'info');
+        
+        try {
+            const response = await fetch('php/check_session.php', {
+                method: 'GET',
+                credentials: 'include',
+                cache: 'no-cache'
+            });
+
+            const result = await response.json();
+            
+            if (response.ok && result.success && result.user) {
+                console.log('✅ Fresh session check confirmed user:', result.user.username);
+                currentUser = result.user;
+                updateUIForLoggedInUser();
+            } else {
+                console.log('❌ Fresh session check: user not logged in');
+                hideNotification();
+                showNotification('Please login to add items to your cart', 'warning');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1500);
+                return;
+            }
+        } catch (error) {
+            console.error('❌ Error in verification check:', error);
+            hideNotification();
+            showNotification('Error checking login status. Please try again.', 'error');
+            return;
+        }
+        
+        hideNotification();
+    }
+    
+    // User is authenticated, proceed with adding to cart
+    console.log('✅ User authenticated, adding to cart');
     
     const productNames = {
         'smartphone': 'ElectraPhone Pro Max',
@@ -257,7 +308,8 @@ function addToCart(event, productId, price) {
         'speaker': '🔊'
     };
     
-    // Check if item already exists in cart
+    // FIXED: Add to both cart systems for compatibility
+    // 1. Add to homepage cart (for modal display)
     const existingItem = cart.find(item => item.id === productId);
     
     if (existingItem) {
@@ -274,16 +326,30 @@ function addToCart(event, productId, price) {
         showNotification(`${productNames[productId]} added to cart!`, 'success');
     }
     
+    // 2. Add to shared cart storage (for catalog/cart pages)
+    let sharedCart = JSON.parse(localStorage.getItem('cart')) || [];
+    const productIdStr = productId.toString();
+    
+    if (!sharedCart.includes(productIdStr)) {
+        sharedCart.push(productIdStr);
+        localStorage.setItem('cart', JSON.stringify(sharedCart));
+    }
+    
+    // Update both cart systems
     updateCartCount();
     saveCartToStorage();
 }
 
-// Update cart count in header
+// FIXED: Update cart count - use shared cart storage
 function updateCartCount() {
-    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    // Use the shared cart storage that other pages use
+    const sharedCart = JSON.parse(localStorage.getItem('cart')) || [];
+    const totalItems = sharedCart.length;
+    
     const cartCountElement = document.getElementById('cartCount');
     if (cartCountElement) {
         cartCountElement.textContent = totalItems;
+        console.log('✅ Cart count updated to:', totalItems);
     }
 }
 
@@ -359,7 +425,14 @@ function changeQuantity(productId, change) {
 
 // Remove item from cart
 function removeFromCart(productId) {
+    // Remove from homepage cart
     cart = cart.filter(item => item.id !== productId);
+    
+    // Remove from shared cart
+    let sharedCart = JSON.parse(localStorage.getItem('cart')) || [];
+    sharedCart = sharedCart.filter(id => id !== productId.toString());
+    localStorage.setItem('cart', JSON.stringify(sharedCart));
+    
     updateCartCount();
     updateCartDisplay();
     saveCartToStorage();
@@ -407,6 +480,7 @@ function checkout() {
         alert('Thank you for your purchase, ' + currentUser.username + '! Your order has been placed.');
         // Clear cart after successful checkout
         cart = [];
+        localStorage.removeItem('cart'); // Clear shared cart too
         updateCartCount();
         updateCartDisplay();
         saveCartToStorage();
@@ -469,25 +543,56 @@ function hideNotification() {
     }
 }
 
-// Save cart to localStorage
+// FIXED: Save cart to localStorage using consistent storage
 function saveCartToStorage() {
     try {
+        // Save homepage cart format for modal display
         localStorage.setItem('electraedge_cart', JSON.stringify(cart));
+        console.log('✅ Homepage cart saved to storage');
     } catch (error) {
         console.log('Storage not available in this environment');
     }
 }
 
-// Load cart from localStorage
+// FIXED: Load cart from localStorage - sync with shared cart
 function loadCartFromStorage() {
     try {
+        // Load shared cart first (for consistency with other pages)
+        const sharedCart = JSON.parse(localStorage.getItem('cart')) || [];
+        
+        // Load homepage cart format
         const savedCart = localStorage.getItem('electraedge_cart');
         if (savedCart) {
             cart = JSON.parse(savedCart);
-            updateCartCount();
         }
+        
+        // Sync carts if they're out of sync
+        syncCartSystems();
+        
+        updateCartCount();
+        console.log('✅ Cart loaded from storage');
     } catch (error) {
         console.log('Storage not available in this environment');
+    }
+}
+
+// Sync between homepage cart and shared cart
+function syncCartSystems() {
+    const sharedCart = JSON.parse(localStorage.getItem('cart')) || [];
+    
+    // If shared cart has items but homepage cart doesn't, create placeholder items
+    if (sharedCart.length > 0 && cart.length === 0) {
+        sharedCart.forEach(productId => {
+            // Create placeholder items for products in shared cart
+            cart.push({
+                id: productId,
+                name: `Product ${productId}`,
+                emoji: '📦',
+                price: 0, // Will be updated when actual product info is available
+                quantity: 1
+            });
+        });
+        saveCartToStorage();
     }
 }
 
@@ -534,5 +639,43 @@ document.addEventListener('keydown', function(e) {
         if (dropdownMenu && dropdownMenu.style.display === 'block') {
             dropdownMenu.style.display = 'none';
         }
+    }
+});
+
+// 🔄 SESSION PERSISTENCE: Handle page navigation
+window.addEventListener('beforeunload', function() {
+    // Store session state in sessionStorage for quick recovery
+    if (currentUser) {
+        try {
+            sessionStorage.setItem('tempUserSession', JSON.stringify({
+                user: currentUser,
+                timestamp: Date.now()
+            }));
+        } catch (error) {
+            console.log('Cannot save temp session');
+        }
+    }
+});
+
+// Quick session recovery on page load
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        const tempSession = sessionStorage.getItem('tempUserSession');
+        if (tempSession) {
+            const sessionData = JSON.parse(tempSession);
+            const now = Date.now();
+            
+            // If temp session is less than 30 seconds old, use it temporarily
+            if (now - sessionData.timestamp < 30000) {
+                console.log('🔄 Using temporary session data');
+                currentUser = sessionData.user;
+                sessionCheckComplete = true;
+                
+                // Still do the real session check in background
+                setTimeout(checkUserSession, 500);
+            }
+        }
+    } catch (error) {
+        console.log('Cannot load temp session');
     }
 });

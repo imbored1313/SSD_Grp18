@@ -1,4 +1,4 @@
-// catalog.js - Product Catalog JavaScript with COMPLETE FIXED Session Management
+// catalog.js - Product Catalog JavaScript with FINAL SESSION PERSISTENCE FIXES
 
 let currentUser = null;
 let sessionCheckInProgress = false;
@@ -8,12 +8,42 @@ let sessionCheckComplete = false;
 document.addEventListener('DOMContentLoaded', function () {
     console.log('=== CATALOG PAGE LOADED ===');
 
+    // Quick session recovery first
+    quickSessionRecovery();
+
     // Start session check immediately
     checkUserSession();
 
     // Initialize catalog features
     initializeCatalogFeatures();
 });
+
+// Quick session recovery from sessionStorage
+function quickSessionRecovery() {
+    try {
+        const tempSession = sessionStorage.getItem('tempUserSession');
+        if (tempSession) {
+            const sessionData = JSON.parse(tempSession);
+            const now = Date.now();
+            
+            // If temp session is less than 30 seconds old, use it temporarily
+            if (now - sessionData.timestamp < 30000) {
+                console.log('🔄 Using temporary session data for quick recovery');
+                currentUser = sessionData.user;
+                sessionCheckComplete = true;
+                
+                // Update UI immediately with temp data
+                updateUIForLoggedInUser();
+                
+                console.log('✅ Quick session recovery successful for:', currentUser.username);
+                return true;
+            }
+        }
+    } catch (error) {
+        console.log('Cannot load temp session');
+    }
+    return false;
+}
 
 // Initialize catalog features
 function initializeCatalogFeatures() {
@@ -38,9 +68,13 @@ function initializeCatalogFeatures() {
 
 // Check user session and update UI accordingly
 async function checkUserSession() {
-    console.log('=== CHECKING USER SESSION ===');
+    console.log('=== CHECKING USER SESSION (CATALOG) ===');
     sessionCheckInProgress = true;
-    sessionCheckComplete = false;
+    
+    // Don't reset sessionCheckComplete if we have quick recovery data
+    if (!currentUser) {
+        sessionCheckComplete = false;
+    }
 
     try {
         console.log('Making request to php/check_session.php');
@@ -58,27 +92,58 @@ async function checkUserSession() {
 
         if (response.ok && result.success && result.user) {
             console.log('✅ User is logged in:', result.user.username);
+            
+            // Update current user data with fresh info
             currentUser = result.user;
             updateUIForLoggedInUser();
+            
+            // Store fresh session for quick recovery
+            storeSessionForQuickRecovery();
         } else {
             console.log('❌ User not logged in:', result.message);
             currentUser = null;
             updateUIForLoggedOutUser();
+            
+            // Clear any temp session data
+            try {
+                sessionStorage.removeItem('tempUserSession');
+            } catch (error) {
+                console.log('Cannot clear temp session');
+            }
         }
     } catch (error) {
         console.error('❌ Error checking session:', error);
-        currentUser = null;
-        updateUIForLoggedOutUser();
+        
+        // If we had quick recovery data and real check fails, keep using it temporarily
+        if (!currentUser) {
+            currentUser = null;
+            updateUIForLoggedOutUser();
+        }
     } finally {
         sessionCheckInProgress = false;
         sessionCheckComplete = true;
-        console.log('✅ Session check completed. User:', currentUser ? currentUser.username : 'not logged in');
+        console.log('✅ Session check completed (CATALOG). User:', currentUser ? currentUser.username : 'not logged in');
+    }
+}
+
+// Store session for quick recovery
+function storeSessionForQuickRecovery() {
+    if (currentUser) {
+        try {
+            sessionStorage.setItem('tempUserSession', JSON.stringify({
+                user: currentUser,
+                timestamp: Date.now()
+            }));
+            console.log('✅ Session stored for quick recovery');
+        } catch (error) {
+            console.log('Cannot save temp session');
+        }
     }
 }
 
 // Update UI for logged in user
 function updateUIForLoggedInUser() {
-    console.log('=== UPDATING UI FOR LOGGED IN USER ===');
+    console.log('=== UPDATING UI FOR LOGGED IN USER (CATALOG) ===');
 
     const navActions = document.querySelector('.nav-actions');
     console.log('Nav actions element found:', !!navActions);
@@ -126,7 +191,7 @@ function updateUIForLoggedInUser() {
 
 // Update UI for logged out user
 function updateUIForLoggedOutUser() {
-    console.log('=== UPDATING UI FOR LOGGED OUT USER ===');
+    console.log('=== UPDATING UI FOR LOGGED OUT USER (CATALOG) ===');
 
     const navActions = document.querySelector('.nav-actions');
     const userDropdown = navActions ? navActions.querySelector('.user-dropdown') : null;
@@ -163,7 +228,7 @@ document.addEventListener('click', function (event) {
 
 // Logout function
 async function logout() {
-    console.log('=== LOGGING OUT ===');
+    console.log('=== LOGGING OUT (CATALOG) ===');
 
     try {
         const response = await fetch('php/logout.php', {
@@ -176,15 +241,26 @@ async function logout() {
         if (result.success) {
             console.log('✅ Logout successful');
             currentUser = null;
+            
+            // Clear temp session
+            try {
+                sessionStorage.removeItem('tempUserSession');
+            } catch (error) {
+                console.log('Cannot clear temp session');
+            }
+            
             updateUIForLoggedOutUser();
-            window.location.href = 'index.html';
+            showNotification('Logged out successfully!', 'success');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
         } else {
             console.error('❌ Logout failed:', result.error);
-            alert('Logout failed. Please try again.');
+            showNotification('Logout failed. Please try again.', 'error');
         }
     } catch (error) {
         console.error('❌ Logout error:', error);
-        alert('Logout failed. Please try again.');
+        showNotification('Logout failed. Please try again.', 'error');
     }
 }
 
@@ -228,16 +304,16 @@ function sortProducts(sortOrder) {
     productCards.forEach(card => productGrid.appendChild(card));
 }
 
-// 🔐 AUTHENTICATION LAYER: Main add to cart function with authentication
+// 🔐 AUTHENTICATION LAYER: Main add to cart function with improved authentication
 async function addToCart(productId) {
-    console.log('=== ADD TO CART CLICKED ===');
+    console.log('=== ADD TO CART CLICKED (CATALOG) ===');
     console.log('Product ID:', productId);
-    console.log('Current state - sessionCheckComplete:', sessionCheckComplete, 'currentUser:', currentUser?.username || 'null');
+    console.log('Current state - sessionCheckComplete:', sessionCheckComplete, 'sessionCheckInProgress:', sessionCheckInProgress, 'currentUser:', currentUser?.username || 'null');
 
     // Strategy 1: If session check is still in progress, wait for it
     if (sessionCheckInProgress) {
         console.log('⏳ Session check in progress, waiting...');
-        showNotification('Checking login status...');
+        showNotification('Checking login status...', 'info');
         
         // Wait for session check to complete (max 5 seconds)
         let waitTime = 0;
@@ -248,16 +324,16 @@ async function addToCart(productId) {
         hideNotification();
     }
 
-    // Strategy 2: If we have a user from the initial check, trust it
+    // Strategy 2: If we have a user from session check/recovery, trust it
     if (currentUser && sessionCheckComplete) {
         console.log('✅ Using cached user session:', currentUser.username);
         addItemToCart(productId);
         return;
     }
 
-    // Strategy 3: If no cached user or session check not complete, do ONE fresh check
-    console.log('🔄 Doing verification check...');
-    showNotification('Verifying login status...');
+    // Strategy 3: If no cached user, do ONE fresh check
+    console.log('🔄 No cached user, doing fresh verification check...');
+    showNotification('Verifying login status...', 'info');
     
     try {
         const response = await fetch('php/check_session.php', {
@@ -271,10 +347,15 @@ async function addToCart(productId) {
         if (response.ok && result.success && result.user) {
             console.log('✅ Fresh session check confirmed user:', result.user.username);
             currentUser = result.user;
+            
             // Update UI if it wasn't updated before
             if (document.querySelector('a[href="login.html"]')) {
                 updateUIForLoggedInUser();
             }
+            
+            // Store for quick recovery
+            storeSessionForQuickRecovery();
+            
             hideNotification();
             addItemToCart(productId);
         } else {
@@ -379,12 +460,21 @@ function hideNotification() {
     }
 }
 
+// 🔄 SESSION PERSISTENCE: Handle page navigation
+window.addEventListener('beforeunload', function() {
+    // Store session state in sessionStorage for quick recovery
+    if (currentUser) {
+        storeSessionForQuickRecovery();
+    }
+});
+
 // 🔄 PAGE REFRESH HANDLER: Ensure session state is maintained
 window.addEventListener('pageshow', function(event) {
     // Handle browser back/forward navigation
     if (event.persisted) {
         console.log('Page loaded from cache, refreshing session check...');
-        checkUserSession();
+        quickSessionRecovery();
+        setTimeout(checkUserSession, 500);
     }
 });
 
