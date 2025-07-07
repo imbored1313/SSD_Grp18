@@ -1,15 +1,58 @@
-// js/cart.js - SIMPLIFIED with session manager
+// js/cart.js - DEBUG version to find session mismatch
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('=== CART PAGE LOADED ===');
-
-    // Use session manager to check login
-    const loginRequired = await window.sessionManager.requireLogin();
-    if (!loginRequired) {
-        return; // Will redirect to login
+    
+    // Debug: Check what session manager thinks
+    if (window.sessionManager.isLoggedIn()) {
+        const user = window.sessionManager.getUser();
+        console.log('🟢 Session Manager says user IS logged in:', user);
+    } else {
+        console.log('🔴 Session Manager says user is NOT logged in');
     }
 
-    // User is logged in, load cart
-    loadCartFromDB();
+    // Debug: Check what PHP thinks
+    console.log('🔍 Now checking what PHP thinks...');
+    
+    try {
+        const sessionCheck = await fetch('php/check_session.php', {
+            method: 'GET',
+            credentials: 'include',
+            cache: 'no-cache'
+        });
+        const sessionResult = await sessionCheck.json();
+        console.log('🟢 PHP check_session.php says:', sessionResult);
+    } catch (error) {
+        console.log('🔴 Error checking PHP session:', error);
+    }
+
+    // Debug: Try to load cart and see what get_cart.php says
+    console.log('🔍 Now trying to load cart...');
+    
+    try {
+        const cartResponse = await fetch('php/get_cart.php', {
+            method: 'GET',
+            credentials: 'include'
+        });
+        const cartResult = await cartResponse.json();
+        console.log('🟢 PHP get_cart.php says:', cartResult);
+        
+        if (cartResult.success) {
+            if (cartResult.cart.length === 0) {
+                displayEmptyCart();
+            } else {
+                displayCartItems(cartResult.cart);
+            }
+            updateCartCount(cartResult.cartCount || 0);
+        } else {
+            console.log('🔴 Cart load failed:', cartResult.message);
+            console.log('🔍 This means get_cart.php cannot find session data');
+            displayEmptyCart();
+            updateCartCount(0);
+        }
+    } catch (error) {
+        console.error("🔴 Cart load error:", error);
+        displayEmptyCart();
+    }
 });
 
 function loadCartFromDB() {

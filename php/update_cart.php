@@ -1,42 +1,99 @@
 <?php
-// ===== php/update_cart.php - PDO VERSION =====
+// ===== php/update_cart.php =====
 require_once(__DIR__ . '/config.php');
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 header('Content-Type: application/json');
+header('Access-Control-Allow-Credentials: true');
 
-if (!isset($_SESSION['user']['user_id'])) {
-    echo json_encode(['success' => false, 'message' => 'Not logged in']);
-    exit;
-}
-
-$user_id = $_SESSION['user']['user_id'];
-$data = json_decode(file_get_contents('php://input'), true);
-
-$product_id = $data['product_id'];
-$quantity = $data['quantity'];
-
-if ($quantity < 1) {
-    echo json_encode(['success' => false, 'message' => 'Quantity must be at least 1']);
-    exit;
-}
+logSessionDebug("=== UPDATE CART REQUEST ===");
 
 try {
-    $database = new Database();
-    $conn = $database->getConnection();
+    // Check authentication
+    $user = requireAuthentication();
+    $user_id = $user['user_id'];
     
-    $stmt = $conn->prepare("UPDATE Cart SET quantity = ? WHERE user_id = ? AND product_id = ?");
+    // Get POST data
+    $input = json_decode(file_get_contents('php://input'), true);
+    $product_id = intval($input['product_id'] ?? 0);
+    $quantity = intval($input['quantity'] ?? 1);
     
-    if ($stmt->execute([$quantity, $user_id, $product_id])) {
-        echo json_encode(['success' => true]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to update cart']);
+    if ($product_id <= 0) {
+        throw new Exception("Invalid product ID");
     }
+    
+    if ($quantity < 0) {
+        throw new Exception("Invalid quantity");
+    }
+    
+    logSessionDebug("Updating cart item", [
+        'user_id' => $user_id,
+        'product_id' => $product_id,
+        'quantity' => $quantity
+    ]);
+    
+    $database = new Database();
+    $db = $database->getConnection();
+    
+    // If quantity is 0, delete the item
+    if ($quantity == 0) {
+        $deleteQuery = "DELETE FROM Cart WHERE user_id = :user_id AND product_id = :product_id";
+        $deleteStmt = $db->prepare($deleteQuery);
+        $deleteStmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+        $deleteStmt->bindParam(':product_id', $product_id, PDO::PARAM_INT);
+        $deleteStmt->execute();
+        
+        logSessionDebug("✅ Removed cart item (quantity = 0)");
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Item removed from cart'
+        ]);
+        exit;
+    }
+    
+    // Check product stock
+    $productQuery = "SELECT name, stock FROM Products WHERE product_id = :product_id";
+    $productStmt = $db->prepare($productQuery);
+    $productStmt->bindParam(':product_id', $product_id, PDO::PARAM_INT);
+    $productStmt->execute();
+    $product = $productStmt->fetch();
+    
+    if (!$product) {
+        throw new Exception("Product not found");
+    }
+    
+    if ($product['stock'] < $quantity) {
+        throw new Exception("Not enough stock available. Only " . $product['stock'] . " items left.");
+    }
+    
+    // Update cart item
+    $updateQuery = "UPDATE Cart SET quantity = :quantity WHERE user_id = :user_id AND product_id = :product_id";
+    $updateStmt = $db->prepare($updateQuery);
+    $updateStmt->bindParam(':quantity', $quantity, PDO::PARAM_INT);
+    $updateStmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+    $updateStmt->bindParam(':product_id', $product_id, PDO::PARAM_INT);
+    $updateStmt->execute();
+    
+    if ($updateStmt->rowCount() == 0) {
+        throw new Exception("Cart item not found");
+    }
+    
+    logSessionDebug("✅ Cart item updated successfully");
+    
+    echo json_encode([
+        'success' => true,
+        'message' => 'Cart updated successfully',
+        'product_name' => $product['name']
+    ]);
+    
 } catch (Exception $e) {
-    error_log("Update cart error: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Failed to update cart']);
+    logSessionDebug("❌ Update cart error: " . $e->getMessage());
+    
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => $e->getMessage()
+    ]);
 }
+
 ?>
