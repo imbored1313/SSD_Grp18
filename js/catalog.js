@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('=== CATALOG PAGE LOADED ===');
     
     // Start session check immediately
-    //checkUserSession();
+    checkUserSession();
     
     // Initialize catalog features
     initializeCatalogFeatures();

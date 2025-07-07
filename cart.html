@@ -19,10 +19,6 @@
             .then(res => res.text())
             .then(data => {
                 document.getElementById('header-placeholder').innerHTML = data;
-                // Now that header is loaded, run session check
-                if (typeof checkUserSession === 'function') {
-                    checkUserSession();
-                }
             });
 
     </script>
