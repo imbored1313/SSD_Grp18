@@ -38,6 +38,29 @@ try {
     $lastName = sanitizeInput($_POST['lastName'] ?? '');
     $email = sanitizeInput($_POST['email'] ?? '');
     $phone = sanitizeInput($_POST['phone'] ?? '');
+
+    // Get entered password
+    $enteredPassword = $_POST['verifyPassword'] ?? '';
+
+    if (empty($enteredPassword)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Password confirmation is required']);
+        exit;
+    }
+    
+    // Fetch user's password
+    $passQuery = "SELECT password_hash FROM Users WHERE user_id = :user_id";
+    $passStmt = $db->prepare($passQuery);
+    $passStmt->bindParam(':user_id', $userId);
+    $passStmt->execute();
+    $stored = $passStmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$stored || !password_verify($enteredPassword, $stored['password_hash'])) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Incorrect password']);
+        exit;
+    }
+
 // Validate required fields
     if (empty($firstName) || empty($lastName) || empty($email)) {
         http_response_code(400);

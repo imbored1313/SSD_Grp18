@@ -140,6 +140,7 @@ async function handleProfileUpdate(e)
     formData.append('lastName', document.getElementById('lastName').value.trim());
     formData.append('email', document.getElementById('email').value.trim());
     formData.append('phone', document.getElementById('phone').value.trim());
+    formData.append('verifyPassword', document.getElementById('verifyPassword').value.trim());
 
     // Client-side validation
     const firstName = formData.get('firstName');
@@ -199,7 +200,11 @@ async function handleProfileUpdate(e)
             showNotification('Profile updated successfully!', 'success');
             cancelEdit();
         } else {
-            showNotification('Error updating profile: ' + (result.error || 'Unknown error'), 'error');
+            if (result.error === 'Incorrect password'){
+                document.getElementById('verifyPasswordError').textContent = 'Incorrect password';
+            } else{
+                showNotification('Error updating profile: ' + (result.error || 'Unknown error'), 'error');
+            }
         }
     } catch (error) {
         console.error('Profile update error:', error);
