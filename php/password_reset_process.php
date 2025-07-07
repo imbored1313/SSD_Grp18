@@ -2,6 +2,19 @@
 
 require_once(__DIR__ . '/config.php');
 ensureSessionStarted();
+
+// Rate Limiting logic for reset request
+$now = time();
+$lastRequest = $_SESSION['last_reset_request'] ?? 0;
+
+if ($now - $lastRequest < 60) {
+    http_response_code(429);
+    echo json_encode(['success' => false, 'error' => 'Too many requests. Try again in 1 minute.']);
+    exit;
+}
+
+$_SESSION['last_reset_request'] = $now;
+
 require_once 'email_config.php';
 header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

@@ -29,10 +29,21 @@ try {
         exit;
     }
 
+    // Track incorrect attempts per session
+    if (!isset($_SESSION['code_attempts'])) {
+        $_SESSION['code_attempts'] = 0;
+    }
+    if ($_SESSION['code_attempts'] >= 5) {
+        unset($_SESSION['reset_code'], $_SESSION['reset_email'], $_SESSION['reset_user_id'], $_SESSION['reset_expires'], $_SESSION['code_attempts']);
+        http_response_code(429);
+        echo json_encode(['error' => 'Too many incorrect attempts. Please request a new code.']);
+        exit;
+    }
+
     // Check if code is expired
     if (time() > $_SESSION['reset_expires']) {
         // Clear session
-        unset($_SESSION['reset_code'], $_SESSION['reset_email'], $_SESSION['reset_user_id'], $_SESSION['reset_expires']);
+        unset($_SESSION['reset_code'], $_SESSION['reset_email'], $_SESSION['reset_user_id'], $_SESSION['reset_expires'], , $_SESSION['code_attempts']);
         http_response_code(400);
         echo json_encode(['error' => 'Reset code has expired. Please request a new one.']);
         exit;
@@ -40,6 +51,7 @@ try {
 
     // Verify code
     if ($code !== $_SESSION['reset_code']) {
+        $_SESSION['code_attempts'] += 1;
         http_response_code(400);
         echo json_encode(['error' => 'Invalid verification code']);
         exit;
@@ -75,7 +87,7 @@ try {
         $logStmt->execute();
 
         // Clear session data
-        unset($_SESSION['reset_code'], $_SESSION['reset_email'], $_SESSION['reset_user_id'], $_SESSION['reset_expires']);
+        unset($_SESSION['reset_code'], $_SESSION['reset_email'], $_SESSION['reset_user_id'], $_SESSION['reset_expires'], $_SESSION['code_attempts']);
 
         echo json_encode([
             'success' => true,
