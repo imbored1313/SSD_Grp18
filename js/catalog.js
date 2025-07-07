@@ -1,4 +1,4 @@
-// catalog.js - SIMPLIFIED using session manager
+// catalog.js - FIXED to add items to database instead of localStorage
 document.addEventListener('DOMContentLoaded', function () {
     console.log('=== CATALOG PAGE LOADED ===');
     
@@ -151,7 +151,7 @@ function sortProducts(sortOrder) {
     productCards.forEach(card => productGrid.appendChild(card));
 }
 
-// Add to cart function using session manager
+// FIXED: Add to cart function - saves to database instead of localStorage
 async function addToCart(productId) {
     console.log('=== ADD TO CART CLICKED (CATALOG) ===');
     console.log('Product ID:', productId);
@@ -162,33 +162,75 @@ async function addToCart(productId) {
         return; // Will redirect to login
     }
     
-    // User is authenticated, add to cart
-    addItemToCart(productId);
+    // User is authenticated, add to database
+    await addItemToDatabase(productId);
 }
 
-// Add item to cart (only called when user is authenticated)
-function addItemToCart(productId) {
-    console.log('✅ Adding product to cart:', productId);
+// FIXED: Add item to database instead of localStorage
+async function addItemToDatabase(productId) {
+    console.log('✅ Adding product to database:', productId);
     
-    let cart = JSON.parse(localStorage.getItem('cart')) || [];
-    const productIdStr = productId.toString();
-    
-    // Check if item is already in cart
-    if (!cart.includes(productIdStr)) {
-        cart.push(productIdStr);
-        localStorage.setItem('cart', JSON.stringify(cart));
+    try {
+        // Show loading state
+        showNotification('Adding to cart...', 'info');
         
-        // Update cart count in header if function exists
-        if (typeof updateCartCount === 'function') {
-            updateCartCount();
+        const response = await fetch('php/add_to_cart.php', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                product_id: parseInt(productId), 
+                quantity: 1 
+            })
+        });
+
+        console.log('Add to cart response status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Add to cart response:', data);
+        
+        if (data.success) {
+            console.log('✅ Product successfully added to cart in database');
+            showNotification(`${data.product_name || 'Product'} added to cart!`, 'success');
+            
+            // Update cart count in header
+            updateCartCountInHeader();
+            
+        } else {
+            console.error('❌ Add to cart failed:', data.message);
+            showNotification('Failed to add to cart: ' + (data.message || 'Unknown error'), 'error');
         }
         
-        // Show success message
-        showNotification('Product added to cart!', 'success');
-        console.log('✅ Product successfully added to cart');
-    } else {
-        showNotification('Product is already in your cart!', 'info');
-        console.log('ℹ️ Product was already in cart');
+    } catch (error) {
+        console.error('💥 Add to cart error:', error);
+        showNotification('Failed to add to cart. Please try again.', 'error');
+    }
+}
+
+// Update cart count in header
+async function updateCartCountInHeader() {
+    try {
+        const response = await fetch('php/get_cart.php', {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                const cartCount = document.getElementById('cartCount');
+                if (cartCount) {
+                    cartCount.textContent = data.cartCount || 0;
+                }
+                console.log('🔄 Cart count updated:', data.cartCount);
+            }
+        }
+    } catch (error) {
+        console.error('Failed to update cart count:', error);
     }
 }
 
@@ -220,6 +262,7 @@ function showNotification(message, type = 'success') {
         box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         font-family: Arial, sans-serif;
         font-size: 14px;
+        transition: opacity 0.3s ease;
     `;
     
     notification.textContent = message;
@@ -227,7 +270,28 @@ function showNotification(message, type = 'success') {
     
     setTimeout(() => {
         if (notification.parentNode) {
-            notification.remove();
+            notification.style.opacity = '0';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
         }
     }, 3000);
 }
+
+// Debug function to check current cart in database
+async function debugCartDatabase() {
+    try {
+        const response = await fetch('php/get_cart.php', {
+            method: 'GET',
+            credentials: 'include'
+        });
+        const data = await response.json();
+        console.log('🔍 Current cart in database:', data);
+    } catch (error) {
+        console.error('Failed to check cart:', error);
+    }
+}
+
+// Call this function in browser console to debug: debugCartDatabase()
