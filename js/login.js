@@ -16,12 +16,12 @@ document.addEventListener('DOMContentLoaded', function () {
 // Check if user is already logged in and redirect if so
 async function checkExistingSession() {
     console.log('Checking existing session...');
-    
+
     // Wait for session manager to complete its check
     if (window.sessionManager.sessionCheckInProgress) {
         await window.sessionManager.waitForSessionCheck();
     }
-    
+
     if (window.sessionManager.isLoggedIn()) {
         const user = window.sessionManager.getUser();
         console.log('✅ User already logged in, redirecting...');
@@ -90,6 +90,20 @@ async function handleLoginSubmit(e) {
             console.log('✅ Login successful');
             showNotification('Login successful! Redirecting...', 'success');
 
+            // DEBUG: Check session immediately after login
+            setTimeout(async () => {
+                const sessionCheck = await fetch('php/check_session.php', {
+                    method: 'GET',
+                    credentials: 'include',
+                    cache: 'no-cache'
+                });
+                const sessionResult = await sessionCheck.json();
+                console.log('🔍 Session check RIGHT after login:', sessionResult);
+            }, 500);
+
+            // Clear form
+            document.getElementById('loginForm').reset();
+
             // Clear form
             document.getElementById('loginForm').reset();
 
@@ -141,7 +155,7 @@ async function syncCartAfterLogin() {
             });
 
             const data = await response.json();
-            
+
             if (data.success) {
                 console.log('✅ Cart synced to database.');
             } else {

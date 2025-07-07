@@ -24,9 +24,22 @@ error_log("Request Method: " . $_SERVER['REQUEST_METHOD']);
 error_log("Session ID: " . session_id());
 error_log("Session Status: " . session_status());
 error_log("Session data: " . print_r($_SESSION, true));
-error_log("Cookies received: " . print_r($_COOKIE, true));
+error_log("Session cookie: " . ($_COOKIE[session_name()] ?? 'not set'));
 error_log("User Agent: " . ($_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'));
 error_log("Remote IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'Unknown'));
+
+// CHECK WHAT'S ACTUALLY IN SESSION
+if (isset($_SESSION['user'])) {
+    error_log("✅ SESSION USER ARRAY: " . print_r($_SESSION['user'], true));
+} else {
+    error_log("❌ NO SESSION USER ARRAY");
+}
+
+if (isset($_SESSION['user_id'])) {
+    error_log("✅ SESSION USER_ID: " . $_SESSION['user_id']);
+} else {
+    error_log("❌ NO SESSION USER_ID");
+}
 
 try {
     // Check if this is a valid GET request
