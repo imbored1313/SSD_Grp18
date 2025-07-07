@@ -1,5 +1,5 @@
 <?php
-// check_session.php - Improved session management with better error handling
+// improved_check_session.php - Enhanced session management with database validation
 
 require_once(__DIR__ . '/config.php');
 
@@ -19,14 +19,12 @@ header('Pragma: no-cache');
 header('Expires: 0');
 
 // Enhanced debug logging
-error_log("=== SESSION CHECK DEBUG ===");
+error_log("=== ENHANCED SESSION CHECK DEBUG ===");
 error_log("Request Method: " . $_SERVER['REQUEST_METHOD']);
 error_log("Session ID: " . session_id());
 error_log("Session Status: " . session_status());
 error_log("Session data: " . print_r($_SESSION, true));
 error_log("Cookies received: " . print_r($_COOKIE, true));
-error_log("User Agent: " . ($_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'));
-error_log("Remote IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'Unknown'));
 
 try {
     // Check if this is a valid GET request
@@ -39,31 +37,20 @@ try {
         exit;
     }
 
-    // Check if session exists and has user data
+    // Initialize variables
     $sessionValid = false;
     $userData = null;
+    $sessionId = session_id();
 
-    // Strategy 1: Check for user data in session array format (preferred)
+    // Strategy 1: Check for user data in PHP session
     if (isset($_SESSION['user']) && is_array($_SESSION['user']) && isset($_SESSION['user']['user_id'])) {
         error_log("✅ Found user session in array format: " . $_SESSION['user']['username']);
-        $sessionValid = true;
-        $userData = [
-            'id' => $_SESSION['user']['user_id'],
-            'user_id' => $_SESSION['user']['user_id'],
-            'username' => $_SESSION['user']['username'],
-            'email' => $_SESSION['user']['email'],
-            'first_name' => $_SESSION['user']['first_name'] ?? '',
-            'last_name' => $_SESSION['user']['last_name'] ?? '',
-            'role' => $_SESSION['user']['role'] ?? 'user',
-            'is_verified' => $_SESSION['user']['is_verified'] ?? false
-        ];
-    }
-    // Strategy 2: Check for individual session variables (fallback)
-    elseif (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+        $userId = $_SESSION['user']['user_id'];
+        $userData = $_SESSION['user'];
+    } elseif (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
         error_log("✅ Found user session in individual variables: " . ($_SESSION['username'] ?? 'unknown'));
-        $sessionValid = true;
+        $userId = $_SESSION['user_id'];
         $userData = [
-            'id' => $_SESSION['user_id'],
             'user_id' => $_SESSION['user_id'],
             'username' => $_SESSION['username'] ?? '',
             'email' => $_SESSION['email'] ?? '',
@@ -74,46 +61,105 @@ try {
         ];
     }
 
-    if ($sessionValid && $userData) {
-        // Optional: Verify session against database
+    // Strategy 2: Validate session against database Sessions table
+    if ($userData && isset($userId)) {
         try {
             $database = new Database();
             $db = $database->getConnection();
             
             if ($db) {
-                // Check if user still exists and is active
-                $query = "SELECT user_id, username, email, role, is_verified FROM Users WHERE user_id = :user_id";
-                $stmt = $db->prepare($query);
-                $stmt->bindParam(':user_id', $userData['user_id']);
-                $stmt->execute();
-                $dbUser = $stmt->fetch();
+                // Check if session exists and is valid in Sessions table
+                $sessionQuery = "SELECT s.session_id, s.user_id, s.token, s.expiry_time, s.is_active,
+                                       u.user_id, u.username, u.email, u.first_name, u.last_name, u.role, u.is_verified
+                                FROM Sessions s
+                                JOIN Users u ON s.user_id = u.user_id
+                                WHERE s.session_id = :session_id 
+                                AND s.user_id = :user_id 
+                                AND s.is_active = TRUE 
+                                AND s.expiry_time > NOW()";
                 
-                if ($dbUser) {
-                    // Update user data with latest from database
+                $stmt = $db->prepare($sessionQuery);
+                $stmt->bindParam(':session_id', $sessionId);
+                $stmt->bindParam(':user_id', $userId);
+                $stmt->execute();
+                $sessionData = $stmt->fetch();
+                
+                if ($sessionData) {
+                    // Session is valid in database
+                    error_log("✅ Session validated against database for user: " . $sessionData['username']);
+                    
+                    // Update session data with latest from database
                     $userData = [
-                        'id' => $dbUser['user_id'],
-                        'user_id' => $dbUser['user_id'],
-                        'username' => $dbUser['username'],
-                        'email' => $dbUser['email'],
-                        'first_name' => $userData['first_name'], // Keep session data for these
-                        'last_name' => $userData['last_name'],   // as they might not be in query
-                        'role' => $dbUser['role'],
-                        'is_verified' => $dbUser['is_verified']
+                        'id' => $sessionData['user_id'],
+                        'user_id' => $sessionData['user_id'],
+                        'username' => $sessionData['username'],
+                        'email' => $sessionData['email'],
+                        'first_name' => $sessionData['first_name'] ?? '',
+                        'last_name' => $sessionData['last_name'] ?? '',
+                        'role' => $sessionData['role'],
+                        'is_verified' => $sessionData['is_verified']
                     ];
                     
-                    error_log("✅ Session verified against database for user: " . $dbUser['username']);
+                    // Update PHP session with fresh data
+                    $_SESSION['user'] = $userData;
+                    $_SESSION['user_id'] = $userData['user_id'];
+                    $_SESSION['username'] = $userData['username'];
+                    $_SESSION['email'] = $userData['email'];
+                    $_SESSION['role'] = $userData['role'];
+                    
+                    // Extend session expiry by 1 hour
+                    $newExpiryTime = date('Y-m-d H:i:s', strtotime('+1 hour'));
+                    $updateQuery = "UPDATE Sessions SET expiry_time = :expiry_time WHERE session_id = :session_id";
+                    $updateStmt = $db->prepare($updateQuery);
+                    $updateStmt->bindParam(':expiry_time', $newExpiryTime);
+                    $updateStmt->bindParam(':session_id', $sessionId);
+                    $updateStmt->execute();
+                    
+                    $sessionValid = true;
+                    error_log("✅ Session extended until: " . $newExpiryTime);
                 } else {
-                    // User no longer exists in database, invalidate session
-                    error_log("❌ User no longer exists in database, invalidating session");
+                    // Session not found or expired in database
+                    error_log("❌ Session not found or expired in database, invalidating PHP session");
+                    
+                    // Clean up invalid session
+                    session_unset();
                     session_destroy();
+                    
                     $sessionValid = false;
                     $userData = null;
                 }
+            } else {
+                error_log("⚠️ Database connection failed, using PHP session data");
+                // Fallback to PHP session if database is unavailable
+                $sessionValid = true;
             }
         } catch (Exception $dbError) {
-            // Database error, but don't invalidate session
-            error_log("⚠️ Database verification failed, but keeping session: " . $dbError->getMessage());
-            // Continue with session data we have
+            error_log("⚠️ Database session validation failed: " . $dbError->getMessage());
+            // Fallback to PHP session if database query fails
+            $sessionValid = true;
+        }
+    }
+
+    // Strategy 3: Clean up expired sessions in database (maintenance)
+    if ($sessionValid) {
+        try {
+            $database = new Database();
+            $db = $database->getConnection();
+            
+            if ($db) {
+                // Clean up expired sessions (run occasionally)
+                if (rand(1, 100) <= 5) { // 5% chance to run cleanup
+                    $cleanupQuery = "UPDATE Sessions SET is_active = FALSE WHERE expiry_time < NOW() AND is_active = TRUE";
+                    $cleanupStmt = $db->prepare($cleanupQuery);
+                    $cleanupStmt->execute();
+                    $cleanedCount = $cleanupStmt->rowCount();
+                    if ($cleanedCount > 0) {
+                        error_log("🧹 Cleaned up $cleanedCount expired sessions");
+                    }
+                }
+            }
+        } catch (Exception $cleanupError) {
+            error_log("⚠️ Session cleanup failed: " . $cleanupError->getMessage());
         }
     }
 
@@ -123,15 +169,19 @@ try {
             'success' => true,
             'user' => $userData,
             'timestamp' => time(),
-            'session_id' => session_id()
+            'session_id' => $sessionId,
+            'session_source' => 'database_validated'
         ]);
+        
+        // Log successful session check
+        error_log("✅ Session check successful for user: " . $userData['username']);
     } else {
         error_log("❌ No valid session data found");
         echo json_encode([
             'success' => false,
             'message' => 'User not logged in',
             'timestamp' => time(),
-            'session_id' => session_id()
+            'session_id' => $sessionId
         ]);
     }
 
@@ -147,6 +197,6 @@ try {
         'timestamp' => time()
     ]);
 } finally {
-    // Log the final response for debugging
-    error_log("=== SESSION CHECK COMPLETE ===");
+    error_log("=== ENHANCED SESSION CHECK COMPLETE ===");
 }
+?>
