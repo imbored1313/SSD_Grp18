@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('=== CATALOG PAGE LOADED ===');
     
     // Start session check immediately
-    checkUserSession();
+    //checkUserSession();
     
     // Initialize catalog features
     initializeCatalogFeatures();
@@ -217,13 +217,25 @@ function sortProducts(sortOrder) {
     productCards.forEach(card => productGrid.appendChild(card));
 }
 
-// Add to cart function (placeholder)
+// Add to cart function 
 function addToCart(productId) {
     if (!currentUser) {
         alert('Please log in to add items to your cart.');
         window.location.href = 'login.html';
         return;
     }
-    
-    alert('Added product ' + productId + ' to cart! (Implement as needed)');
-} 
+
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    cart.push(productId);
+    localStorage.setItem('cart', JSON.stringify(cart));
+
+    alert(`Product ${productId} added to cart!`);
+}
+
+// Handle Add to Cart button clicks
+document.addEventListener('click', function (event) {
+    if (event.target.classList.contains('add-to-cart-btn')) {
+        const productId = event.target.getAttribute('data-product-id');
+        addToCart(productId);
+    }
+});

@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('=== CART PAGE LOADED ===');
     
     // Start session check immediately
-    checkUserSession();
+    //checkUserSession();
     
     // Initialize cart features
     initializeCartFeatures();

@@ -16,8 +16,13 @@
             .then(res => res.text())
             .then(data => {
                 document.getElementById('header-placeholder').innerHTML = data;
+                // Now that header is inserted, start session check
+                if (typeof checkUserSession === 'function') {
+                    checkUserSession();
+                }
             });
     </script>
+
 
 
     <section class="container" style="padding: 4rem 0;">

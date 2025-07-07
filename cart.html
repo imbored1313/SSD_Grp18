@@ -19,7 +19,12 @@
             .then(res => res.text())
             .then(data => {
                 document.getElementById('header-placeholder').innerHTML = data;
+                // Now that header is loaded, run session check
+                if (typeof checkUserSession === 'function') {
+                    checkUserSession();
+                }
             });
+
     </script>
 
     <section class="container" style="max-width: 600px; margin: 2rem auto; padding: 2rem; text-align: center;">
@@ -40,22 +45,33 @@
 
     <script>
         let total = 0;
+        let cartIds = JSON.parse(localStorage.getItem('cart')) || [];
+
         fetch('get_products.php')
             .then(r => r.json())
             .then(products => {
                 const c = document.getElementById('cart-summary');
-                products.forEach(p => {
+                const cartItems = products.filter(p => cartIds.includes(p.product_id));
+
+                if (cartItems.length === 0) {
+                    c.innerHTML = '<p>Your cart is empty.</p>';
+                    return;
+                }
+
+                cartItems.forEach(p => {
                     c.innerHTML += `
-            <div>
-              <img src="${p.image_path}" width="100">
-              <h3>${p.name}</h3>
-              <p>${p.description}</p>
-              <p>Price: $${p.price}</p>
-            </div>`;
+                <div>
+                  <img src="${p.image_path}" width="100">
+                  <h3>${p.name}</h3>
+                  <p>${p.description}</p>
+                  <p>Price: $${p.price}</p>
+                </div>`;
                     total += parseFloat(p.price);
                 });
+
                 document.getElementById('total-amount').innerText = `$${total.toFixed(2)}`;
             });
+
 
         paypal.Buttons({
             createOrder: (data, actions) => {
@@ -77,6 +93,7 @@
                     .then(res => res.json())
                     .then(details => {
                         alert(`Payment complete! Thank you, ${details.payer.name.given_name}.`);
+                        localStorage.removeItem('cart'); // clear cart
                         window.location.href = 'order_cfm.php'; // redirect on success
                     });
             },
