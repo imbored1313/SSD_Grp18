@@ -26,7 +26,7 @@ class EmailService
             $this->mailer->SMTPAuth   = true;
             $this->mailer->Username   = getenv('SMTP_USER');
 // Your Zoho email address
-            $this->mailer->Password   = getenv('SMTP_PASS');
+            $this->mailer->Password   = getenv('SMTP_PASSWORD');
 // Your 16-char app password
             $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $this->mailer->Port       = getenv('SMTP_PORT');
