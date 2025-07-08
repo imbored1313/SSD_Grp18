@@ -22,17 +22,17 @@ class EmailService
         try {
 // Server settings
             $this->mailer->isSMTP();
-            $this->mailer->Host       = 'smtp.zoho.com';
+            $this->mailer->Host       = getenv('SMTP_HOST');
             $this->mailer->SMTPAuth   = true;
-            $this->mailer->Username   = 'admin@electraedge.xyz';
+            $this->mailer->Username   = getenv('SMTP_USER');
 // Your Zoho email address
-            $this->mailer->Password   = '!Huu1FvmV886T`';
+            $this->mailer->Password   = getenv('SMTP_PASS');
 // Your 16-char app password
             $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $this->mailer->Port       = 587;
+            $this->mailer->Port       = getenv('SMTP_PORT');
 // Default sender
-            $this->mailer->setFrom('admin@electraedge.xyz', 'ElectraEdge Team');
-            $this->mailer->addReplyTo('admin@electraedge.xyz', 'ElectraEdge Support');
+            $this->mailer->setFrom(getenv('SMTP_FROM'), 'ElectraEdge Team');
+            $this->mailer->addReplyTo(getenv('SMTP_FROM'), 'ElectraEdge Support');
         } catch (Exception $e) {
             error_log("SMTP Setup Error: " . $e->getMessage());
         }
