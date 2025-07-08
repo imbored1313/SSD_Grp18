@@ -24,8 +24,10 @@ class EmailService
             $this->mailer->isSMTP();
             $this->mailer->Host       = 'smtp.zoho.com';
             $this->mailer->SMTPAuth   = true;
-            $this->mailer->Username = getenv("SMTP_USER");
-            $this->mailer->Password = getenv("SMTP_PASS");
+            $this->mailer->Username   = 'admin@electraedge.xyz';
+// Your Zoho email address
+            $this->mailer->Password   = '!Huu1FvmV886T`';
+// Your 16-char app password
             $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $this->mailer->Port       = 587;
 // Default sender
