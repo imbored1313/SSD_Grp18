@@ -726,8 +726,3 @@ function hideDeleteAccountModal() {
     }
 }
 
-// Download Data functionality (placeholder)
-function downloadData() {
-    alert('Data download functionality will be implemented soon.');
-    // You can implement this to generate a JSON/PDF file with user data
-}
