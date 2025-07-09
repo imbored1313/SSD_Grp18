@@ -214,7 +214,7 @@
             errorDiv.style.display = 'none';
             
             try {
-                const response = await fetch('php/get_products.php');
+                const response = await fetch('get_products.php');
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
