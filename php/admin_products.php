@@ -79,7 +79,6 @@ try {
                             VALUES (?, ?, NOW(), ?)';
                $logStmt = $db->prepare($logQuery);
                $logStmt->bindValue(':user_id', $_SESSION['user']['user_id']);
-               $logStmt->bindValue(':action', "PRODUCT_CREATE: " . $data['name']);
                $logStmt->bindValue(':ip_addr', $_SERVER['REMOTE_ADDR'] ?? 'unknown');
                $logStmt->execute();
             }
@@ -157,10 +156,9 @@ try {
             if ($success) {
                // Direct SQL audit log (UPDATE)
                $logQuery = 'INSERT INTO AuditLogs (user_id, action, timestamp, ip_addr) 
-                            VALUES (?, ?, NOW(), ?)';
+                            VALUES (:user_id, :action, NOW(), :ip_addr)';
                $logStmt = $db->prepare($logQuery);
                $logStmt->bindValue(':user_id', $_SESSION['user']['user_id']);
-               $logStmt->bindValue(':action', "PRODUCT_UPDATE: " . $data['name']);
                $logStmt->bindValue(':ip_addr', $_SERVER['REMOTE_ADDR'] ?? 'unknown');
                $logStmt->execute();
             }
@@ -181,10 +179,9 @@ try {
             if ($success) {
                // Direct SQL audit log (DELETE)
                $logQuery = 'INSERT INTO AuditLogs (user_id, action, timestamp, ip_addr) 
-                            VALUES (?, ?, NOW(), ?)';
+                            VALUES (:user_id, :action, NOW(), :ip_addr)';
                $logStmt = $db->prepare($logQuery);
                $logStmt->bindValue(':user_id', $_SESSION['user']['user_id']);
-               $logStmt->bindValue(':action', "PRODUCT_DELETE: " . $data['name']);
                $logStmt->bindValue(':ip_addr', $_SERVER['REMOTE_ADDR'] ?? 'unknown');
                $logStmt->execute();
             }

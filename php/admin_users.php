@@ -34,8 +34,11 @@ if ($action == 'list') {
         if ($success) {
             // Log the deletion
             $logStmt = $db->prepare("INSERT INTO AuditLogs (user_id, action, timestamp, ip_addr) 
-                                      VALUES (?, 'USER_DELETED', NOW(), ?)");
-            $logStmt->execute([$_SESSION['user']['user_id'], $_SERVER['REMOTE_ADDR']]);
+                                      VALUES (:user_id, 'USER_DELETED', NOW(), :ip_addr)");
+            $logStmt->execute([
+                'user_id' => $_SESSION['user']['user_id'],
+                'ip_addr' => $_SERVER['REMOTE_ADDR']
+            ]);
         }
         echo json_encode(['success' => $success]);
     } else {
@@ -50,8 +53,11 @@ if ($action == 'list') {
         if ($success) {
             // Log the role change
             $logStmt = $db->prepare("INSERT INTO AuditLogs (user_id, action, timestamp, ip_addr) 
-                                      VALUES (?, 'USER_ROLE_CHANGED', NOW(), ?)");
-            $logStmt->execute([$_SESSION['user']['user_id'], $_SERVER['REMOTE_ADDR']]);
+                                      VALUES (:user_id, 'USER_ROLE_CHANGED', NOW(), :ip_addr)");
+            $logStmt->execute([
+                'user_id' => $_SESSION['user']['user_id'],
+                'ip_addr' => $_SERVER['REMOTE_ADDR']
+            ]);
         }
         echo json_encode(['success' => $success]);
     } else {

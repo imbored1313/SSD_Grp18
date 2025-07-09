@@ -10,7 +10,7 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Admin - Dashboard (Logs)</title>
     <link rel="stylesheet" href="website.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -25,11 +25,28 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
             </ul>
         </aside>
         <main class="admin-content">
-            <div class="admin-header">
-                <h1><span role="img" aria-label="wave">👋</span> Welcome to the Admin Dashboard</h1>
-                <a href="index.html" class="btn btn-primary mt-3"><i class="fas fa-home me-2"></i>Back to Home</a>
+            <div class="admin-header mb-4">
+                <h1>Audit Logs</h1>
+            </div>
+
+            <div class="data-table">
+                <table class="table table-bordered table-striped" id="logsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>IP Address</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </main>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/admin_dashboard.js"></script>
 </body>
 </html>
