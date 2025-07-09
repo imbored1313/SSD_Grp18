@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fetch logs from backend
     async function fetchLogs() {
         try {
-            const response = await fetch('admin_dashboard.php?action=list');
+            const response = await fetch('php/admin_dashboard.php?action=list');
             const data = await response.json();
             if (Array.isArray(data)) {
                 logs = data;
