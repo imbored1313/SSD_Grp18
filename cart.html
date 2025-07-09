@@ -215,7 +215,7 @@
                             console.log('✅ PayPal payment captured:', details);
                             alert(`Payment complete! Thank you, ${details.payer.name.given_name}.`);
                             localStorage.removeItem('cart');
-                            window.location.href = 'order_cfm.php';
+                            window.location.href = 'my_orders.html';
                         })
                         .catch(err => {
                             console.error('❌ Error capturing PayPal payment:', err);
