@@ -1,10 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     const logsTableBody = document.querySelector('#logsTable tbody');
-    const paginationContainer = document.getElementById('pagination');
-    const pageSize = 10;
-    let logs = [];
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    const currentPageDisplay = document.getElementById('currentPage');
 
-    // Escapes HTML to prevent XSS
+    let currentPage = 1;
+    let totalPages = 1;
+
     function escapeHTML(str) {
         if (typeof str !== 'string') return str;
         return str.replace(/[&<>"']/g, match => ({
@@ -16,73 +18,49 @@ document.addEventListener('DOMContentLoaded', () => {
         }[match]));
     }
 
-    // Fetch logs from backend
-    async function fetchLogs() {
+    async function fetchLogs(page = 1) {
         try {
-            const response = await fetch('php/admin_dashboard.php?action=list');
+            const response = await fetch(`php/admin_dashboard.php?action=list&page=${page}`);
             const data = await response.json();
-            if (Array.isArray(data)) {
-                logs = data;
-                renderPage(1);
-                renderPagination(logs.length);
+
+            if (data.success && Array.isArray(data.logs)) {
+                logsTableBody.innerHTML = data.logs.map(log => `
+                    <tr>
+                        <td>${escapeHTML(log.id)}</td>
+                        <td>${escapeHTML(log.username ?? 'Unknown')}</td>
+                        <td>${escapeHTML(log.action)}</td>
+                        <td>${escapeHTML(log.ip_addr)}</td>
+                        <td>${escapeHTML(log.timestamp)}</td>
+                    </tr>
+                `).join('');
+
+                currentPage = data.page;
+                totalPages = Math.ceil(data.total / data.pageSize);
+                updatePagination();
             } else {
                 logsTableBody.innerHTML = `<tr><td colspan="5">No logs found</td></tr>`;
+                currentPageDisplay.textContent = '';
             }
         } catch (err) {
-            logsTableBody.innerHTML = `<tr><td colspan="5">Error loading logs</td></tr>`;
             console.error('Error fetching logs:', err);
+            logsTableBody.innerHTML = `<tr><td colspan="5">Error loading logs</td></tr>`;
+            currentPageDisplay.textContent = '';
         }
     }
 
-    // Renders logs for a specific page
-    function renderPage(page) {
-        const start = (page - 1) * pageSize;
-        const end = start + pageSize;
-        const pageLogs = logs.slice(start, end);
-
-        logsTableBody.innerHTML = pageLogs.map(log => `
-            <tr>
-                <td>${escapeHTML(log.id)}</td>
-                <td>${escapeHTML(log.username ?? 'Unknown')}</td>
-                <td>${escapeHTML(log.action)}</td>
-                <td>${escapeHTML(log.ip_addr)}</td>
-                <td>${escapeHTML(log.timestamp)}</td>
-            </tr>
-        `).join('');
+    function updatePagination() {
+        currentPageDisplay.textContent = `Page ${currentPage} of ${totalPages}`;
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
     }
 
-    // Renders pagination buttons
-    function renderPagination(totalLogs) {
-        const totalPages = Math.ceil(totalLogs / pageSize);
-        paginationContainer.innerHTML = '';
+    prevBtn.addEventListener('click', () => {
+        if (currentPage > 1) fetchLogs(currentPage - 1);
+    });
 
-        for (let i = 1; i <= totalPages; i++) {
-            const li = document.createElement('li');
-            li.className = 'page-item';
-            const a = document.createElement('a');
-            a.className = 'page-link';
-            a.href = '#';
-            a.textContent = i;
+    nextBtn.addEventListener('click', () => {
+        if (currentPage < totalPages) fetchLogs(currentPage + 1);
+    });
 
-            a.addEventListener('click', (e) => {
-                e.preventDefault();
-                renderPage(i);
-                setActivePage(i);
-            });
-
-            li.appendChild(a);
-            paginationContainer.appendChild(li);
-        }
-
-        setActivePage(1);
-    }
-
-    function setActivePage(pageNum) {
-        document.querySelectorAll('#pagination .page-link').forEach((link, index) => {
-            link.parentElement.classList.toggle('active', index + 1 === pageNum);
-        });
-    }
-
-    // Initialize
-    fetchLogs();
+    fetchLogs(); // Initial fetch
 });
