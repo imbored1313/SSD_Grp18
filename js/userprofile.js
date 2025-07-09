@@ -697,7 +697,7 @@ function showDeleteAccountModal() {
         formData.append('confirmPassword', document.getElementById('confirmPasswordDelete').value);
         
         try {
-            const response = await fetch('delete_account.php', {
+            const response = await fetch('php/delete_account.php', {
                 method: 'POST',
                 body: formData,
                 credentials: 'include'
