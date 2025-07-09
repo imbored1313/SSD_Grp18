@@ -33,90 +33,38 @@
         <div class="container">
             <h2 style="text-align: center; margin-bottom: 3rem; font-size: 2.5rem; color: #333;">Featured Products</h2>
 
-            <div class="product-grid">
-                <div class="product-card" onclick="viewProduct('smartphone')">
-                    <div class="product-image">📱</div>
-                    <div class="product-info">
-                        <h3 class="product-title">ElectraPhone Pro Max</h3>
-                        <div class="product-rating">
-                            <span class="stars">⭐⭐⭐⭐⭐</span>
-                            <span>(324 reviews)</span>
-                        </div>
-                        <div class="product-price">$1,299</div>
-                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'smartphone', 1299)">Add to
-                            Cart</button>
-                    </div>
-                </div>
+            <!-- Loading state -->
+            <div id="featured-loading" style="text-align: center; padding: 3rem;">
+                <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #2c5aa0; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem;"></div>
+                <p style="color: #666;">Loading featured products...</p>
+                <style>
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            </div>
 
-                <div class="product-card" onclick="viewProduct('laptop')">
-                    <div class="product-image">💻</div>
-                    <div class="product-info">
-                        <h3 class="product-title">UltraBook Elite X1</h3>
-                        <div class="product-rating">
-                            <span class="stars">⭐⭐⭐⭐⭐</span>
-                            <span>(156 reviews)</span>
-                        </div>
-                        <div class="product-price">$2,199</div>
-                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'laptop', 2199)">Add to
-                            Cart</button>
-                    </div>
-                </div>
+            <!-- Featured Products Grid -->
+            <div class="product-grid" id="featuredProducts" style="display: none;">
+                <!-- Featured products will be loaded here dynamically -->
+            </div>
 
-                <div class="product-card" onclick="viewProduct('headphones')">
-                    <div class="product-image">🎧</div>
-                    <div class="product-info">
-                        <h3 class="product-title">SoundWave Pro Wireless</h3>
-                        <div class="product-rating">
-                            <span class="stars">⭐⭐⭐⭐⭐</span>
-                            <span>(89 reviews)</span>
-                        </div>
-                        <div class="product-price">$349</div>
-                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'headphones', 349)">Add to
-                            Cart</button>
-                    </div>
-                </div>
+            <!-- Error state -->
+            <div id="featured-error" style="display: none; text-align: center; padding: 3rem;">
+                <div style="font-size: 3rem; margin-bottom: 1rem; color: #dc3545;">⚠️</div>
+                <h3 style="color: #dc3545; margin-bottom: 1rem;">Unable to Load Products</h3>
+                <p style="color: #666; margin-bottom: 2rem;">We're having trouble loading our featured products. Please try again later.</p>
+                <button onclick="loadFeaturedProducts()" style="background: #2c5aa0; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                    Try Again
+                </button>
+            </div>
 
-                <div class="product-card" onclick="viewProduct('smartwatch')">
-                    <div class="product-image">⌚</div>
-                    <div class="product-info">
-                        <h3 class="product-title">TimeSync Smart Watch</h3>
-                        <div class="product-rating">
-                            <span class="stars">⭐⭐⭐⭐⭐</span>
-                            <span>(267 reviews)</span>
-                        </div>
-                        <div class="product-price">$599</div>
-                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'smartwatch', 599)">Add to
-                            Cart</button>
-                    </div>
-                </div>
-
-                <div class="product-card" onclick="viewProduct('tablet')">
-                    <div class="product-image">📟</div>
-                    <div class="product-info">
-                        <h3 class="product-title">TabletPro Ultra 12</h3>
-                        <div class="product-rating">
-                            <span class="stars">⭐⭐⭐⭐⭐</span>
-                            <span>(198 reviews)</span>
-                        </div>
-                        <div class="product-price">$899</div>
-                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'tablet', 899)">Add to
-                            Cart</button>
-                    </div>
-                </div>
-
-                <div class="product-card" onclick="viewProduct('speaker')">
-                    <div class="product-image">🔊</div>
-                    <div class="product-info">
-                        <h3 class="product-title">BoomBox Smart Speaker</h3>
-                        <div class="product-rating">
-                            <span class="stars">⭐⭐⭐⭐⭐</span>
-                            <span>(143 reviews)</span>
-                        </div>
-                        <div class="product-price">$249</div>
-                        <button class="btn btn-primary w-100" onclick="addToCart(event, 'speaker', 249)">Add to
-                            Cart</button>
-                    </div>
-                </div>
+            <!-- View All Products Link -->
+            <div style="text-align: center; margin-top: 3rem;">
+                <a href="catalog.html" style="display: inline-block; background: #f8f9fa; color: #2c5aa0; padding: 1rem 2rem; text-decoration: none; border-radius: 8px; font-weight: bold; border: 2px solid #2c5aa0; transition: all 0.2s ease;" onmouseover="this.style.background='#2c5aa0'; this.style.color='white'" onmouseout="this.style.background='#f8f9fa'; this.style.color='#2c5aa0'">
+                    View All Products →
+                </a>
             </div>
         </div>
     </section>
@@ -194,7 +142,6 @@
             });
     </script>
 
-
     <!-- Shopping Cart Modal -->
     <div id="cartModal"
         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
@@ -219,7 +166,7 @@
 
             <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                 <button class="btn btn-secondary w-100" onclick="toggleCart()">Continue Shopping</button>
-                <button class="btn btn-primary w-100" onclick="checkout()">Checkout</button>
+                <a href="cart.html" class="btn btn-primary w-100" style="text-align: center; text-decoration: none;">Go to Cart</a>
             </div>
         </div>
     </div>
@@ -230,10 +177,21 @@
         <span id="notificationText">Item added to cart!</span>
     </div>
 
-    <script src="js/index.js"></script>
     <script>
-        // Hide 'Join ElectraEdge' button if user is logged in
+        // Load featured products on page load
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== HOME PAGE LOADED ===');
+            
+            // Load featured products first
+            loadFeaturedProducts();
+            
+            // Set up session change listeners
+            window.sessionManager.onSessionChange(handleSessionChange);
+            
+            // Initialize other features
+            initializePageFeatures();
+            
+            // Hide 'Join ElectraEdge' button if user is logged in
             window.sessionManager.checkSession().then(() => {
                 if (window.sessionManager.isLoggedIn()) {
                     const joinBtn = document.getElementById('join-electraedge-btn');
@@ -241,6 +199,254 @@
                 }
             });
         });
+
+        // Load featured products from database
+        async function loadFeaturedProducts() {
+            console.log('🔄 Loading featured products from database...');
+            
+            const loadingDiv = document.getElementById('featured-loading');
+            const productsDiv = document.getElementById('featuredProducts');
+            const errorDiv = document.getElementById('featured-error');
+            
+            // Show loading state
+            loadingDiv.style.display = 'block';
+            productsDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('php/get_products.php');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const products = await response.json();
+                console.log('📦 Products received:', products);
+                
+                if (!products || products.length === 0) {
+                    throw new Error('No products available');
+                }
+                
+                // Take only the first 3 products for featured section
+                const featuredProducts = products.slice(0, 3);
+                
+                displayFeaturedProducts(featuredProducts);
+                
+            } catch (error) {
+                console.error('❌ Error loading featured products:', error);
+                showFeaturedError();
+            }
+        }
+
+        // Display featured products
+        function displayFeaturedProducts(products) {
+            const loadingDiv = document.getElementById('featured-loading');
+            const productsDiv = document.getElementById('featuredProducts');
+            const errorDiv = document.getElementById('featured-error');
+            
+            let productsHTML = '';
+            
+            products.forEach(product => {
+                // Handle image path
+                let imageSrc = 'uploads/no-image.jpg';
+                if (product.image_path) {
+                    if (product.image_path.startsWith('http') || product.image_path.startsWith('/uploads/')) {
+                        imageSrc = product.image_path;
+                    } else {
+                        imageSrc = '/uploads/products/' + product.image_path;
+                    }
+                }
+                
+                const price = parseFloat(product.price);
+                const isInStock = parseInt(product.stock) > 0;
+                
+                productsHTML += `
+                    <div class="product-card" onclick="viewProduct(${product.product_id})" style="cursor: pointer;">
+                        <div class="product-image">
+                            <img src="${imageSrc}" alt="${product.name}" 
+                                 style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;"
+                                 onerror="this.src='uploads/no-image.jpg'" />
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-title">${product.name}</h3>
+                            <div class="product-rating">
+                                <span class="stars">⭐⭐⭐⭐⭐</span>
+                                <span>(Featured)</span>
+                            </div>
+                            <div class="product-price">$${price.toFixed(2)}</div>
+                            <button class="btn btn-primary w-100" 
+                                    ${isInStock ? '' : 'disabled'} 
+                                    onclick="addToCartFromFeatured(event, ${product.product_id})"
+                                    style="${isInStock ? '' : 'opacity: 0.6; cursor: not-allowed;'}">
+                                ${isInStock ? 'Add to Cart' : 'Out of Stock'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            productsDiv.innerHTML = productsHTML;
+            
+            // Hide loading, show products
+            loadingDiv.style.display = 'none';
+            productsDiv.style.display = 'grid';
+            errorDiv.style.display = 'none';
+            
+            console.log('✅ Featured products displayed successfully');
+        }
+
+        // Show error state
+        function showFeaturedError() {
+            const loadingDiv = document.getElementById('featured-loading');
+            const productsDiv = document.getElementById('featuredProducts');
+            const errorDiv = document.getElementById('featured-error');
+            
+            loadingDiv.style.display = 'none';
+            productsDiv.style.display = 'none';
+            errorDiv.style.display = 'block';
+        }
+
+        // Add to cart from featured products section
+        async function addToCartFromFeatured(event, productId) {
+            // Prevent card click event
+            event.stopPropagation();
+            
+            console.log('=== ADD TO CART CLICKED (FEATURED PRODUCT) ===');
+            console.log('Product ID:', productId);
+            
+            // Check if user is logged in using session manager
+            const loginRequired = await window.sessionManager.requireLogin();
+            if (!loginRequired) {
+                return; // Will redirect to login
+            }
+            
+            // User is authenticated, add to database
+            await addItemToDatabase(productId);
+        }
+
+        // Add item to database (same as catalog)
+        async function addItemToDatabase(productId) {
+            console.log('✅ Adding product to database:', productId);
+            
+            try {
+                // Show loading state
+                showNotification('Adding to cart...', 'info');
+                
+                const response = await fetch('php/add_to_cart.php', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        product_id: parseInt(productId), 
+                        quantity: 1 
+                    })
+                });
+
+                console.log('Add to cart response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Add to cart response:', data);
+                
+                if (data.success) {
+                    console.log('✅ Product successfully added to cart in database');
+                    showNotification(`${data.product_name || 'Product'} added to cart!`, 'success');
+                    
+                    // Update cart count in header
+                    updateCartCountInHeader();
+                    
+                } else {
+                    console.error('❌ Add to cart failed:', data.message);
+                    showNotification('Failed to add to cart: ' + (data.message || 'Unknown error'), 'error');
+                }
+                
+            } catch (error) {
+                console.error('💥 Add to cart error:', error);
+                showNotification('Failed to add to cart. Please try again.', 'error');
+            }
+        }
+
+        // Update cart count in header
+        async function updateCartCountInHeader() {
+            try {
+                const response = await fetch('php/get_cart.php', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        const cartCount = document.getElementById('cartCount');
+                        if (cartCount) {
+                            cartCount.textContent = data.cartCount || 0;
+                        }
+                        console.log('🔄 Cart count updated:', data.cartCount);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to update cart count:', error);
+            }
+        }
+
+        // View product details
+        function viewProduct(productId) {
+            console.log('👀 Viewing product:', productId);
+            showNotification('Viewing product details...', 'info');
+            // TODO: Implement product detail page
+            // window.location.href = `product_detail.html?id=${productId}`;
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            // Remove existing notification first
+            const existing = document.getElementById('home-notification');
+            if (existing) existing.remove();
+            
+            const notification = document.createElement('div');
+            notification.id = 'home-notification';
+            
+            const colors = {
+                success: '#28a745',
+                error: '#dc3545',
+                info: '#17a2b8',
+                warning: '#ffc107'
+            };
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${colors[type] || colors.info};
+                color: white;
+                padding: 1rem 2rem;
+                border-radius: 8px;
+                z-index: 3000;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                font-family: Arial, sans-serif;
+                font-size: 14px;
+                transition: opacity 0.3s ease;
+            `;
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.opacity = '0';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.remove();
+                        }
+                    }, 300);
+                }
+            }, 3000);
+        }
     </script>
+
+    <script src="js/index.js"></script>
 </body>
 </html>
