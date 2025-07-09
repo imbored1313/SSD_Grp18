@@ -1100,3 +1100,72 @@ body {
 
 #join-electraedge-btn {
 }
+
+/* Add these CSS rules to fix the auth container layout */
+
+/* Override the auth-container for pages with header/footer */
+body:has(#header-placeholder) .auth-container {
+    min-height: calc(100vh - 160px); /* Account for header and footer */
+    padding: 2rem 1rem;
+    margin-top: 0;
+}
+
+/* Ensure proper spacing */
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem;
+}
+
+/* Make auth card more compact for pages with header/footer */
+body:has(#header-placeholder) .auth-card {
+    max-width: 500px; /* Slightly wider for better form layout */
+    margin: 1rem auto;
+}
+
+.auth-card {
+    background: white;
+    padding: 3rem;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    body:has(#header-placeholder) .auth-container {
+        min-height: calc(100vh - 120px);
+        padding: 1rem;
+    }
+    
+    .auth-card {
+        padding: 2rem 1.5rem;
+        margin: 0.5rem;
+    }
+}
+
+/* Fix body layout for auth pages */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* Ensure auth pages don't have unwanted spacing */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Auth container should take remaining space */
+.auth-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
