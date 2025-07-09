@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
+    if (!window.sessionManager || !window.sessionManager.isLoggedIn()) {
+        window.location.href = 'login.html';
+        return;
+    }
     const ordersList = document.getElementById('orders-list');
 
     fetch('php/get_orders.php', {

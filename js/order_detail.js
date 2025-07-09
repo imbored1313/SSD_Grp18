@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
+    if (!window.sessionManager || !window.sessionManager.isLoggedIn()) {
+        window.location.href = 'login.html';
+        return;
+    }
     const orderDetail = document.getElementById('order-detail');
     const urlParams = new URLSearchParams(window.location.search);
     const orderId = urlParams.get('order_id');
