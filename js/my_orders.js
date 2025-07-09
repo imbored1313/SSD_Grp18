@@ -1,5 +1,9 @@
-document.addEventListener('DOMContentLoaded', function() {
-    if (!window.sessionManager || !window.sessionManager.isLoggedIn()) {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Wait for session check to complete
+    if (window.sessionManager.sessionCheckInProgress) {
+        await window.sessionManager.waitForSessionCheck();
+    }
+    if (!window.sessionManager.isLoggedIn()) {
         window.location.href = 'login.html';
         return;
     }
