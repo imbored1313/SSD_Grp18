@@ -42,6 +42,15 @@ try {
 
     $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    $targetTimezone = new DateTimeZone('Asia/Singapore');
+    foreach ($logs as &$log) {
+        if (!empty($log['timestamp'])) {
+            $utcTime = new DateTime($log['timestamp'], new DateTimeZone('UTC'));
+            $utcTime->setTimezone($targetTimezone);
+            $log['timestamp'] = $utcTime->format('Y-m-d H:i:s');
+        }
+    }
+
     echo json_encode([
         'success' => true,
         'logs' => $logs,
