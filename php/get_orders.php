@@ -1,0 +1,66 @@
+<?php
+require_once(__DIR__ . '/config.php');
+
+header('Content-Type: application/json');
+header('Access-Control-Allow-Credentials: true');
+
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
+if (!$user_id) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'User not logged in.']);
+    exit;
+}
+
+$order_id = null;
+if (isset($_GET['order_id'])) {
+    $order_id = intval($_GET['order_id']);
+} elseif (isset($_POST['order_id'])) {
+    $order_id = intval($_POST['order_id']);
+}
+
+$database = new Database();
+$db = $database->getConnection();
+
+try {
+    if ($order_id) {
+        // Fetch a single order and its items
+        $order_sql = "SELECT * FROM Orders WHERE order_id = :order_id AND user_id = :user_id";
+        $order_stmt = $db->prepare($order_sql);
+        $order_stmt->execute([':order_id' => $order_id, ':user_id' => $user_id]);
+        $order = $order_stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$order) {
+            echo json_encode(['success' => false, 'message' => 'Order not found.']);
+            exit;
+        }
+        $items_sql = "SELECT * FROM order_items WHERE order_id = :order_id";
+        $items_stmt = $db->prepare($items_sql);
+        $items_stmt->execute([':order_id' => $order_id]);
+        $order['items'] = $items_stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(['success' => true, 'order' => $order]);
+        exit;
+    } else {
+        // Fetch all orders for the user
+        $orders_sql = "SELECT * FROM Orders WHERE user_id = :user_id ORDER BY order_date DESC";
+        $orders_stmt = $db->prepare($orders_sql);
+        $orders_stmt->execute([':user_id' => $user_id]);
+        $orders = $orders_stmt->fetchAll(PDO::FETCH_ASSOC);
+        // For each order, fetch its items
+        foreach ($orders as &$order) {
+            $items_sql = "SELECT * FROM order_items WHERE order_id = :order_id";
+            $items_stmt = $db->prepare($items_sql);
+            $items_stmt->execute([':order_id' => $order['order_id']]);
+            $order['items'] = $items_stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+        echo json_encode(['success' => true, 'orders' => $orders]);
+        exit;
+    }
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Server error', 'error' => $e->getMessage()]);
+    exit;
+} 
