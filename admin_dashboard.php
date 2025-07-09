@@ -42,6 +42,11 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
                     </thead>
                     <tbody></tbody>
                 </table>
+                <div id="pagination" class="d-flex justify-content-between align-items-center px-3 pb-3">
+                    <button id="prevPage" class="btn btn-outline btn-sm">&laquo; Prev</button>
+                    <span id="currentPage" class="fw-bold"></span>
+                    <button id="nextPage" class="btn btn-outline btn-sm">Next &raquo;</button>
+                </div>
             </div>
         </main>
     </div>

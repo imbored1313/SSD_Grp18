@@ -1091,3 +1091,9 @@ body {
 #footer-placeholder {
     margin-top: auto;
 }
+
+/* Pagination styles */
+#pagination {
+    padding-top: 1rem;
+    background: #fff;
+}
