@@ -20,7 +20,7 @@ if ($action !== 'list') {
 
 try {
     $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
-    $pageSize = 25;
+    $pageSize = 15;
     $offset = ($page - 1) * $pageSize;
 
     $database = new Database();
