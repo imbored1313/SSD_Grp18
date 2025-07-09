@@ -6,6 +6,195 @@
     <title>Product Catalog - ElectraEdge</title>
     <link rel="stylesheet" href="website.css" />
     <script src="js/session_manager.js"></script>
+    <style>
+        /* Enhanced Product Grid Styles */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Force exactly 3 columns on larger screens */
+        @media (min-width: 1024px) {
+            .product-grid {
+                grid-template-columns: repeat(3, 1fr);
+                max-width: 1000px;
+            }
+        }
+
+        /* 2 columns on medium screens */
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+                max-width: 800px;
+            }
+        }
+
+        /* 1 column on small screens */
+        @media (max-width: 767px) {
+            .product-grid {
+                grid-template-columns: 1fr;
+                max-width: 400px;
+            }
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: fit-content;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 250px;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-image img {
+            transform: scale(1.05);
+        }
+
+        .product-info {
+            padding: 1.5rem;
+        }
+
+        .product-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+            line-height: 1.4;
+            height: 2.8rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .product-price {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #2c5aa0;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: #2c5aa0;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #1e3f73;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .search-sort-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 3rem;
+            padding: 0 1rem;
+        }
+
+        .search-sort-container input,
+        .search-sort-container select {
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            transition: border-color 0.2s ease;
+            min-width: 200px;
+        }
+
+        .search-sort-container input:focus,
+        .search-sort-container select:focus {
+            outline: none;
+            border-color: #2c5aa0;
+        }
+
+        @media (max-width: 640px) {
+            .search-sort-container input,
+            .search-sort-container select {
+                width: 100%;
+                min-width: unset;
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .loading-state,
+        .error-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #666;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2c5aa0;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 
 <body>
@@ -14,64 +203,251 @@
 
     <script src="js/header.js"></script>
     
-
     <section class="container" style="padding: 4rem 0;">
-        <h2 style="text-align: center; margin-bottom: 2rem;">All Products</h2>
+        <h2 style="text-align: center; margin-bottom: 3rem; font-size: 2.5rem; color: #333;">All Products</h2>
 
-        <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-bottom: 2rem;">
+        <!-- Search and Sort Controls -->
+        <div class="search-sort-container">
             <input type="text" id="searchInput" placeholder="Search products..."
-                style="padding: 0.75rem 1rem; font-size: 1rem; width: 250px; border: 1px solid #ccc; border-radius: 8px;" />
-            <select id="sortSelect"
-                style="padding: 0.75rem 1rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 8px;">
+                style="flex: 1; max-width: 300px;" />
+            <select id="sortSelect" style="min-width: 200px;">
                 <option value="">Sort by</option>
                 <option value="asc">Price: Low to High</option>
                 <option value="desc">Price: High to Low</option>
+                <option value="name">Name: A to Z</option>
+                <option value="stock">Stock: High to Low</option>
             </select>
         </div>
 
-        <div class="product-grid" id="productCatalog"></div>
+        <!-- Loading State -->
+        <div id="loading-state" class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Loading products...</p>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="product-grid" id="productCatalog" style="display: none;">
+            <!-- Products will be loaded here -->
+        </div>
+
+        <!-- Error State -->
+        <div id="error-state" class="error-state" style="display: none;">
+            <div style="font-size: 3rem; margin-bottom: 1rem; color: #dc3545;">⚠️</div>
+            <h3 style="color: #dc3545; margin-bottom: 1rem;">Unable to Load Products</h3>
+            <p style="margin-bottom: 2rem;">We're having trouble loading our products. Please try again later.</p>
+            <button onclick="loadProducts()" style="background: #2c5aa0; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                Try Again
+            </button>
+        </div>
+
+        <!-- No Products State -->
+        <div id="no-products-state" class="error-state" style="display: none;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📦</div>
+            <h3 style="color: #666; margin-bottom: 1rem;">No Products Found</h3>
+            <p style="margin-bottom: 2rem;">No products match your current search or filter criteria.</p>
+            <button onclick="clearFilters()" style="background: #2c5aa0; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                Clear Filters
+            </button>
+        </div>
     </section>
 
-
     <script>
-        fetch('get_products.php')
-            .then(response => response.json())
-            .then(products => {
-                const container = document.getElementById('productCatalog');
-                if (!products.length) {
-                    container.innerHTML = '<p>No products available.</p>';
+        let allProducts = [];
+        let filteredProducts = [];
+
+        // Load products on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProducts();
+            initializeFilters();
+        });
+
+        // Load products from database
+        async function loadProducts() {
+            console.log('📦 Loading products from database...');
+            
+            const loadingDiv = document.getElementById('loading-state');
+            const catalogDiv = document.getElementById('productCatalog');
+            const errorDiv = document.getElementById('error-state');
+            const noProductsDiv = document.getElementById('no-products-state');
+            
+            // Show loading state
+            loadingDiv.style.display = 'block';
+            catalogDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            noProductsDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('get_products.php');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const products = await response.json();
+                console.log('✅ Products loaded:', products.length);
+                
+                if (!products || products.length === 0) {
+                    showNoProducts();
                     return;
                 }
-                products.forEach(p => {
-                    const div = document.createElement('div');
-                    div.className = 'product-card';
-                    div.innerHTML = `
+                
+                allProducts = products;
+                filteredProducts = [...products];
+                displayProducts(filteredProducts);
+                
+            } catch (error) {
+                console.error('❌ Error loading products:', error);
+                showError();
+            }
+        }
+
+        // Display products in grid
+        function displayProducts(products) {
+            const loadingDiv = document.getElementById('loading-state');
+            const catalogDiv = document.getElementById('productCatalog');
+            const errorDiv = document.getElementById('error-state');
+            const noProductsDiv = document.getElementById('no-products-state');
+            
+            if (!products || products.length === 0) {
+                showNoProducts();
+                return;
+            }
+            
+            let productsHTML = '';
+            
+            products.forEach(product => {
+                // Handle image path
+                let imageSrc = 'uploads/no-image.jpg';
+                if (product.image_path) {
+                    if (product.image_path.startsWith('http') || product.image_path.startsWith('/uploads/')) {
+                        imageSrc = product.image_path;
+                    } else {
+                        imageSrc = '/uploads/products/' + product.image_path;
+                    }
+                }
+                
+                const price = parseFloat(product.price);
+                const isInStock = parseInt(product.stock) > 0;
+                const stockText = isInStock ? `${product.stock} in stock` : 'Out of stock';
+                
+                productsHTML += `
+                    <div class="product-card">
                         <div class="product-image">
-                            <img src="${p.image_path}" alt="${p.name}" />
+                            <img src="${imageSrc}" alt="${product.name}" 
+                                 onerror="this.src='uploads/no-image.jpg'" />
                         </div>
                         <div class="product-info">
-                            <h3 class="product-title">${p.name}</h3>
+                            <h3 class="product-title">${product.name}</h3>
                             <div class="product-rating">
                                 <span class="stars">⭐⭐⭐⭐⭐</span>
-                                <span>(No reviews)</span>
+                                <span>(${stockText})</span>
                             </div>
-                            <div class="product-price">$${parseFloat(p.price).toLocaleString()}</div>
-                            <button class="btn btn-primary w-100" ${p.stock > 0 ? '' : 'disabled'} onclick="addToCart(${p.product_id})">
-                                Add to Cart
+                            <div class="product-price">$${price.toFixed(2)}</div>
+                            <button class="btn btn-primary" 
+                                    ${isInStock ? '' : 'disabled'} 
+                                    onclick="addToCart(${product.product_id})"
+                                    style="${isInStock ? '' : 'opacity: 0.6;'}">
+                                ${isInStock ? 'Add to Cart' : 'Out of Stock'}
                             </button>
                         </div>
-                    `;
-                    container.appendChild(div);
-                });
-            })
-            .catch(err => {
-                console.error(err);
-                document.getElementById('productCatalog').innerHTML = '<p>Error loading products.</p>';
+                    </div>
+                `;
             });
+            
+            catalogDiv.innerHTML = productsHTML;
+            
+            // Show products grid
+            loadingDiv.style.display = 'none';
+            catalogDiv.style.display = 'grid';
+            errorDiv.style.display = 'none';
+            noProductsDiv.style.display = 'none';
+            
+            console.log('✅ Products displayed in grid:', products.length);
+        }
 
-        // function addToCart(id) {
-        //     alert('Added product ' + id + ' to cart! (Implement as needed)');
-        // }
+        // Show error state
+        function showError() {
+            document.getElementById('loading-state').style.display = 'none';
+            document.getElementById('productCatalog').style.display = 'none';
+            document.getElementById('error-state').style.display = 'block';
+            document.getElementById('no-products-state').style.display = 'none';
+        }
+
+        // Show no products state
+        function showNoProducts() {
+            document.getElementById('loading-state').style.display = 'none';
+            document.getElementById('productCatalog').style.display = 'none';
+            document.getElementById('error-state').style.display = 'none';
+            document.getElementById('no-products-state').style.display = 'block';
+        }
+
+        // Initialize search and sort filters
+        function initializeFilters() {
+            const searchInput = document.getElementById('searchInput');
+            const sortSelect = document.getElementById('sortSelect');
+            
+            // Search functionality
+            searchInput.addEventListener('input', function() {
+                filterAndDisplayProducts();
+            });
+            
+            // Sort functionality
+            sortSelect.addEventListener('change', function() {
+                filterAndDisplayProducts();
+            });
+        }
+
+        // Filter and display products
+        function filterAndDisplayProducts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const sortOrder = document.getElementById('sortSelect').value;
+            
+            // Filter products
+            filteredProducts = allProducts.filter(product => {
+                const nameMatch = product.name.toLowerCase().includes(searchTerm);
+                const descMatch = product.description.toLowerCase().includes(searchTerm);
+                return nameMatch || descMatch;
+            });
+            
+            // Sort products
+            if (sortOrder) {
+                filteredProducts.sort((a, b) => {
+                    switch (sortOrder) {
+                        case 'asc':
+                            return parseFloat(a.price) - parseFloat(b.price);
+                        case 'desc':
+                            return parseFloat(b.price) - parseFloat(a.price);
+                        case 'name':
+                            return a.name.localeCompare(b.name);
+                        case 'stock':
+                            return parseInt(b.stock) - parseInt(a.stock);
+                        default:
+                            return 0;
+                    }
+                });
+            }
+            
+            displayProducts(filteredProducts);
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('sortSelect').value = '';
+            filteredProducts = [...allProducts];
+            displayProducts(filteredProducts);
+        }
+
+        // Add to cart function (placeholder - implement with your existing logic)
+        function addToCart(productId) {
+            console.log('Adding product to cart:', productId);
+            // This should call your existing addToCart logic from catalog.js
+            if (window.addToCart && typeof window.addToCart === 'function') {
+                window.addToCart(productId);
+            } else {
+                alert('Add to cart functionality will be implemented here');
+            }
+        }
     </script>
 
     <!-- Include catalog JavaScript for session management -->
