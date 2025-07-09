@@ -83,6 +83,7 @@ try {
         // $deleteCartStmt->bindParam(':user_id', $userId);
         // $deleteCartStmt->execute();
         
+        //test
         // Delete the user account
         $deleteUserQuery = "DELETE FROM Users WHERE user_id = :user_id";
         $deleteUserStmt = $db->prepare($deleteUserQuery);
