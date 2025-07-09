@@ -16,12 +16,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize other features
     initializePageFeatures();
-
-    // Hide join button if already logged in
-    if (window.sessionManager.isLoggedIn()) {
-        const joinBtn = document.getElementById('join-btn');
-        if (joinBtn) joinBtn.style.display = 'none';
-    }
 });
 
 // Handle session changes
@@ -123,9 +117,6 @@ function updateUIForLoggedInUser(user) {
             </div>
         `;
     }
-    // Hide join button
-    const joinBtn = document.getElementById('join-btn');
-    if (joinBtn) joinBtn.style.display = 'none';
 }
 
 // Update UI for logged out user
@@ -138,9 +129,6 @@ function updateUIForLoggedOutUser() {
     if (userDropdown) {
         userDropdown.outerHTML = '<a href="login.html" class="btn btn-outline">Login</a>';
     }
-    // Show join button
-    const joinBtn = document.getElementById('join-btn');
-    if (joinBtn) joinBtn.style.display = '';
 }
 
 // Toggle user dropdown menu
