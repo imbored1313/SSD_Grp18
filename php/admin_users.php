@@ -10,7 +10,7 @@ if ($action == 'currentUser') {
 }
 
 
-// ✅ Check: Only admin allowed
+// Check: Only admin allowed
 if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admin') {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Forbidden']);
@@ -31,6 +31,12 @@ if ($action == 'list') {
     if ($id) {
         $stmt = $db->prepare("DELETE FROM Users WHERE user_id = ?");
         $success = $stmt->execute([$id]);
+        if ($success) {
+            // Log the deletion
+            $logStmt = $db->prepare("INSERT INTO AuditLogs (user_id, action, timestamp, ip_addr) 
+                                      VALUES (?, 'USER_DELETED', NOW(), ?)");
+            $logStmt->execute([$_SESSION['user']['user_id'], $_SERVER['REMOTE_ADDR']]);
+        }
         echo json_encode(['success' => $success]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Missing user ID']);
@@ -41,6 +47,12 @@ if ($action == 'list') {
     if ($id && $role) {
         $stmt = $db->prepare("UPDATE Users SET role = ? WHERE user_id = ?");
         $success = $stmt->execute([$role, $id]);
+        if ($success) {
+            // Log the role change
+            $logStmt = $db->prepare("INSERT INTO AuditLogs (user_id, action, timestamp, ip_addr) 
+                                      VALUES (?, 'USER_ROLE_CHANGED', NOW(), ?)");
+            $logStmt->execute([$_SESSION['user']['user_id'], $_SERVER['REMOTE_ADDR']]);
+        }
         echo json_encode(['success' => $success]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Missing parameters']);

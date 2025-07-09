@@ -72,6 +72,18 @@ try {
                 isset($data['image_path']) ? basename($data['image_path']) : null,
                 $_SESSION['user']['user_id']
             ]);
+
+            if ($success) {
+               // Direct SQL audit log (CREATE)
+               $logQuery = 'INSERT INTO AuditLogs (user_id, action, timestamp, ip_addr) 
+                            VALUES (?, ?, NOW(), ?)';
+               $logStmt = $db->prepare($logQuery);
+               $logStmt->bindValue(':user_id', $_SESSION['user']['user_id']);
+               $logStmt->bindValue(':action', "PRODUCT_CREATE: " . $data['name']);
+               $logStmt->bindValue(':ip_addr', $_SERVER['REMOTE_ADDR'] ?? 'unknown');
+               $logStmt->execute();
+            }
+
             echo json_encode([
                 'success' => $success,
                 'product_id' => $db->lastInsertId()
@@ -141,6 +153,18 @@ try {
                 $image_path,
                 $id
             ]);
+            
+            if ($success) {
+               // Direct SQL audit log (UPDATE)
+               $logQuery = 'INSERT INTO AuditLogs (user_id, action, timestamp, ip_addr) 
+                            VALUES (?, ?, NOW(), ?)';
+               $logStmt = $db->prepare($logQuery);
+               $logStmt->bindValue(':user_id', $_SESSION['user']['user_id']);
+               $logStmt->bindValue(':action', "PRODUCT_UPDATE: " . $data['name']);
+               $logStmt->bindValue(':ip_addr', $_SERVER['REMOTE_ADDR'] ?? 'unknown');
+               $logStmt->execute();
+            }
+            
             echo json_encode(['success' => $success]);
 
             break;
@@ -152,6 +176,19 @@ try {
 
             $stmt = $db->prepare("DELETE FROM Products WHERE product_id = ?");
             $success = $stmt->execute([$id]);
+
+            
+            if ($success) {
+               // Direct SQL audit log (DELETE)
+               $logQuery = 'INSERT INTO AuditLogs (user_id, action, timestamp, ip_addr) 
+                            VALUES (?, ?, NOW(), ?)';
+               $logStmt = $db->prepare($logQuery);
+               $logStmt->bindValue(':user_id', $_SESSION['user']['user_id']);
+               $logStmt->bindValue(':action', "PRODUCT_DELETE: " . $data['name']);
+               $logStmt->bindValue(':ip_addr', $_SERVER['REMOTE_ADDR'] ?? 'unknown');
+               $logStmt->execute();
+            }
+            
             echo json_encode(['success' => $success]);
 
             break;
