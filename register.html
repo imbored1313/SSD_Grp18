@@ -1,4 +1,3 @@
-<!-- Updated register.html with username field -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - ElectraEdge</title>
     <link rel="stylesheet" href="website.css">
+    <style>
+        /* Fix for standalone auth page - override the flex layout */
+        body {
+            display: block !important;
+        }
+    </style>
 </head>
 <body>
     <div class="auth-container">
@@ -87,4 +92,3 @@
     <script src="js/register.js"></script>
 </body>
 </html>
-hello
