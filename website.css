@@ -1098,10 +1098,6 @@ body {
     background: #fff;
 }
 
-#join-btn {
-  display: none;
-}
-
 #join-electraedge-btn {
-  display: none;
+  display: none !important;
 }

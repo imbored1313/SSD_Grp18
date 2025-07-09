@@ -232,16 +232,15 @@
 
     <script src="js/index.js"></script>
     <script>
-        // Hide 'Join ElectraEdge' button if user is logged in
-        document.addEventListener('DOMContentLoaded', function() {
-            window.sessionManager.checkSession().then(() => {
-                if (!window.sessionManager.isLoggedIn()) {
-                    const joinBtn = document.getElementById('join-electraedge-btn');
-                    if (joinBtn) joinBtn.style.display = '';
-                }
-            });
+    document.addEventListener('DOMContentLoaded', function() {
+        window.sessionManager.checkSession().then(() => {
+            console.log('Session checked. Logged in?', window.sessionManager.isLoggedIn());
+            const joinBtn = document.getElementById('join-electraedge-btn');
+            if (!window.sessionManager.isLoggedIn()) {
+                if (joinBtn) joinBtn.style.display = '';
+            }
         });
+    });
     </script>
 </body>
-
 </html>
