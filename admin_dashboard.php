@@ -5,6 +5,7 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
     exit;
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
