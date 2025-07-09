@@ -7,7 +7,7 @@ async function loadAllOrders() {
     ordersContainer.innerHTML = '<p>Loading orders...</p>';
 
     try {
-        const res = await fetch('php/get_all_orders.php', {
+        const res = await fetch('php/admin_orders.php', {
             method: 'GET',
             credentials: 'include'
         });
