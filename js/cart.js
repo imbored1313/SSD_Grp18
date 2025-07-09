@@ -186,7 +186,7 @@ function displayCartItems(items) {
                         body: JSON.stringify({ orderID: data.orderID })
                     }).then(res => res.json()).then(details => {
                         alert(`Payment complete! Thank you, ${details.payer.name.given_name}.`);
-                        window.location.href = 'order_cfm.php';
+                        window.location.href = 'my_orders.html';
                     });
                 }
             }).render('#paypal-button-container');
