@@ -23,7 +23,7 @@
             <p>Discover premium electronics with cutting-edge technology and unbeatable prices</p>
             <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
                 <a href="catalog.html" class="btn btn-primary btn-large">Shop Now</a>
-                <a href="register.html" class="btn btn-secondary btn-large">Join ElectraEdge</a>
+                <a href="register.html" class="btn btn-secondary btn-large" id="join-electraedge-btn">Join ElectraEdge</a>
             </div>
         </div>
     </section>
@@ -231,6 +231,17 @@
     </div>
 
     <script src="js/index.js"></script>
+    <script>
+        // Hide 'Join ElectraEdge' button if user is logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            window.sessionManager.checkSession().then(() => {
+                if (window.sessionManager.isLoggedIn()) {
+                    const joinBtn = document.getElementById('join-electraedge-btn');
+                    if (joinBtn) joinBtn.style.display = 'none';
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>
