@@ -37,7 +37,6 @@ if ($action == 'list') {
                                       VALUES (:user_id, 'USER_DELETED', NOW(), :ip_addr)");
             $logStmt->execute([
                 'user_id' => $_SESSION['user']['user_id'],
-                'action' => 'USER_DELETED: ' . $id,
                 'ip_addr' => $_SERVER['REMOTE_ADDR']
             ]);
         }
@@ -57,7 +56,6 @@ if ($action == 'list') {
                                       VALUES (:user_id, 'USER_ROLE_CHANGED', NOW(), :ip_addr)");
             $logStmt->execute([
                 'user_id' => $_SESSION['user']['user_id'],
-                'action' => 'USER_ROLE_CHANGED: ' . $id . ' to ' . $role,
                 'ip_addr' => $_SERVER['REMOTE_ADDR']
             ]);
         }
