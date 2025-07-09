@@ -16,7 +16,7 @@ try {
     // Get all orders from the orders table
     $ordersStmt = $db->query("
         SELECT *
-        FROM orders
+        FROM Orders
         ORDER BY order_date DESC
     ");
     $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
