@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.success && Array.isArray(data.logs)) {
                 logsTableBody.innerHTML = data.logs.map(log => `
                     <tr>
-                        <td>${escapeHTML(log.id)}</td>
+                        <td>${escapeHTML(log.log_id)}</td>
                         <td>${escapeHTML(log.username ?? 'Unknown')}</td>
                         <td>${escapeHTML(log.action)}</td>
                         <td>${escapeHTML(log.ip_addr)}</td>
