@@ -1,3 +1,4 @@
+<!-- Updated register.html with username field -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,13 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - ElectraEdge</title>
     <link rel="stylesheet" href="website.css">
-    <script src="js/session_manager.js"></script>
 </head>
 <body>
-    <!-- Header -->
-    <div id="header-placeholder"></div>
-    <script src="js/header.js"></script>
-
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
@@ -86,16 +82,6 @@
             </form>
         </div>
     </div>
-
-    <!-- Footer -->
-    <div id="footer-placeholder"></div>
-    <script>
-        fetch("footer.html")
-            .then(res => res.text())
-            .then(data => {
-                document.getElementById("footer-placeholder").innerHTML = data;
-            });
-    </script>
 
     <!-- External JavaScript -->
     <script src="js/register.js"></script>
