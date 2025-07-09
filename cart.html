@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <title>Shopping Cart - ElectraEdge</title>
     <link rel="stylesheet" href="website.css" />
-    <!-- Load PayPal SDK with Sandbox Client ID -->
+    <!-- Load PayPal SDK with SGD currency to match your current setup -->
     <script
         src="https://www.paypal.com/sdk/js?client-id=AVyilJ6eWAp302gUQQDI6HVO19xtLy7OGAp7ZUDRwmKY__jhoV6M-Xvdb3-raWXW2uX7wLtLtEbj-nh4&currency=SGD">
         </script>
@@ -17,7 +17,6 @@
     <div id="header-placeholder"></div>
 
     <script src="js/header.js"></script>
-
 
     <section class="container" style="max-width: 600px; margin: 2rem auto; padding: 2rem; text-align: center;">
         <h1>Your Shopping Cart</h1>
@@ -34,30 +33,52 @@
         <div id="paypal-button-container" style="max-width: 400px; margin: 2rem auto;"></div>
     </section>
 
-
     <script>
         let total = 0;
 
-        // Wait for cart items to load before initializing PayPal
-        function initializePayPal() {
-            // Only initialize PayPal if there are items in cart and total > 0
-            const totalAmount = document.getElementById('total-amount');
-            if (!totalAmount || total <= 0) {
+        function initializePayPalNow() {
+            const paypalContainer = document.getElementById('paypal-button-container');
+
+            if (!paypalContainer) {
+                console.error('❌ PayPal container not found');
                 return;
             }
+
+            if (typeof paypal === 'undefined') {
+                console.error('❌ PayPal SDK not loaded');
+                return;
+            }
+
+            if (total <= 0) {
+                console.warn('⚠️ Total is 0, setting minimum amount');
+                total = 0.01;
+            }
+
+            console.log('🔧 Creating PayPal buttons with amount:', total.toFixed(2));
 
             paypal.Buttons({
                 createOrder: (data, actions) => {
                     const amount = total.toFixed(2);
+                    console.log('📝 Creating PayPal order with amount:', amount);
+
                     return fetch('php/create-order.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ amount })
                     })
                         .then(res => res.json())
-                        .then(data => data.id);
+                        .then(data => {
+                            console.log('✅ PayPal order created:', data.id);
+                            return data.id;
+                        })
+                        .catch(err => {
+                            console.error('❌ Error creating PayPal order:', err);
+                            throw err;
+                        });
                 },
                 onApprove: (data, actions) => {
+                    console.log('✅ PayPal payment approved:', data.orderID);
+
                     return fetch('php/capture-order.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -65,35 +86,81 @@
                     })
                         .then(res => res.json())
                         .then(details => {
-                            alert(`Payment complete! Thank you, ${details.payer.name.given_name}.`);
-                            localStorage.removeItem('cart'); // clear cart
-                            window.location.href = 'order_cfm.php'; // redirect on success
+                            console.log('✅ PayPal payment captured:', details);
+                            
+                            // Show success message with better UX
+                            const customerName = details.payer?.name?.given_name || 'Customer';
+                            
+                            // Create success overlay
+                            const successOverlay = document.createElement('div');
+                            successOverlay.style.cssText = `
+                                position: fixed;
+                                top: 0;
+                                left: 0;
+                                width: 100%;
+                                height: 100%;
+                                background: rgba(0,0,0,0.8);
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                z-index: 10000;
+                            `;
+                            
+                            successOverlay.innerHTML = `
+                                <div style="background: white; padding: 3rem; border-radius: 12px; text-align: center; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                                    <div style="font-size: 4rem; color: #28a745; margin-bottom: 1rem;">✅</div>
+                                    <h2 style="color: #333; margin-bottom: 1rem;">Payment Successful!</h2>
+                                    <p style="color: #666; margin-bottom: 2rem;">Thank you, ${customerName}! Your order has been processed successfully.</p>
+                                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+                                        <p style="margin: 0; color: #666; font-size: 0.9rem;">Order ID: ${details.local_order_id || 'Processing...'}</p>
+                                    </div>
+                                    <p style="color: #666; font-size: 0.9rem;">Redirecting to your orders...</p>
+                                </div>
+                            `;
+                            
+                            document.body.appendChild(successOverlay);
+                            
+                            // Clear cart and redirect after 3 seconds
+                            setTimeout(() => {
+                                localStorage.removeItem('cart');
+                                window.location.href = 'my_orders.html';
+                            }, 3000);
+                        })
+                        .catch(err => {
+                            console.error('❌ Error capturing PayPal payment:', err);
+                            alert('Payment processing failed. Please try again.');
                         });
                 },
-                onCancel: () => alert('Payment cancelled.'),
-                onError: err => {
-                    console.error(err);
-                    alert('An error occurred during checkout.');
+                onCancel: (data) => {
+                    console.log('⚠️ PayPal payment cancelled:', data);
+                    alert('Payment cancelled.');
+                },
+                onError: (err) => {
+                    console.error('❌ PayPal error:', err);
+                    alert('An error occurred during checkout. Please try again.');
                 }
-            }).render('#paypal-button-container');
+            }).render('#paypal-button-container')
+                .then(() => {
+                    console.log('🎉 PayPal buttons rendered successfully!');
+                })
+                .catch(err => {
+                    console.error('❌ Error rendering PayPal buttons:', err);
+                });
         }
-
-        // paypal
 
         function displayCartItems(cartItems) {
             console.log('🎨 Displaying cart items for PayPal:', cartItems);
 
             const cartSummary = document.getElementById('cart-summary');
-            total = 0; // Reset total
+            total = 0;
             let cartHTML = '';
 
             cartItems.forEach(item => {
                 const price = parseFloat(item.price);
                 const quantity = parseInt(item.quantity);
                 const itemTotal = price * quantity;
-                total += itemTotal; // Calculate running total
+                total += itemTotal;
 
-                // Handle image path
                 let imageSrc = 'uploads/no-image.jpg';
                 if (item.image_path) {
                     if (item.image_path.startsWith('http') || item.image_path.startsWith('/uploads/')) {
@@ -138,108 +205,17 @@
 
             cartSummary.innerHTML = cartHTML;
 
-            console.log('✅ Cart HTML updated, total:', total);
-
-            // FORCE SHOW AND INITIALIZE PAYPAL
             const paypalContainer = document.getElementById('paypal-button-container');
             if (paypalContainer) {
-                console.log('📦 PayPal container found, showing and initializing...');
-
-                // Always show the container
                 paypalContainer.style.display = 'block';
-
-                // Clear any existing PayPal buttons
                 paypalContainer.innerHTML = '';
 
-                // Initialize PayPal with current total
                 setTimeout(() => {
-                    console.log('🚀 Initializing PayPal with total:', total);
                     initializePayPalNow();
                 }, 100);
-            } else {
-                console.error('❌ PayPal container not found!');
             }
         }
 
-        // Add this new function for immediate PayPal initialization
-        function initializePayPalNow() {
-            const paypalContainer = document.getElementById('paypal-button-container');
-
-            if (!paypalContainer) {
-                console.error('❌ PayPal container not found');
-                return;
-            }
-
-            if (typeof paypal === 'undefined') {
-                console.error('❌ PayPal SDK not loaded');
-                return;
-            }
-
-            if (total <= 0) {
-                console.warn('⚠️ Total is 0, setting minimum amount');
-                total = 0.01; // Minimum PayPal amount
-            }
-
-            console.log('🔧 Creating PayPal buttons with amount:', total.toFixed(2));
-
-            paypal.Buttons({
-                createOrder: (data, actions) => {
-                    const amount = total.toFixed(2);
-                    console.log('📝 Creating PayPal order with amount:', amount);
-
-                    return fetch('php/create-order.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ amount })
-                    })
-                        .then(res => res.json())
-                        .then(data => {
-                            console.log('✅ PayPal order created:', data.id);
-                            return data.id;
-                        })
-                        .catch(err => {
-                            console.error('❌ Error creating PayPal order:', err);
-                            throw err;
-                        });
-                },
-                onApprove: (data, actions) => {
-                    console.log('✅ PayPal payment approved:', data.orderID);
-
-                    return fetch('php/capture-order.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ orderID: data.orderID })
-                    })
-                        .then(res => res.json())
-                        .then(details => {
-                            console.log('✅ PayPal payment captured:', details);
-                            alert(`Payment complete! Thank you, ${details.payer.name.given_name}.`);
-                            localStorage.removeItem('cart');
-                            window.location.href = 'my_orders.html';
-                        })
-                        .catch(err => {
-                            console.error('❌ Error capturing PayPal payment:', err);
-                            alert('Payment processing failed. Please try again.');
-                        });
-                },
-                onCancel: (data) => {
-                    console.log('⚠️ PayPal payment cancelled:', data);
-                    alert('Payment cancelled.');
-                },
-                onError: (err) => {
-                    console.error('❌ PayPal error:', err);
-                    alert('An error occurred during checkout. Please try again.');
-                }
-            }).render('#paypal-button-container')
-                .then(() => {
-                    console.log('🎉 PayPal buttons rendered successfully!');
-                })
-                .catch(err => {
-                    console.error('❌ Error rendering PayPal buttons:', err);
-                });
-        }
-
-        // Override the displayEmptyCart function
         function displayEmptyCart() {
             const cartSummary = document.getElementById('cart-summary');
             cartSummary.innerHTML = `
@@ -251,7 +227,6 @@
                 </div>
             `;
 
-            // Hide PayPal button container
             document.getElementById('paypal-button-container').style.display = 'none';
         }
     </script>

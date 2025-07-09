@@ -18,7 +18,7 @@ $res = curl_exec($ch);
 curl_close($ch);
 $token = json_decode($res, true)['access_token'];
 
-// 2. Create order with SGD currency
+// 2. Create order with SGD currency to match your SDK setup
 $orderData = [
   'intent' => 'CAPTURE',
   'purchase_units' => [[
