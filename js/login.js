@@ -47,8 +47,71 @@ document.addEventListener('DOMContentLoaded', function () {
         loginForm.addEventListener('submit', handleLoginSubmit);
     }
 
+    // 2FA modal events
+    const resend2FA = document.getElementById('resend2FA');
+    if (resend2FA) {
+        resend2FA.addEventListener('click', async function (e) {
+            e.preventDefault();
+            resend2FA.textContent = 'Resending...';
+            if (loginForm) {
+                await handleLoginSubmit(new Event('submit'));
+            }
+            setTimeout(() => { resend2FA.textContent = "Didn't get a code? Resend"; }, 2000);
+        });
+    }
+    const closeBtn = document.getElementById('close2FAModal');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', hide2FAModal);
+    }
+    const twoFAForm = document.getElementById('twoFAForm');
+    if (twoFAForm) {
+        twoFAForm.addEventListener('submit', handle2FASubmit);
+    }
+
+    // Real-time validation for better UX
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    if (usernameInput) {
+        usernameInput.addEventListener('blur', function () {
+            const value = InputSanitizer.sanitizeText(this.value);
+            if (value) {
+                const errorElement = document.getElementById('usernameError');
+                if (errorElement) {
+                    errorElement.textContent = '';
+                    errorElement.style.display = 'none';
+                }
+                this.classList.remove('error');
+            }
+        });
+        usernameInput.addEventListener('input', function () {
+            this.classList.remove('error');
+        });
+    }
+    if (passwordInput) {
+        passwordInput.addEventListener('input', function () {
+            this.classList.remove('error');
+            const errorElement = document.getElementById('passwordError');
+            if (errorElement) {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+            }
+        });
+    }
+
     // Check if user is already logged in using session manager
     checkExistingSession();
+
+    // Handle Enter key press for login
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            if (loginForm) {
+                const submitButton = loginForm.querySelector('button[type="submit"]');
+                if (submitButton && !submitButton.disabled) {
+                    submitButton.click();
+                }
+            }
+        }
+    });
 });
 
 // Check if user is already logged in and redirect if so
@@ -78,8 +141,8 @@ async function checkExistingSession() {
 
 // Handle login form submission
 async function handleLoginSubmit(e) {
-    e.preventDefault();
-    console.log('=== LOGIN FORM SUBMITTED ===');
+    if (e) e.preventDefault();
+    console.log('=== LOGIN FORM SUBMITTED ===', new Date().toISOString());
 
     // Clear previous errors
     clearErrors();
@@ -246,33 +309,6 @@ async function handle2FASubmit(e) {
         setLoadingState(submitBtn, false, originalText);
     }
 }
-
-// Handle resend 2FA code (re-submit login form to trigger backend resend)
-document.addEventListener('DOMContentLoaded', function () {
-    const resend2FA = document.getElementById('resend2FA');
-    if (resend2FA) {
-        resend2FA.addEventListener('click', async function (e) {
-            e.preventDefault();
-            resend2FA.textContent = 'Resending...';
-            // Re-submit login form to trigger backend resend
-            const loginForm = document.getElementById('loginForm');
-            if (loginForm) {
-                await handleLoginSubmit(new Event('submit'));
-            }
-            setTimeout(() => { resend2FA.textContent = "Didn't get a code? Resend"; }, 2000);
-        });
-    }
-    // Close modal
-    const closeBtn = document.getElementById('close2FAModal');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', hide2FAModal);
-    }
-    // 2FA form submit
-    const twoFAForm = document.getElementById('twoFAForm');
-    if (twoFAForm) {
-        twoFAForm.addEventListener('submit', handle2FASubmit);
-    }
-});
 
 // Sync cart after successful login
 async function syncCartAfterLogin() {
@@ -493,51 +529,3 @@ const FormValidator = {
         return null;
     }
 };
-
-// Real-time validation for better UX
-document.addEventListener('DOMContentLoaded', function () {
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
-
-    if (usernameInput) {
-        usernameInput.addEventListener('blur', function () {
-            const value = InputSanitizer.sanitizeText(this.value);
-            if (value) {
-                const errorElement = document.getElementById('usernameError');
-                if (errorElement) {
-                    errorElement.textContent = '';
-                    errorElement.style.display = 'none';
-                }
-                this.classList.remove('error');
-            }
-        });
-
-        usernameInput.addEventListener('input', function () {
-            this.classList.remove('error');
-        });
-    }
-
-    if (passwordInput) {
-        passwordInput.addEventListener('input', function () {
-            this.classList.remove('error');
-            const errorElement = document.getElementById('passwordError');
-            if (errorElement) {
-                errorElement.textContent = '';
-                errorElement.style.display = 'none';
-            }
-        });
-    }
-});
-
-// Handle Enter key press
-document.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') {
-        const loginForm = document.getElementById('loginForm');
-        if (loginForm) {
-            const submitButton = loginForm.querySelector('button[type="submit"]');
-            if (submitButton && !submitButton.disabled) {
-                submitButton.click();
-            }
-        }
-    }
-});
