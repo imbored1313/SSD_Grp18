@@ -51,6 +51,7 @@
             <!-- Edit Mode -->
             <div id="editMode" style="display: none;">
                 <form id="profileForm">
+                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
                             <label class="form-label" for="firstName">First Name</label>
@@ -108,6 +109,7 @@
             <!-- Edit Mode -->
             <div id="addressEditMode" style="display: none;">
                 <form id="addressForm">
+                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                     <div class="form-group">
                         <label class="form-label" for="street">Street Address</label>
                         <input type="text" id="street" name="street" class="form-input" value="123 Electronics Street">

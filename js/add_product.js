@@ -31,6 +31,20 @@ document.addEventListener('DOMContentLoaded', () => {
             // added_by: <?php echo $_SESSION['user']['user_id'] ?? 0; ?>
         };
 
+        // Fetch the CSRF token dynamically
+        try {
+            const csrfResponse = await fetch('/php/get_csrf_token.php');
+            const csrfData = await csrfResponse.json();
+            const csrfToken = csrfData.token;
+            
+            // Add CSRF token to the form data
+            formData.append('csrf_token', csrfToken);
+        } catch (err) {
+            console.error('Error fetching CSRF token:', err);
+            showNotification('Error fetching CSRF token. Please try again.', 'error');
+            return;
+        }
+
         // Add JSON data as a field
         formData.append('productData', JSON.stringify(productData));
 
