@@ -303,30 +303,24 @@ async function saveProduct()
     };
 
     try {
-        // Fetch CSRF token
-        const csrfResponse = await fetch('/php/get_csrf_token.php', {
-            // Ensure the session cookie is sent
-            credentials: 'include'
-        });
-        const csrfData = await csrfResponse.json();
-        const csrfToken = csrfData.token;
-
-        // Add CSRF token to the form data
-        const formData = new FormData();
-        formData.append('csrf_token', csrfToken);
-
-        // Add other form data
-        formData.append('productData', JSON.stringify(productData));
-
         let imagePath = null;
 
+        // Handle image upload first if there's a file
         if (fileInput.files.length > 0) {
-            const formData = new FormData();
-            formData.append('productImage', fileInput.files[0]);
+            // Get CSRF token for image upload
+            const csrfResponse = await fetch('/php/get_csrf_token.php', {
+                credentials: 'include'
+            });
+            const csrfData = await csrfResponse.json();
+            const csrfToken = csrfData.token;
+
+            const imageFormData = new FormData();
+            imageFormData.append('productImage', fileInput.files[0]);
+            imageFormData.append('csrf_token', csrfToken);
 
             const uploadResponse = await fetch('php/upload.php', {
                 method: 'POST',
-                body: formData,
+                body: imageFormData,
                 credentials: 'include'
             });
 
@@ -344,10 +338,12 @@ async function saveProduct()
             imagePath = uploadResult.imagePath;
         }
 
+        // Add image path to product data if we have one
         if (imagePath) {
             productData.image_path = imagePath;
         }
 
+        // Now handle the product update
         const response = await fetch(`php/admin_products.php?action=update&id=${id}`, {
             method: 'POST',
             headers: {
@@ -366,14 +362,14 @@ async function saveProduct()
         }
 
         if (result.success) {
-            showSuccess(`Product updated successfully`);
+            showSuccess(`Product ${isEdit ? 'updated' : 'created'} successfully`);
             await loadProducts();
             bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
         } else {
             throw new Error(result.message || 'Update failed');
         }
     } catch (error) {
-        showError(`Failed to update product: ${error.message}`);
+        showError(`Failed to ${isEdit ? 'update' : 'create'} product: ${error.message}`);
     }
 }
 
