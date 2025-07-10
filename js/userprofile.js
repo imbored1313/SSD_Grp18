@@ -51,6 +51,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Fetch and display user profile data
     fetchUserProfile();
+
+    // Handle profile form submission
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            clearProfileFormErrors();
+            const formData = new FormData(profileForm);
+            fetch('php/update_user_profile.php', {
+                method: 'POST',
+                credentials: 'include',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Update UI with new data
+                    document.getElementById('displayName').textContent = `${escapeHTML(data.user.first_name)} ${escapeHTML(data.user.last_name)}`.trim();
+                    document.getElementById('fullNameDisplay').textContent = `${escapeHTML(data.user.first_name)} ${escapeHTML(data.user.last_name)}`.trim();
+                    document.getElementById('emailDisplay').textContent = escapeHTML(data.user.email);
+                    document.getElementById('phoneDisplay').textContent = escapeHTML(data.user.phone);
+                    toggleEditMode();
+                } else {
+                    showProfileFormError(data.error || 'Failed to update profile.');
+                }
+            })
+            .catch(() => {
+                showProfileFormError('Failed to update profile.');
+            });
+        });
+    }
 });
 
 function fetchUserProfile() {
@@ -81,6 +112,19 @@ function setProfileError(msg) {
     document.getElementById('fullNameDisplay').textContent = msg;
     document.getElementById('emailDisplay').textContent = msg;
     document.getElementById('phoneDisplay').textContent = msg;
+}
+
+function clearProfileFormErrors() {
+    document.getElementById('firstNameError').textContent = '';
+    document.getElementById('lastNameError').textContent = '';
+    document.getElementById('emailError').textContent = '';
+    document.getElementById('phoneError').textContent = '';
+    document.getElementById('verifyPasswordError').textContent = '';
+}
+
+function showProfileFormError(msg) {
+    // Show error at the top or in a general way
+    document.getElementById('firstNameError').textContent = msg;
 }
 
 // Handle session changes
@@ -265,4 +309,65 @@ document.addEventListener('click', function(event) {
 // Logout using session manager
 async function logout() {
     await window.sessionManager.logout();
+}
+
+// --- Profile Edit Mode Toggle ---
+function toggleEditMode() {
+    const displayMode = document.getElementById('displayMode');
+    const editMode = document.getElementById('editMode');
+    if (displayMode && editMode) {
+        if (displayMode.style.display === 'none') {
+            displayMode.style.display = '';
+            editMode.style.display = 'none';
+        } else {
+            displayMode.style.display = 'none';
+            editMode.style.display = '';
+        }
+    }
+}
+
+function cancelEdit() {
+    toggleEditMode();
+}
+
+// --- Address Edit Mode Toggle ---
+function toggleAddressEditMode() {
+    const displayMode = document.getElementById('addressDisplayMode');
+    const editMode = document.getElementById('addressEditMode');
+    if (displayMode && editMode) {
+        if (displayMode.style.display === 'none') {
+            displayMode.style.display = '';
+            editMode.style.display = 'none';
+        } else {
+            displayMode.style.display = 'none';
+            editMode.style.display = '';
+        }
+    }
+}
+
+function cancelAddressEdit() {
+    toggleAddressEditMode();
+}
+
+// --- Change Password Modal ---
+function showChangePassword() {
+    const modal = document.getElementById('changePasswordModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function hideChangePassword() {
+    const modal = document.getElementById('changePasswordModal');
+    if (modal) modal.style.display = 'none';
+}
+
+// --- View Login Activity (placeholder) ---
+function viewLoginActivity() {
+    alert('Login activity feature coming soon!');
+}
+
+// --- Delete Account (placeholder) ---
+function deleteAccount() {
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        alert('Account deletion feature coming soon!');
+    }
 }
