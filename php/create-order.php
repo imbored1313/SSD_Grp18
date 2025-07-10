@@ -2,8 +2,8 @@
 
 $data = json_decode(file_get_contents('php://input'), true);
 $amount = $data['amount'];
-$clientId = 'AVyilJ6eWAp302gUQQDI6HVO19xtLy7OGAp7ZUDRwmKY__jhoV6M-Xvdb3-raWXW2uX7wLtLtEbj-nh4';
-$clientSecret = 'EA6aWvSedTU2peoR7zMfdGY23CPEakYbDO4-DTNXSqGXBo_M1PIWLJd0rshmFrXKStV2avtfdmPSS2ih';
+$clientId = $_SERVER['PAYPAL_CLIENT_ID'];
+$clientSecret = $_SERVER['PAYPAL_CLIENT_SECRET'];
 
 // 1. Get access token
 $ch = curl_init('https://api-m.sandbox.paypal.com/v1/oauth2/token');
