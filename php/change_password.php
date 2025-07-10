@@ -16,6 +16,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// CSRF Token Check
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Invalid CSRF token']);
+        exit;
+    }
+}
+
 try {
 // Check if user is logged in
     if (!isset($_SESSION['user']) || !isset($_SESSION['user']['user_id'])) {

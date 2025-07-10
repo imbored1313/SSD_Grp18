@@ -13,7 +13,31 @@
 
     <script src="js/header.js"></script>
     
+    <script src="js/userprofile.js"></script>
 
+    <!-- Fetch CSRF token for forms-->
+    <script>
+        fetch('/php/get_csrf_token.php')
+            .then(res => res.json())
+            .then(data => {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = data.token;
+
+        // Add CSRF input to all forms
+        document.querySelectorAll('form').forEach(form => {
+        // Don't duplicate if already present
+        if (!form.querySelector('input[name="csrf_token"]')) {
+            form.appendChild(csrfInput.cloneNode(true));
+        }
+        });
+        })
+        .catch(err => {
+            console.error('Failed to fetch CSRF token:', err);
+        });
+    </script>
+    
     <div class="profile-container">
         <!-- Profile Header -->
         <div class="profile-header">
