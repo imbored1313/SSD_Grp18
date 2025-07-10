@@ -1,4 +1,16 @@
-// js/cart.js - SECURE VERSION - XSS vulnerabilities fixed
+// js/cart.js - COMPLETE SECURE VERSION - XSS vulnerabilities fixed
+
+// XSS Prevention: HTML escaping function
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('=== CART PAGE LOADED ===');
 
@@ -155,7 +167,7 @@ function displayCartItemsSecurely(items) {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ orderID: data.orderID })
                     }).then(res => res.json()).then(details => {
-                        alert(`Payment complete! Thank you, ${details.payer.name.given_name}.`);
+                        showNotificationSecure(`Payment complete! Thank you, ${details.payer.name.given_name}.`, 'success');
                         window.location.href = 'my_orders.html';
                     });
                 }
@@ -194,25 +206,25 @@ function createSecureCartItem(item, price, quantity, itemTotal) {
     const detailsDiv = document.createElement('div');
     detailsDiv.style.cssText = 'flex: 1;';
 
-    // Product name
+    // Product name - SECURE: Using textContent
     const nameH3 = document.createElement('h3');
     nameH3.style.cssText = 'margin: 0 0 0.5rem 0; font-size: 1.1rem; color: #333;';
     nameH3.textContent = item.name || 'Unknown Product';
     detailsDiv.appendChild(nameH3);
 
-    // Product description
+    // Product description - SECURE: Using textContent
     const descP = document.createElement('p');
     descP.style.cssText = 'margin: 0; color: #666; font-size: 0.9rem;';
     descP.textContent = item.description || 'No description';
     detailsDiv.appendChild(descP);
 
-    // Price and quantity
+    // Price and quantity - SECURE: Using textContent
     const priceP = document.createElement('p');
     priceP.style.cssText = 'margin: 0.5rem 0 0 0; font-weight: bold; color: #2c5aa0;';
     priceP.textContent = `$${price.toFixed(2)} × ${quantity}`;
     detailsDiv.appendChild(priceP);
 
-    // Stock warning
+    // Stock warning - SECURE: Using textContent
     if (item.stock < 10) {
         const stockP = document.createElement('p');
         stockP.style.cssText = 'margin: 0.25rem 0 0 0; color: #dc3545; font-size: 0.8rem;';
@@ -238,7 +250,7 @@ function createSecureCartItem(item, price, quantity, itemTotal) {
     }
     quantityDiv.appendChild(decreaseBtn);
 
-    // Quantity display
+    // Quantity display - SECURE: Using textContent
     const quantitySpan = document.createElement('span');
     quantitySpan.style.cssText = 'min-width: 40px; text-align: center; font-weight: bold; font-size: 1.1rem;';
     quantitySpan.textContent = quantity;
@@ -258,7 +270,7 @@ function createSecureCartItem(item, price, quantity, itemTotal) {
 
     cartItemDiv.appendChild(quantityDiv);
 
-    // Item total
+    // Item total - SECURE: Using textContent
     const totalDiv = document.createElement('div');
     totalDiv.style.cssText = 'font-weight: bold; min-width: 80px; text-align: right; font-size: 1.1rem; color: #2c5aa0;';
     totalDiv.textContent = `$${itemTotal.toFixed(2)}`;
@@ -373,16 +385,16 @@ async function updateQuantity(productId, newQty) {
 
         if (data.success) {
             console.log('✅ Quantity updated successfully');
-            showNotification('Quantity updated!', 'success');
+            showNotificationSecure('Quantity updated!', 'success');
             // Reload cart to get fresh data
             await loadCartFromDB();
         } else {
             console.error('❌ Update failed:', data.message);
-            showNotification('Update failed: ' + (data.message || 'Unknown error'), 'error');
+            showNotificationSecure('Update failed: ' + (data.message || 'Unknown error'), 'error');
         }
     } catch (error) {
         console.error('💥 Update quantity error:', error);
-        showNotification('Failed to update quantity', 'error');
+        showNotificationSecure('Failed to update quantity', 'error');
     }
 }
 
@@ -403,21 +415,21 @@ async function removeItem(productId) {
 
         if (data.success) {
             console.log('✅ Item removed successfully');
-            showNotification('Item removed from cart!', 'success');
+            showNotificationSecure('Item removed from cart!', 'success');
             // Reload cart to get fresh data
             await loadCartFromDB();
         } else {
             console.error('❌ Remove failed:', data.message);
-            showNotification('Failed to remove item: ' + (data.message || 'Unknown error'), 'error');
+            showNotificationSecure('Failed to remove item: ' + (data.message || 'Unknown error'), 'error');
         }
     } catch (error) {
         console.error('💥 Remove item error:', error);
-        showNotification('Failed to remove item', 'error');
+        showNotificationSecure('Failed to remove item', 'error');
     }
 }
 
-// Secure notification function
-function showNotification(message, type = 'success') {
+// SECURITY FIX: Secure notification function
+function showNotificationSecure(message, type = 'success') {
     const existing = document.getElementById('cart-notification');
     if (existing) existing.remove();
 
@@ -444,9 +456,9 @@ function showNotification(message, type = 'success') {
         font-family: Arial, sans-serif;
         font-size: 14px;
     `;
-    
-    // SAFE: Created using createElement and textContent — not vulnerable to XSS
-    notification.textContent = message; // Safe text insertion
+
+    // CRITICAL: Use textContent instead of innerHTML to prevent XSS
+    notification.textContent = String(message || ''); // Safe text insertion
     document.body.appendChild(notification);
 
     setTimeout(() => {
@@ -454,4 +466,9 @@ function showNotification(message, type = 'success') {
             notification.remove();
         }
     }, 3000);
+}
+
+// Keep original function name for backward compatibility
+function showNotification(message, type = 'success') {
+    showNotificationSecure(message, type);
 }

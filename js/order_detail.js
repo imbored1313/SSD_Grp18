@@ -1,138 +1,522 @@
-document.addEventListener('DOMContentLoaded', function() {
-    if (!window.sessionManager || !window.sessionManager.isLoggedIn()) {
-        window.location.href = 'login.html';
-        return;
-    }
-    const orderDetail = document.getElementById('order-detail');
-    const urlParams = new URLSearchParams(window.location.search);
-    const orderId = urlParams.get('order_id');
-    if (!orderId) {
-        orderDetail.innerHTML = '<div style="color:#c00;">No order selected.</div>';
-        return;
-    }
-    fetch('php/get_orders.php?order_id=' + encodeURIComponent(orderId), {
-        credentials: 'include'
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (!data.success || !data.order) {
-            orderDetail.innerHTML = '<div style="color:#c00;">Order not found.</div>';
-            return;
-        }
-        const order = data.order;
-        // Order header
-        let html = `<div style="background:#fff; border:1px solid #eee; border-radius:10px; padding:1.5rem; box-shadow:0 2px 8px rgba(0,0,0,0.03); margin-bottom:2rem;">
-            <div style="display:flex; justify-content:space-between; flex-wrap:wrap; align-items:center;">
-                <div>
-                    <div style="font-weight:bold; font-size:1.2em;">Order #${order.order_id}</div>
-                    <div style="color:#888; font-size:0.98em;">${new Date(order.order_date).toLocaleString()}</div>
-                    <div style="margin-top:0.5em; font-size:1em;">Status: <span style="color:#2c5aa0; font-weight:bold;">${order.status}</span></div>
-                </div>
-                <div style="text-align:right; min-width:120px;">
-                    <div style="font-size:1.2em; color:#2c5aa0; font-weight:bold;">$${parseFloat(order.grand_total || order.total_amount || 0).toFixed(2)}</div>
-                </div>
-            </div>
-        </div>`;
-        // Itemized list
-        html += `<div style="background:#f8f9fa; border-radius:10px; padding:1.2rem; margin-bottom:2rem;">
-            <div style="font-weight:bold; font-size:1.1em; margin-bottom:1em;">Items</div>`;
-        order.items.forEach(item => {
-            html += `<div style="display:flex; align-items:center; border-bottom:1px solid #eee; padding:0.7em 0; gap:1em;">
-                <img src="${item.product_image || 'uploads/no-image.jpg'}" alt="${item.product_name}" style="width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #ddd;">
-                <div style="flex:1;">
-                    <a href="product_detail.html?product_id=${item.product_id}" style="font-weight:bold; color:#2c5aa0; text-decoration:none;">${item.product_name}</a>
-                    <div style="color:#888; font-size:0.97em;">Unit Price: $${parseFloat(item.product_price).toFixed(2)}</div>
-                </div>
-                <div style="min-width:60px; text-align:center;">Qty: <b>${item.quantity}</b></div>
-                <div style="min-width:80px; text-align:right; font-weight:bold; color:#2c5aa0;">$${parseFloat(item.subtotal).toFixed(2)}</div>
-            </div>`;
-        });
-        html += `</div>`;
-        // Order progress (simple timeline)
-        html += `<div style="margin-bottom:2rem;">
-            <div style="font-weight:bold; font-size:1.1em; margin-bottom:0.7em;">Order Progress</div>
-            <div style="display:flex; flex-wrap:wrap; gap:1.5em; align-items:center;">
-                <div style="display:flex; flex-direction:column; align-items:center;">
-                    <span style="font-size:1.3em;">📝</span>
-                    <span style="font-size:0.95em; color:#555;">Received</span>
-                    <span style="font-size:0.85em; color:#888;">${new Date(order.order_date).toLocaleString()}</span>
-                </div>
-                <div style="width:30px; height:2px; background:#2c5aa0; align-self:center;"></div>
-                <div style="display:flex; flex-direction:column; align-items:center;">
-                    <span style="font-size:1.3em;">📦</span>
-                    <span style="font-size:0.95em; color:#555;">Processing</span>
-                </div>
-                <div style="width:30px; height:2px; background:#eee; align-self:center;"></div>
-                <div style="display:flex; flex-direction:column; align-items:center;">
-                    <span style="font-size:1.3em;">🚚</span>
-                    <span style="font-size:0.95em; color:#555;">Shipped</span>
-                </div>
-                <div style="width:30px; height:2px; background:#eee; align-self:center;"></div>
-                <div style="display:flex; flex-direction:column; align-items:center;">
-                    <span style="font-size:1.3em;">✅</span>
-                    <span style="font-size:0.95em; color:#555;">Delivered</span>
-                </div>
-            </div>
-        </div>`;
-        // Shipping details
-        html += `<div style="margin-bottom:2rem;">
-            <div style="font-weight:bold; font-size:1.1em; margin-bottom:0.7em;">Shipping Details</div>
-            <div style="color:#555;">${order.shipping_name || ''}</div>
-            <div style="color:#555;">${order.shipping_address || ''}</div>
-            <div style="color:#888; font-size:0.97em;">Method: ${order.shipping_method || 'Standard'}</div>
-            ${order.shipping_tracking_number ? `<div style="color:#888; font-size:0.97em;">Tracking: <a href="#" style="color:#2c5aa0;">${order.shipping_tracking_number}</a></div>` : ''}
-            ${order.shipping_eta ? `<div style="color:#888; font-size:0.97em;">ETA: ${new Date(order.shipping_eta).toLocaleDateString()}</div>` : ''}
-        </div>`;
-        // Billing & payment
-        html += `<div style="margin-bottom:2rem;">
-            <div style="font-weight:bold; font-size:1.1em; margin-bottom:0.7em;">Billing & Payment</div>
-            <div style="color:#555;">Payment Method: ${order.payment_method || ''} ${order.payment_details ? '(' + order.payment_details + ')' : ''}</div>
-            <div style="color:#555;">Billing Address: ${order.billing_address || order.shipping_address || ''}</div>
-        </div>`;
-        // Cost breakdown
-        html += `<div style="margin-bottom:2rem;">
-            <div style="font-weight:bold; font-size:1.1em; margin-bottom:0.7em;">Cost Breakdown</div>
-            <div style="display:flex; flex-wrap:wrap; gap:1em;">
-                <div style="flex:1;">Items Total:</div><div style="min-width:100px; text-align:right;">$${parseFloat(order.items_total || 0).toFixed(2)}</div>
-            </div>
-            <div style="display:flex; flex-wrap:wrap; gap:1em;">
-                <div style="flex:1;">Shipping:</div><div style="min-width:100px; text-align:right;">$${parseFloat(order.shipping_cost || 0).toFixed(2)}</div>
-            </div>
-            <div style="display:flex; flex-wrap:wrap; gap:1em;">
-                <div style="flex:1;">Tax:</div><div style="min-width:100px; text-align:right;">$${parseFloat(order.tax || 0).toFixed(2)}</div>
-            </div>
-            <div style="display:flex; flex-wrap:wrap; gap:1em;">
-                <div style="flex:1;">Discount:</div><div style="min-width:100px; text-align:right;">-$${parseFloat(order.discount || 0).toFixed(2)}</div>
-            </div>
-            <div style="display:flex; flex-wrap:wrap; gap:1em; font-weight:bold; color:#2c5aa0;">
-                <div style="flex:1;">Grand Total:</div><div style="min-width:100px; text-align:right;">$${parseFloat(order.grand_total || order.total_amount || 0).toFixed(2)}</div>
-            </div>
-        </div>`;
-        // Actions
-        html += `<div style="margin-bottom:2rem; display:flex; flex-wrap:wrap; gap:1em;">
-            <button style="background:#2c5aa0; color:#fff; border:none; padding:0.7em 1.5em; border-radius:6px; font-weight:bold; cursor:pointer;">Download Invoice</button>
-            <button style="background:#eee; color:#2c5aa0; border:none; padding:0.7em 1.5em; border-radius:6px; font-weight:bold; cursor:pointer;">Reorder</button>
-            <button style="background:#eee; color:#2c5aa0; border:none; padding:0.7em 1.5em; border-radius:6px; font-weight:bold; cursor:pointer;">Request Return</button>
-            <button style="background:#eee; color:#2c5aa0; border:none; padding:0.7em 1.5em; border-radius:6px; font-weight:bold; cursor:pointer;">Contact Support</button>
-        </div>`;
-        // Notes/FAQ
-        if (order.notes) {
-            html += `<div style="background:#f8f9fa; border-radius:8px; padding:1em; margin-bottom:2em; color:#555;">Note from seller: ${escapeHTML(order.notes)}</div>`;
-        }
-        html += `<div style="background:#f8f9fa; border-radius:8px; padding:1em; color:#888; font-size:0.97em;">For questions about returns, shipping, or customs, please see our <a href="#" style="color:#2c5aa0;">FAQs</a>.</div>`;
-        orderDetail.innerHTML = html;
-    })
-    .catch(err => {
-        orderDetail.innerHTML = '<div style="color:#c00;">Failed to load order details. Please try again later.</div>';
-    });
-}); 
+// js/order_detail.js - COMPLETE SECURE VERSION - XSS vulnerabilities fixed
 
+// XSS Prevention: HTML escaping function
 function escapeHTML(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get('id');
+    
+    if (orderId) {
+        loadOrderDetails(orderId);
+    } else {
+        displayError('No order ID provided');
+    }
+});
+
+async function loadOrderDetails(orderId) {
+    try {
+        showLoading();
+        
+        const response = await fetch(`php/get_order_details.php?id=${encodeURIComponent(orderId)}`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.order) {
+            displayOrderDetailsSecurely(data.order);
+        } else {
+            throw new Error(data.message || 'Failed to load order details');
+        }
+    } catch (error) {
+        console.error('Error loading order details:', error);
+        displayError('Failed to load order details: ' + error.message);
+    } finally {
+        hideLoading();
+    }
+}
+
+// SECURITY FIX: Secure order details display using DOM methods
+function displayOrderDetailsSecurely(order) {
+    const container = document.getElementById('order-details');
+    if (!container) return;
+
+    // Clear existing content
+    container.innerHTML = '';
+
+    // Create main order container
+    const orderContainer = document.createElement('div');
+    orderContainer.className = 'order-container';
+    orderContainer.style.cssText = 'max-width: 800px; margin: 0 auto; padding: 2rem; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);';
+
+    // Order header
+    const header = createOrderHeader(order);
+    orderContainer.appendChild(header);
+
+    // Order status
+    const status = createOrderStatus(order);
+    orderContainer.appendChild(status);
+
+    // Customer information
+    const customerInfo = createCustomerInfo(order);
+    orderContainer.appendChild(customerInfo);
+
+    // Order items
+    const itemsSection = createOrderItems(order);
+    orderContainer.appendChild(itemsSection);
+
+    // Order summary
+    const summary = createOrderSummary(order);
+    orderContainer.appendChild(summary);
+
+    // Order notes (if any)
+    if (order.notes) {
+        const notesSection = createOrderNotes(order);
+        orderContainer.appendChild(notesSection);
+    }
+
+    container.appendChild(orderContainer);
+}
+
+// SECURITY FIX: Create order header securely
+function createOrderHeader(order) {
+    const header = document.createElement('div');
+    header.className = 'order-header';
+    header.style.cssText = 'border-bottom: 2px solid #2c5aa0; padding-bottom: 1rem; margin-bottom: 2rem;';
+
+    const title = document.createElement('h1');
+    title.style.cssText = 'margin: 0 0 0.5rem 0; color: #2c5aa0; font-size: 2rem;';
+    title.textContent = `Order #${order.order_id}`;
+    header.appendChild(title);
+
+    const date = document.createElement('p');
+    date.style.cssText = 'margin: 0; color: #666; font-size: 1rem;';
+    const orderDate = new Date(order.order_date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    date.textContent = `Placed on ${orderDate}`;
+    header.appendChild(date);
+
+    return header;
+}
+
+// SECURITY FIX: Create order status securely
+function createOrderStatus(order) {
+    const statusContainer = document.createElement('div');
+    statusContainer.className = 'order-status';
+    statusContainer.style.cssText = 'background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;';
+
+    const statusLabel = document.createElement('h3');
+    statusLabel.style.cssText = 'margin: 0 0 0.5rem 0; color: #333;';
+    statusLabel.textContent = 'Order Status';
+    statusContainer.appendChild(statusLabel);
+
+    const statusBadge = document.createElement('span');
+    statusBadge.className = 'status-badge';
+    
+    // Set status styling based on order status
+    const status = (order.status || 'pending').toLowerCase();
+    let statusColor = '#6c757d'; // default gray
+    let statusBg = '#f8f9fa';
+    
+    switch(status) {
+        case 'completed':
+        case 'delivered':
+            statusColor = '#28a745';
+            statusBg = '#d4edda';
+            break;
+        case 'processing':
+        case 'shipped':
+            statusColor = '#007bff';
+            statusBg = '#d1ecf1';
+            break;
+        case 'pending':
+            statusColor = '#ffc107';
+            statusBg = '#fff3cd';
+            break;
+        case 'cancelled':
+            statusColor = '#dc3545';
+            statusBg = '#f8d7da';
+            break;
+    }
+    
+    statusBadge.style.cssText = `display: inline-block; padding: 0.5rem 1rem; background: ${statusBg}; color: ${statusColor}; border-radius: 6px; font-weight: 600; text-transform: capitalize;`;
+    statusBadge.textContent = order.status || 'Pending';
+    statusContainer.appendChild(statusBadge);
+
+    return statusContainer;
+}
+
+// SECURITY FIX: Create customer info securely
+function createCustomerInfo(order) {
+    const customerContainer = document.createElement('div');
+    customerContainer.className = 'customer-info';
+    customerContainer.style.cssText = 'margin-bottom: 2rem;';
+
+    const title = document.createElement('h3');
+    title.style.cssText = 'margin: 0 0 1rem 0; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 0.5rem;';
+    title.textContent = 'Customer Information';
+    customerContainer.appendChild(title);
+
+    const infoGrid = document.createElement('div');
+    infoGrid.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;';
+
+    // Customer name
+    if (order.customer_name) {
+        const nameField = createInfoField('Name', order.customer_name);
+        infoGrid.appendChild(nameField);
+    }
+
+    // Customer email
+    if (order.customer_email) {
+        const emailField = createInfoField('Email', order.customer_email);
+        infoGrid.appendChild(emailField);
+    }
+
+    // Customer phone
+    if (order.customer_phone) {
+        const phoneField = createInfoField('Phone', order.customer_phone);
+        infoGrid.appendChild(phoneField);
+    }
+
+    // Shipping address
+    if (order.shipping_address) {
+        const addressField = createInfoField('Shipping Address', order.shipping_address);
+        infoGrid.appendChild(addressField);
+    }
+
+    customerContainer.appendChild(infoGrid);
+    return customerContainer;
+}
+
+// SECURITY FIX: Create info field securely
+function createInfoField(label, value) {
+    const field = document.createElement('div');
+    field.style.cssText = 'background: #f8f9fa; padding: 1rem; border-radius: 6px;';
+
+    const labelEl = document.createElement('div');
+    labelEl.style.cssText = 'font-weight: 600; color: #666; margin-bottom: 0.25rem; font-size: 0.9rem;';
+    labelEl.textContent = label;
+    field.appendChild(labelEl);
+
+    const valueEl = document.createElement('div');
+    valueEl.style.cssText = 'color: #333; font-size: 1rem;';
+    valueEl.textContent = value || 'Not provided';
+    field.appendChild(valueEl);
+
+    return field;
+}
+
+// SECURITY FIX: Create order items securely
+function createOrderItems(order) {
+    const itemsContainer = document.createElement('div');
+    itemsContainer.className = 'order-items';
+    itemsContainer.style.cssText = 'margin-bottom: 2rem;';
+
+    const title = document.createElement('h3');
+    title.style.cssText = 'margin: 0 0 1rem 0; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 0.5rem;';
+    title.textContent = 'Order Items';
+    itemsContainer.appendChild(title);
+
+    if (!order.items || order.items.length === 0) {
+        const noItems = document.createElement('p');
+        noItems.style.cssText = 'color: #666; font-style: italic;';
+        noItems.textContent = 'No items found for this order.';
+        itemsContainer.appendChild(noItems);
+        return itemsContainer;
+    }
+
+    const itemsList = document.createElement('div');
+    itemsList.className = 'items-list';
+
+    order.items.forEach(item => {
+        const itemCard = createOrderItemCard(item);
+        itemsList.appendChild(itemCard);
+    });
+
+    itemsContainer.appendChild(itemsList);
+    return itemsContainer;
+}
+
+// SECURITY FIX: Create order item card securely
+function createOrderItemCard(item) {
+    const card = document.createElement('div');
+    card.className = 'order-item-card';
+    card.style.cssText = 'border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;';
+
+    // Product image
+    const imageContainer = document.createElement('div');
+    imageContainer.style.cssText = 'flex-shrink: 0;';
+
+    const img = document.createElement('img');
+    img.style.cssText = 'width: 80px; height: 80px; object-fit: cover; border-radius: 6px;';
+    img.alt = 'Product image';
+    
+    // Handle image path safely
+    let imageSrc = '/assets/images/no-image.jpg';
+    if (item.image_path) {
+        if (item.image_path.startsWith('http') || item.image_path.startsWith('/uploads/')) {
+            imageSrc = item.image_path;
+        } else {
+            imageSrc = '/uploads/products/' + item.image_path;
+        }
+    }
+    img.src = imageSrc;
+    img.onerror = function() { this.src = '/assets/images/no-image.jpg'; };
+    
+    imageContainer.appendChild(img);
+    card.appendChild(imageContainer);
+
+    // Product details
+    const detailsContainer = document.createElement('div');
+    detailsContainer.style.cssText = 'flex: 1;';
+
+    // Product name - SECURE: Using textContent
+    const name = document.createElement('h4');
+    name.style.cssText = 'margin: 0 0 0.5rem 0; color: #333; font-size: 1.1rem;';
+    name.textContent = item.product_name || 'Unknown Product';
+    detailsContainer.appendChild(name);
+
+    // Product description - SECURE: Using textContent
+    if (item.product_description) {
+        const description = document.createElement('p');
+        description.style.cssText = 'margin: 0 0 0.5rem 0; color: #666; font-size: 0.9rem;';
+        const truncatedDesc = item.product_description.length > 100 
+            ? item.product_description.substring(0, 100) + '...'
+            : item.product_description;
+        description.textContent = truncatedDesc;
+        detailsContainer.appendChild(description);
+    }
+
+    // Quantity and price info
+    const priceInfo = document.createElement('div');
+    priceInfo.style.cssText = 'display: flex; gap: 1rem; align-items: center;';
+
+    const quantity = document.createElement('span');
+    quantity.style.cssText = 'color: #666;';
+    quantity.textContent = `Qty: ${item.quantity || 1}`;
+    priceInfo.appendChild(quantity);
+
+    const price = document.createElement('span');
+    price.style.cssText = 'color: #2c5aa0; font-weight: 600;';
+    price.textContent = `$${parseFloat(item.product_price || 0).toFixed(2)} each`;
+    priceInfo.appendChild(price);
+
+    const total = document.createElement('span');
+    total.style.cssText = 'color: #333; font-weight: 700; margin-left: auto;';
+    const itemTotal = parseFloat(item.product_price || 0) * parseInt(item.quantity || 1);
+    total.textContent = `$${itemTotal.toFixed(2)}`;
+    priceInfo.appendChild(total);
+
+    detailsContainer.appendChild(priceInfo);
+    card.appendChild(detailsContainer);
+
+    return card;
+}
+
+// SECURITY FIX: Create order summary securely
+function createOrderSummary(order) {
+    const summaryContainer = document.createElement('div');
+    summaryContainer.className = 'order-summary';
+    summaryContainer.style.cssText = 'background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;';
+
+    const title = document.createElement('h3');
+    title.style.cssText = 'margin: 0 0 1rem 0; color: #333;';
+    title.textContent = 'Order Summary';
+    summaryContainer.appendChild(title);
+
+    const summaryGrid = document.createElement('div');
+    summaryGrid.style.cssText = 'display: flex; flex-direction: column; gap: 0.5rem;';
+
+    // Subtotal
+    if (order.subtotal) {
+        const subtotalRow = createSummaryRow('Subtotal', `$${parseFloat(order.subtotal).toFixed(2)}`);
+        summaryGrid.appendChild(subtotalRow);
+    }
+
+    // Tax
+    if (order.tax_amount) {
+        const taxRow = createSummaryRow('Tax', `$${parseFloat(order.tax_amount).toFixed(2)}`);
+        summaryGrid.appendChild(taxRow);
+    }
+
+    // Shipping
+    if (order.shipping_cost) {
+        const shippingRow = createSummaryRow('Shipping', `$${parseFloat(order.shipping_cost).toFixed(2)}`);
+        summaryGrid.appendChild(shippingRow);
+    }
+
+    // Total
+    const totalRow = createSummaryRow('Total', `$${parseFloat(order.total_amount || 0).toFixed(2)}`, true);
+    summaryGrid.appendChild(totalRow);
+
+    summaryContainer.appendChild(summaryGrid);
+    return summaryContainer;
+}
+
+// SECURITY FIX: Create summary row securely
+function createSummaryRow(label, value, isTotal = false) {
+    const row = document.createElement('div');
+    row.style.cssText = `display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; ${isTotal ? 'border-top: 2px solid #2c5aa0; margin-top: 0.5rem; font-weight: 700; font-size: 1.1rem;' : ''}`;
+
+    const labelEl = document.createElement('span');
+    labelEl.textContent = label;
+    row.appendChild(labelEl);
+
+    const valueEl = document.createElement('span');
+    valueEl.style.cssText = isTotal ? 'color: #2c5aa0;' : 'color: #333;';
+    valueEl.textContent = value;
+    row.appendChild(valueEl);
+
+    return row;
+}
+
+// SECURITY FIX: Create order notes securely
+function createOrderNotes(order) {
+    const notesContainer = document.createElement('div');
+    notesContainer.className = 'order-notes';
+    notesContainer.style.cssText = 'background: #fff3cd; border: 1px solid #ffeaa7; padding: 1rem; border-radius: 8px;';
+
+    const title = document.createElement('h4');
+    title.style.cssText = 'margin: 0 0 0.5rem 0; color: #856404;';
+    title.textContent = 'Order Notes';
+    notesContainer.appendChild(title);
+
+    const notesText = document.createElement('p');
+    notesText.style.cssText = 'margin: 0; color: #856404; line-height: 1.5;';
+    notesText.textContent = order.notes;
+    notesContainer.appendChild(notesText);
+
+    return notesContainer;
+}
+
+function showLoading() {
+    const container = document.getElementById('order-details');
+    if (!container) return;
+
+    container.innerHTML = '';
+    
+    const loading = document.createElement('div');
+    loading.style.cssText = 'text-align: center; padding: 4rem 2rem; color: #666;';
+    
+    const spinner = document.createElement('div');
+    spinner.style.cssText = 'display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #2c5aa0; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem;';
+    loading.appendChild(spinner);
+    
+    const text = document.createElement('p');
+    text.textContent = 'Loading order details...';
+    loading.appendChild(text);
+    
+    container.appendChild(loading);
+
+    // Add CSS animation if not already present
+    if (!document.getElementById('spinner-style')) {
+        const style = document.createElement('style');
+        style.id = 'spinner-style';
+        style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+        document.head.appendChild(style);
+    }
+}
+
+function hideLoading() {
+    // Loading state is replaced when displayOrderDetailsSecurely() is called
+}
+
+function displayError(message) {
+    const container = document.getElementById('order-details');
+    if (!container) return;
+
+    container.innerHTML = '';
+    
+    const errorContainer = document.createElement('div');
+    errorContainer.style.cssText = 'text-align: center; padding: 4rem 2rem; color: #dc3545;';
+    
+    const icon = document.createElement('div');
+    icon.style.cssText = 'font-size: 4rem; margin-bottom: 1rem; opacity: 0.7;';
+    icon.textContent = '⚠️';
+    errorContainer.appendChild(icon);
+    
+    const heading = document.createElement('h3');
+    heading.style.cssText = 'margin-bottom: 1rem; color: #dc3545;';
+    heading.textContent = 'Error Loading Order';
+    errorContainer.appendChild(heading);
+    
+    const text = document.createElement('p');
+    text.style.cssText = 'margin-bottom: 2rem; color: #666;';
+    text.textContent = message || 'Failed to load order details';
+    errorContainer.appendChild(text);
+    
+    const backBtn = document.createElement('button');
+    backBtn.textContent = 'Back to Orders';
+    backBtn.style.cssText = 'padding: 0.75rem 1.5rem; background: #2c5aa0; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem;';
+    backBtn.onclick = function() {
+        window.location.href = 'my_orders.html';
+    };
+    errorContainer.appendChild(backBtn);
+    
+    container.appendChild(errorContainer);
+}
+
+// SECURITY FIX: Secure notification function
+function showNotificationSecure(message, type = 'info') {
+    const existing = document.getElementById('order-notification');
+    if (existing) existing.remove();
+
+    const notification = document.createElement('div');
+    notification.id = 'order-notification';
+
+    const colors = {
+        success: '#28a745',
+        error: '#dc3545',
+        info: '#17a2b8',
+        warning: '#ffc107'
+    };
+
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${colors[type] || colors.info};
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        z-index: 3000;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        transition: opacity 0.3s ease;
+    `;
+
+    // CRITICAL: Use textContent instead of innerHTML to prevent XSS
+    notification.textContent = String(message || ''); // Safe text insertion
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 4000);
+}
+
+// Keep original function name for backward compatibility
+function showNotification(message, type = 'info') {
+    showNotificationSecure(message, type);
+}
