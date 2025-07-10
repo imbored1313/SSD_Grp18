@@ -1,3 +1,5 @@
+// js/admin_products.js - SECURE VERSION - XSS vulnerabilities fixed
+
 document.addEventListener('DOMContentLoaded', () => {
     loadProducts();
     setupEventListeners();
@@ -5,8 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let products = [];
 
-async function loadProducts()
-{
+async function loadProducts() {
     try {
         // 1. First get the raw data from your API
         const response = await fetch('php/admin_products.php?action=list', {
@@ -26,8 +27,8 @@ async function loadProducts()
             ...product
         }));
 
-        // 5. Render the transformed data
-        renderProducts(products);
+        // 5. Render the transformed data securely
+        renderProductsSecurely(products);
     } catch (error) {
         console.error('Failed to load products:', error);
         // Fallback to your test data if API fails
@@ -40,10 +41,11 @@ async function loadProducts()
             image_path: "http://3.15.42.35/uploads/product_6856ff5ef3ddb9.06061919.png",
             added_by_username: "admin"
         };
-        renderProducts([testProduct]);
+        renderProductsSecurely([testProduct]);
     }
 }
 
+// XSS Prevention: HTML escaping function
 function escapeHTML(str) {
     if (typeof str !== 'string') {
         return str === undefined || str === null ? '' : String(str);
@@ -57,64 +59,140 @@ function escapeHTML(str) {
     }[tag]));
 }
 
-function renderProducts(products)
-{
+// SECURITY FIX: Secure table rendering function using DOM creation
+function renderProductsSecurely(products) {
     const tbody = document.querySelector('#productsTable tbody');
+    if (!tbody) return;
 
-    // Clear previous content
+    // Clear previous content safely
     tbody.innerHTML = '';
 
     // Check if products exist
     if (!products || products.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center">No products found</td></tr>';
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 8;
+        cell.className = 'text-center';
+        cell.textContent = 'No products found';
+        row.appendChild(cell);
+        tbody.appendChild(row);
         return;
     }
 
-    // Process each product
+    // Process each product securely
     products.forEach(product => {
-        const row = document.createElement('tr');
-        row.dataset.id = product.product_id;
-
-        // Ensure image_path is a full URL only if not already
-        let imageUrl = product.image_path;
-
-        row.innerHTML = `
-            <td>${escapeHTML(product.product_id)}</td>
-            <td>${escapeHTML(product.name) || 'No name'}</td>
-            <td>${product.description ?
-                escapeHTML(product.description.length > 50 ?
-                    product.description.substring(0, 47) + '...' :
-                    product.description) :
-                'No description'}</td>
-            <td>$${parseFloat(product.price || 0).toFixed(2)}</td>
-            <td>${escapeHTML(product.stock)}</td>
-            <td class="text-center">
-                ${imageUrl ?
-                    `<img src="${imageUrl}"
-                          alt="${escapeHTML(product.name) || 'Product image'}"
-                          class="product-image"
-                          onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\'text-muted\'>Image missing</span>'">` :
-                    '<span class="text-muted">No image</span>'}
-            </td>
-            <td>${escapeHTML(product.added_by_username) || 'System'}</td>
-            <td class="action-buttons">
-                <button class="btn btn-sm btn-warning" data-action="edit">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="btn btn-sm btn-danger" data-action="delete">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-            </td>
-            `;
-
+        const row = createSecureProductRow(product);
         tbody.appendChild(row);
     });
 }
 
-function setupEventListeners()
-{
+// SECURITY FIX: Create product row using DOM methods instead of innerHTML
+function createSecureProductRow(product) {
+    const row = document.createElement('tr');
+    row.dataset.id = product.product_id;
+
+    // ID cell
+    const idCell = document.createElement('td');
+    idCell.textContent = product.product_id || '';
+    row.appendChild(idCell);
+
+    // Name cell
+    const nameCell = document.createElement('td');
+    nameCell.textContent = product.name || 'No name';
+    row.appendChild(nameCell);
+
+    // Description cell
+    const descCell = document.createElement('td');
+    const description = product.description || 'No description';
+    const truncatedDesc = description.length > 50 ? 
+        description.substring(0, 47) + '...' : 
+        description;
+    descCell.textContent = truncatedDesc;
+    row.appendChild(descCell);
+
+    // Price cell
+    const priceCell = document.createElement('td');
+    priceCell.textContent = `$${parseFloat(product.price || 0).toFixed(2)}`;
+    row.appendChild(priceCell);
+
+    // Stock cell
+    const stockCell = document.createElement('td');
+    stockCell.textContent = product.stock || '0';
+    row.appendChild(stockCell);
+
+    // Image cell
+    const imageCell = document.createElement('td');
+    imageCell.className = 'text-center';
+
+    if (product.image_path) {
+        const img = document.createElement('img');
+        img.src = product.image_path;
+        img.alt = 'Product image';
+        img.className = 'product-image';
+        img.style.cssText = 'max-width: 50px; max-height: 50px; object-fit: cover; border-radius: 4px;';
+        img.onerror = function() {
+            this.style.display = 'none';
+            this.parentElement.innerHTML = '';
+            const span = document.createElement('span');
+            span.className = 'text-muted';
+            span.textContent = 'Image missing';
+            this.parentElement.appendChild(span);
+        };
+        imageCell.appendChild(img);
+    } else {
+        const span = document.createElement('span');
+        span.className = 'text-muted';
+        span.textContent = 'No image';
+        imageCell.appendChild(span);
+    }
+    row.appendChild(imageCell);
+
+    // Added by cell
+    const addedByCell = document.createElement('td');
+    addedByCell.textContent = product.added_by_username || 'System';
+    row.appendChild(addedByCell);
+
+    // Actions cell
+    const actionsCell = document.createElement('td');
+    actionsCell.className = 'action-buttons';
+
+    // Edit button
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-sm btn-warning';
+    editBtn.dataset.action = 'edit';
+    editBtn.style.marginRight = '5px';
+
+    const editIcon = document.createElement('i');
+    editIcon.className = 'fas fa-edit';
+    editBtn.appendChild(editIcon);
+    editBtn.appendChild(document.createTextNode(' Edit'));
+
+    actionsCell.appendChild(editBtn);
+
+    // Delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn btn-sm btn-danger';
+    deleteBtn.dataset.action = 'delete';
+
+    const deleteIcon = document.createElement('i');
+    deleteIcon.className = 'fas fa-trash';
+    deleteBtn.appendChild(deleteIcon);
+    deleteBtn.appendChild(document.createTextNode(' Delete'));
+
+    actionsCell.appendChild(deleteBtn);
+    row.appendChild(actionsCell);
+
+    return row;
+}
+
+// Keep original function name for backward compatibility
+function renderProducts(products) {
+    renderProductsSecurely(products);
+}
+
+function setupEventListeners() {
     // Table actions
-    document.querySelector('#productsTable').addEventListener('click', async(e) => {
+    document.querySelector('#productsTable').addEventListener('click', async (e) => {
         const btn = e.target.closest('[data-action]');
         if (!btn) {
             return;
@@ -134,21 +212,26 @@ function setupEventListeners()
     });
 
     // Add product button
-    document.getElementById('addProductBtn').addEventListener('click', () => {
-        showEditForm();
-    });
+    const addBtn = document.getElementById('addProductBtn');
+    if (addBtn) {
+        addBtn.addEventListener('click', () => {
+            showEditForm();
+        });
+    }
 
     // Form submission
-    document.getElementById('productForm').addEventListener('submit', async(e) => {
-        e.preventDefault();
-        await saveProduct();
-    });
+    const form = document.getElementById('productForm');
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await saveProduct();
+        });
+    }
 }
 
-async function deleteProduct(id)
-{
+async function deleteProduct(id) {
     try {
-        const response = await fetch(`php/admin_products.php?action=delete&id=${id}`, {
+        const response = await fetch(`php/admin_products.php?action=delete&id=${encodeURIComponent(id)}`, {
             credentials: 'include'
         });
 
@@ -164,67 +247,87 @@ async function deleteProduct(id)
     }
 }
 
-async function showEditForm(id = null)
-{
+async function showEditForm(id = null) {
     const form = document.getElementById('productForm');
-    const modal = new bootstrap.Modal(document.getElementById('productModal'));
+    const modal = document.getElementById('productModal');
     const previewContainer = document.getElementById('imagePreview');
     const modalTitle = document.getElementById('modalTitle');
+
+    if (!form || !modal) return;
 
     form.reset();
     form.dataset.id = id || '';
 
-    previewContainer.innerHTML = ''; // clear previous preview
-
-    // Set modal title
-    if (id) {
-        modalTitle.textContent = 'Edit Product';
-        try {
-            const response = await fetch(`php/admin_products.php?action=get&id=${id}`, {
-                credentials: 'include'
-            });
-
-            const product = await response.json();
-
-            // ✅ Apply same transformation for consistent URL:
-            product.image_path = product.image_path ? product.image_path : null;
-
-            // Fill form:
-            form.elements.name.value = product.name;
-            form.elements.description.value = product.description || '';
-            form.elements.price.value = product.price;
-            form.elements.stock.value = product.stock;
-
-            // ✅ Show the preview:
-            if (product.image_path) {
-                previewContainer.innerHTML = `
-                    <label class="form-label">Current Image</label>
-                    <img src="${product.image_path}"
-                         alt="Current Image"
-                         class="img-thumbnail mt-2"
-                         style="max-height: 150px;"
-                         onerror="this.onerror=null;this.src='https://via.placeholder.com/150?text=No+Image';">
-                `;
-            } else {
-                previewContainer.innerHTML = `
-                    <label class="form-label">Current Image</label>
-                    <div class="text-muted">No image available</div>
-                `;
-            }
-        } catch (error) {
-            showError('Failed to load product: ' + error.message);
-            return;
-        }
-    } else {
-        modalTitle.textContent = 'Add Product';
+    if (previewContainer) {
+        previewContainer.innerHTML = ''; // clear previous preview
     }
 
-    modal.show();
+    // Set modal title securely
+    if (modalTitle) {
+        if (id) {
+            modalTitle.textContent = 'Edit Product';
+            try {
+                const response = await fetch(`php/admin_products.php?action=get&id=${encodeURIComponent(id)}`, {
+                    credentials: 'include'
+                });
+
+                const product = await response.json();
+
+                // Apply same transformation for consistent URL:
+                product.image_path = product.image_path ? product.image_path : null;
+
+                // Fill form securely using value properties:
+                if (form.elements.name) form.elements.name.value = product.name || '';
+                if (form.elements.description) form.elements.description.value = product.description || '';
+                if (form.elements.price) form.elements.price.value = product.price || '';
+                if (form.elements.stock) form.elements.stock.value = product.stock || '';
+
+                // Show the preview securely
+                if (previewContainer) {
+                    previewContainer.innerHTML = ''; // Clear first
+                    
+                    const label = document.createElement('label');
+                    label.className = 'form-label';
+                    label.textContent = 'Current Image';
+                    previewContainer.appendChild(label);
+
+                    if (product.image_path) {
+                        const img = document.createElement('img');
+                        img.src = product.image_path;
+                        img.alt = 'Current Image';
+                        img.className = 'img-thumbnail mt-2';
+                        img.style.maxHeight = '150px';
+                        img.onerror = function() {
+                            this.onerror = null;
+                            this.src = 'https://via.placeholder.com/150?text=No+Image';
+                        };
+                        previewContainer.appendChild(img);
+                    } else {
+                        const noImageDiv = document.createElement('div');
+                        noImageDiv.className = 'text-muted';
+                        noImageDiv.textContent = 'No image available';
+                        previewContainer.appendChild(noImageDiv);
+                    }
+                }
+            } catch (error) {
+                showError('Failed to load product: ' + error.message);
+                return;
+            }
+        } else {
+            modalTitle.textContent = 'Add Product';
+        }
+    }
+
+    // Show modal (assuming Bootstrap modal)
+    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+    } else {
+        modal.style.display = 'block';
+    }
 }
 
-
-async function saveProduct()
-{
+async function saveProduct() {
     const form = document.getElementById('productForm');
     const id = form.dataset.id || '';
     const isEdit = !!id;
@@ -240,7 +343,7 @@ async function saveProduct()
     try {
         let imagePath = null;
 
-        if (fileInput.files.length > 0) {
+        if (fileInput && fileInput.files.length > 0) {
             const formData = new FormData();
             formData.append('productImage', fileInput.files[0]);
 
@@ -268,7 +371,7 @@ async function saveProduct()
             productData.image_path = imagePath;
         }
 
-        const response = await fetch(`php/admin_products.php?action=update&id=${id}`, {
+        const response = await fetch(`php/admin_products.php?action=update&id=${encodeURIComponent(id)}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -286,62 +389,100 @@ async function saveProduct()
         }
 
         if (result.success) {
-            showSuccess(`Product updated successfully`);
+            showSuccess(`Product ${isEdit ? 'updated' : 'created'} successfully`);
             await loadProducts();
-            bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+            
+            // Close modal
+            const modal = document.getElementById('productModal');
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                if (bsModal) bsModal.hide();
+            } else {
+                modal.style.display = 'none';
+            }
         } else {
-            throw new Error(result.message || 'Update failed');
+            throw new Error(result.message || 'Operation failed');
         }
     } catch (error) {
-        showError(`Failed to update product: ${error.message}`);
+        showError(`Failed to ${isEdit ? 'update' : 'create'} product: ${error.message}`);
     }
 }
 
-document.getElementById('image_file').addEventListener('change', function () {
-    const preview = document.getElementById('imagePreview');
-    preview.innerHTML = '';
+// Image preview functionality
+const imageFileInput = document.getElementById('image_file');
+if (imageFileInput) {
+    imageFileInput.addEventListener('change', function () {
+        const preview = document.getElementById('imagePreview');
+        if (!preview) return;
+        
+        // Clear existing preview safely
+        preview.innerHTML = '';
 
-    const file = this.files[0];
-    if (file) {
-        const img = document.createElement('img');
-        img.classList.add('img-thumbnail', 'mt-2');
-        img.style.maxHeight = '150px';
-
-        img.src = URL.createObjectURL(file);
-        preview.appendChild(img);
-    }
-});
-
-
+        const file = this.files[0];
+        if (file) {
+            const img = document.createElement('img');
+            img.className = 'img-thumbnail mt-2';
+            img.style.maxHeight = '150px';
+            img.src = URL.createObjectURL(file);
+            img.alt = 'Preview';
+            preview.appendChild(img);
+        }
+    });
+}
 
 // Helper functions
-function truncateText(text, maxLength)
-{
+function truncateText(text, maxLength) {
     return text && text.length > maxLength
         ? text.substring(0, maxLength) + '...'
         : text || '';
 }
 
-function showLoading(selector)
-{
-    document.querySelector(selector).classList.add('loading');
+function showLoading(selector) {
+    const element = document.querySelector(selector);
+    if (element) {
+        element.classList.add('loading');
+    }
 }
 
-function hideLoading()
-{
+function hideLoading() {
     document.querySelectorAll('.loading').forEach(el => el.classList.remove('loading'));
 }
 
-function showError(message)
-{
-    // Implement your error display logic
-    console.error(message);
-    alert(message); // Replace with better UI feedback
+// SECURITY FIX: Secure notification functions
+function showError(message) {
+    showNotification(message, 'error');
 }
 
-function showSuccess(message)
-{
-    // Implement your success display logic
-    console.log(message);
-    alert(message); // Replace with better UI feedback
+function showSuccess(message) {
+    showNotification(message, 'success');
+}
+
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existing = document.querySelectorAll('.admin-notification');
+    existing.forEach(el => el.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `admin-notification alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'}`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 400px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding: 1rem;
+        border-radius: 8px;
+        font-family: Arial, sans-serif;
+    `;
+    
+    notification.textContent = message; // Safe text insertion
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
 }

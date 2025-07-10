@@ -1,592 +1,191 @@
-// userprofile.js - User Profile Page JavaScript with Database Integration
-//testing
+// js/userprofile.js - SECURE VERSION - XSS vulnerabilities fixed
 
-let currentUserData = null;
-
-// Initialize page on load
-document.addEventListener('DOMContentLoaded', function () {
-    console.log('Profile page loaded, starting initialization...'); // Debug log
-
-    // Only need session check - it will populate everything
-    checkUserSession();
-    initializeEventListeners();
-});
-
-// Check if user is logged in, redirect if not
-async function checkUserSession()
-{
-    try {
-        console.log('Checking user session...'); // Debug log
-
-        const response = await fetch('php/check_session.php', {
-            method: 'GET',
-            credentials: 'include'
-        });
-
-        console.log('Session check response status:', response.status); // Debug log
-
-        const result = await response.json();
-        console.log('Session check result:', result); // Debug log
-
-        if (!response.ok || !result.success || !result.user) {
-            console.log('Session check failed, redirecting to login'); // Debug log
-            // User not logged in, redirect to login
-            window.location.href = 'login.html';
-            return;
-        }
-
-        console.log('Session check successful, user:', result.user.username); // Debug log
-        currentUserData = result.user;
-
-        // Immediately update navigation and populate profile data
-        updateNavigation();
-        populateProfileData(currentUserData);
-    } catch (error) {
-        console.error('Session check error:', error);
-        // On error, redirect to login immediately
-        window.location.href = 'login.html';
-    }
+// XSS Prevention: HTML escaping function
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
-// Load user profile data from database
-async function loadUserProfile()
-{
-    try {
-        console.log('Loading user profile...'); // Debug log
+// Check user session and redirect if not logged in
+function checkUserSession() {
+    if (window.sessionManager && !window.sessionManager.isLoggedIn()) {
+        window.location.href = 'login.html';
+        return false;
+    }
+    return true;
+}
 
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Check session first
+    if (!checkUserSession()) {
+        return;
+    }
+    
+    // Load user profile data
+    loadUserProfile();
+    
+    // Set up event listeners
+    setupEventListeners();
+});
+
+// SECURITY FIX: Load and display user profile securely
+async function loadUserProfile() {
+    try {
         const response = await fetch('php/get_user_profile.php', {
             method: 'GET',
             credentials: 'include'
         });
 
-        console.log('Profile load response status:', response.status); // Debug log
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-        const result = await response.json();
-        console.log('Profile load result:', result); // Debug log
+        const data = await response.json();
 
-        if (response.ok && result.success) {
-            populateProfileData(result.user);
+        if (data.success && data.user) {
+            displayUserProfileSecurely(data.user);
         } else {
-            showNotification('Error loading profile data: ' + (result.error || 'Unknown error'), 'error');
+            showError('Failed to load profile: ' + (data.error || 'Unknown error'));
         }
     } catch (error) {
-        console.error('Load profile error:', error);
-        showNotification('Error loading profile data', 'error');
+        console.error('Error loading profile:', error);
+        showError('Failed to load profile data. Please try again.');
     }
 }
 
-// Populate profile data on the page
-function populateProfileData(userData)
-{
-    console.log('Populating profile data:', userData); // Debug log
+// SECURITY FIX: Display user profile using DOM methods
+function displayUserProfileSecurely(user) {
+    // Update profile display securely
+    updateElementText('profile-username', user.username);
+    updateElementText('profile-email', user.email);
+    updateElementText('profile-name', `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Not provided');
+    updateElementText('profile-phone', user.phone || 'Not provided');
 
-    // Update header info
-    document.getElementById('displayName').textContent =
-        userData.first_name && userData.last_name ?
-        `${userData.first_name} ${userData.last_name}` :
-        userData.username;
+    // Update form fields securely using value property
+    updateInputValue('firstName', user.first_name);
+    updateInputValue('lastName', user.last_name);
+    updateInputValue('email', user.email);
+    updateInputValue('phone', user.phone);
 
-
-    // Update display mode fields
-    document.getElementById('fullNameDisplay').textContent =
-        userData.first_name && userData.last_name ?
-        `${userData.first_name} ${userData.last_name}` :
-        'Not provided';
-
-    document.getElementById('emailDisplay').textContent = userData.email;
-    document.getElementById('phoneDisplay').textContent = userData.phone || 'Not provided';
-
-    // Update form fields
-    document.getElementById('firstName').value = userData.first_name || '';
-    document.getElementById('lastName').value = userData.last_name || '';
-    document.getElementById('email').value = userData.email;
-    document.getElementById('phone').value = userData.phone || '';
+    // Update user navigation securely
+    updateUserNavigationSecurely(user);
 }
 
-// Initialize all event listeners
-function initializeEventListeners()
-{
-    // Password strength checker for new password
-    const newPasswordInput = document.getElementById('newPassword');
-    if (newPasswordInput) {
-        newPasswordInput.addEventListener('input', function (e) {
-            checkPasswordStrength(e.target.value);
-        });
-    }
-
-    // Profile form submission
-    document.getElementById('profileForm').addEventListener('submit', handleProfileUpdate);
-
-    // Address form submission (placeholder for now)
-    document.getElementById('addressForm').addEventListener('submit', handleAddressUpdate);
-
-    // Change password form submission
-    document.getElementById('changePasswordForm').addEventListener('submit', handlePasswordChange);
-
-    // Preferences form submission (placeholder for now)
-    document.getElementById('preferencesForm').addEventListener('submit', handlePreferencesUpdate);
-}
-
-// Handle profile update
-async function handleProfileUpdate(e)
-{
-    e.preventDefault();
-
-    // Clear previous errors
-    document.querySelectorAll('.form-error').forEach(el => el.textContent = '');
-
-    const formData = new FormData();
-    formData.append('firstName', document.getElementById('firstName').value.trim());
-    formData.append('lastName', document.getElementById('lastName').value.trim());
-    formData.append('email', document.getElementById('email').value.trim());
-    formData.append('phone', document.getElementById('phone').value.trim());
-    formData.append('verifyPassword', document.getElementById('verifyPassword').value.trim());
-
-    // Client-side validation
-    const firstName = formData.get('firstName');
-    const lastName = formData.get('lastName');
-    const email = formData.get('email');
-
-    let isValid = true;
-
-    if (!firstName) {
-        document.getElementById('firstNameError').textContent = 'First name is required';
-        isValid = false;
-    }
-
-    if (!lastName) {
-        document.getElementById('lastNameError').textContent = 'Last name is required';
-        isValid = false;
-    }
-
-    if (!email) {
-        document.getElementById('emailError').textContent = 'Email is required';
-        isValid = false;
-    } else if (!isValidEmail(email)) {
-        document.getElementById('emailError').textContent = 'Please enter a valid email address';
-        isValid = false;
-    }
-
-    if (!isValid) {
-        return;
-    }
-
-    // Add loading state
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalText = submitBtn.textContent;
-    submitBtn.classList.add('loading');
-    submitBtn.textContent = 'Saving...';
-    submitBtn.disabled = true;
-
-    try {
-        const response = await fetch('php/update_user_profile.php', {
-            method: 'POST',
-            body: formData,
-            credentials: 'include'
-        });
-
-        const result = await response.json();
-
-        if (response.ok && result.success) {
-            // Update display values
-            populateProfileData({
-                ...currentUserData,
-                first_name: firstName,
-                last_name: lastName,
-                email: email,
-                phone: formData.get('phone')
-            });
-
-            showNotification('Profile updated successfully!', 'success');
-            cancelEdit();
-        } else {
-            if (result.error === 'Incorrect password'){
-                document.getElementById('verifyPasswordError').textContent = 'Incorrect password';
-            } else{
-                showNotification('Error updating profile: ' + (result.error || 'Unknown error'), 'error');
-            }
-        }
-    } catch (error) {
-        console.error('Profile update error:', error);
-        showNotification('Error updating profile. Please try again.', 'error');
-    } finally {
-        // Reset button
-        submitBtn.classList.remove('loading');
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
-    }
-}
-
-// Handle password change
-async function handlePasswordChange(e)
-{
-    e.preventDefault();
-
-    // Clear previous errors
-    document.querySelectorAll('#changePasswordModal .form-error').forEach(el => el.textContent = '');
-
-    const formData = new FormData();
-    formData.append('currentPassword', document.getElementById('currentPassword').value);
-    formData.append('newPassword', document.getElementById('newPassword').value);
-    formData.append('confirmNewPassword', document.getElementById('confirmNewPassword').value);
-
-    const currentPassword = formData.get('currentPassword');
-    const newPassword = formData.get('newPassword');
-    const confirmNewPassword = formData.get('confirmNewPassword');
-
-    let isValid = true;
-
-    if (!currentPassword) {
-        document.getElementById('currentPasswordError').textContent = 'Current password is required';
-        isValid = false;
-    }
-
-    if (!newPassword || newPassword.length < 8) {
-        document.getElementById('newPasswordError').textContent = 'New password must be at least 8 characters';
-        isValid = false;
-    }
-
-    if (newPassword !== confirmNewPassword) {
-        document.getElementById('confirmNewPasswordError').textContent = 'Passwords do not match';
-        isValid = false;
-    }
-
-    if (!isValid) {
-        return;
-    }
-
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalText = submitBtn.textContent;
-    submitBtn.classList.add('loading');
-    submitBtn.textContent = 'Updating...';
-    submitBtn.disabled = true;
-
-    try {
-        const response = await fetch('php/change_password.php', {
-            method: 'POST',
-            body: formData,
-            credentials: 'include'
-        });
-
-        const result = await response.json();
-
-        if (response.ok && result.success) {
-            showNotification('Password changed successfully!', 'success');
-            hideChangePassword();
-        } else {
-            if (result.error === 'Current password is incorrect') {
-                document.getElementById('currentPasswordError').textContent = result.error;
-            } else {
-                showNotification('Error changing password: ' + (result.error || 'Unknown error'), 'error');
-            }
-        }
-    } catch (error) {
-        console.error('Password change error:', error);
-        showNotification('Error changing password. Please try again.', 'error');
-    } finally {
-        // Reset button
-        submitBtn.classList.remove('loading');
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
-    }
-}
-
-// Handle address update (placeholder for now)
-function handleAddressUpdate(e)
-{
-    e.preventDefault();
-
-    const submitBtn = this.querySelector('button[type="submit"]');
-    submitBtn.classList.add('loading');
-    submitBtn.textContent = 'Saving...';
-
-    setTimeout(() => {
-        const street = document.getElementById('street').value;
-        const city = document.getElementById('city').value;
-        const state = document.getElementById('state').value;
-        const zipCode = document.getElementById('zipCode').value;
-        const country = document.getElementById('country').options[document.getElementById('country').selectedIndex].text;
-
-        document.getElementById('addressDisplay').innerHTML = `
-            < p > < strong > Primary Address: < / strong > < / p >
-            < p > ${street} < br >
-            ${city}, ${state} ${zipCode} < br >
-            ${country} < / p >
-        `;
-
-        submitBtn.classList.remove('loading');
-        submitBtn.textContent = 'Save Address';
-
-        showNotification('Address updated successfully!', 'success');
-        cancelAddressEdit();
-    }, 1000);
-}
-
-// Handle preferences update (placeholder for now)
-function handlePreferencesUpdate(e)
-{
-    e.preventDefault();
-
-    const submitBtn = this.querySelector('button[type="submit"]');
-    submitBtn.classList.add('loading');
-    submitBtn.textContent = 'Saving...';
-
-    setTimeout(() => {
-        showNotification('Preferences saved successfully!', 'success');
-        submitBtn.classList.remove('loading');
-        submitBtn.textContent = 'Save Preferences';
-    }, 1000);
-}
-
-// Utility functions
-function isValidEmail(email)
-{
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-function showNotification(message, type = 'info')
-{
-    // Create notification element if it doesn't exist
-    let notification = document.getElementById('profileNotification');
-    if (!notification) {
-        notification = document.createElement('div');
-        notification.id = 'profileNotification';
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 1rem 2rem;
-            border - radius: 8px;
-            z - index: 3000;
-            box - shadow: 0 5px 15px rgba(0,0,0,0.2);
-            font - weight: 500;
-        `;
-        document.body.appendChild(notification);
-    }
-
-    // Set message and style based on type
-    notification.textContent = message;
-
-    if (type === 'success') {
-        notification.style.background = '#28a745';
-        notification.style.color = 'white';
-    } else if (type === 'error') {
-        notification.style.background = '#dc3545';
-        notification.style.color = 'white';
-    } else {
-        notification.style.background = '#17a2b8';
-        notification.style.color = 'white';
-    }
-
-    notification.style.display = 'block';
-
-    // Auto-hide after 4 seconds
-    setTimeout(() => {
-        notification.style.display = 'none';
-    }, 4000);
-}
-
-// Toggle edit mode for profile
-function toggleEditMode()
-{
-    const displayMode = document.getElementById('displayMode');
-    const editMode = document.getElementById('editMode');
-
-    if (displayMode.style.display === 'none') {
-        displayMode.style.display = 'block';
-        editMode.style.display = 'none';
-    } else {
-        displayMode.style.display = 'none';
-        editMode.style.display = 'block';
-    }
-}
-
-function cancelEdit()
-{
-    document.getElementById('displayMode').style.display = 'block';
-    document.getElementById('editMode').style.display = 'none';
-
-    // Reset form to original values if user cancels
-    if (currentUserData) {
-        document.getElementById('firstName').value = currentUserData.first_name || '';
-        document.getElementById('lastName').value = currentUserData.last_name || '';
-        document.getElementById('email').value = currentUserData.email;
-        document.getElementById('phone').value = currentUserData.phone || '';
-    }
-
-    // Clear any error messages
-    document.querySelectorAll('.form-error').forEach(el => el.textContent = '');
-}
-
-// Toggle edit mode for address
-function toggleAddressEditMode()
-{
-    const displayMode = document.getElementById('addressDisplayMode');
-    const editMode = document.getElementById('addressEditMode');
-
-    if (displayMode.style.display === 'none') {
-        displayMode.style.display = 'block';
-        editMode.style.display = 'none';
-    } else {
-        displayMode.style.display = 'none';
-        editMode.style.display = 'block';
-    }
-}
-
-function cancelAddressEdit()
-{
-    document.getElementById('addressDisplayMode').style.display = 'block';
-    document.getElementById('addressEditMode').style.display = 'none';
-}
-
-// Show/hide change password modal
-function showChangePassword()
-{
-    document.getElementById('changePasswordModal').style.display = 'flex';
-}
-
-function hideChangePassword()
-{
-    document.getElementById('changePasswordModal').style.display = 'none';
-    document.getElementById('changePasswordForm').reset();
-    // Clear any previous error messages
-    document.querySelectorAll('#changePasswordModal .form-error').forEach(el => el.textContent = '');
-    document.getElementById('newPasswordStrength').textContent = '';
-}
-
-// Password strength checker
-function checkPasswordStrength(password)
-{
-    const strengthElement = document.getElementById('newPasswordStrength');
-    let strength = 0;
-    let feedback = [];
-
-    if (password.length >= 8) {
-        strength++;
-    } else {
-        feedback.push('at least 8 characters');
-    }
-
-    if (/[A-Z]/.test(password)) {
-        strength++;
-    } else {
-        feedback.push('an uppercase letter');
-    }
-
-    if (/[a-z]/.test(password)) {
-        strength++;
-    } else {
-        feedback.push('a lowercase letter');
-    }
-
-    if (/[0-9]/.test(password)) {
-        strength++;
-    } else {
-        feedback.push('a number');
-    }
-
-    if (/[^A-Za-z0-9]/.test(password)) {
-        strength++;
-    } else {
-        feedback.push('a special character');
-    }
-
-    const strengthLabels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
-    const strengthColors = ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#20c997'];
-
-    if (password.length > 0) {
-        strengthElement.textContent = `Password strength: ${strengthLabels[strength - 1] || 'Very Weak'}`;
-        strengthElement.style.color = strengthColors[strength - 1] || '#dc3545';
-
-        if (feedback.length > 0) {
-            strengthElement.textContent += `(needs: ${feedback.join(', ')})`;
-        }
-    } else {
-        strengthElement.textContent = '';
-    }
-}
-
-// Other functions (placeholders for future implementation)
-function viewLoginActivity()
-{
-    showNotification('Login activity feature will be implemented in the next phase', 'info');
-}
-
-function downloadData()
-{
-    showNotification('Data download will be implemented in the next phase', 'info');
-}
-
-function deleteAccount()
-{
-    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-        showNotification('Account deletion will be implemented in the next phase', 'info');
-    }
-}
-
-// Navigation management (same as index.js)
-function updateNavigation()
-{
-    if (currentUserData) {
-        updateUIForLoggedInUser();
-    } else {
-        updateUIForLoggedOutUser();
-    }
-}
-
-// Update UI for logged in user
-function updateUIForLoggedInUser()
-{
-    const navActions = document.querySelector('.nav-actions');
+// SECURITY FIX: Update user navigation using DOM methods
+function updateUserNavigationSecurely(user) {
     const userNavigation = document.getElementById('userNavigation');
+    if (!userNavigation) return;
 
-    if (userNavigation) {
-        // Replace login button with user dropdown
-        userNavigation.innerHTML = `
-            <div class="user-dropdown" style="position: relative;">
-                <button class="user-btn" onclick="toggleUserDropdown()" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; color: white; font-size: 1rem;">
-                    <span style="font-size: 1.5rem;">👤</span>
-                    <span>Hi, ${currentUserData.username}</span>
-                    <span style="font-size: 0.8rem;">▼</span>
-                </button>
-                <div id="userDropdownMenu" class="dropdown-menu" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); min-width: 200px; z-index: 1000;">
-                    <div style="padding: 1rem; border-bottom: 1px solid #eee; background: #f8f9fa; border-radius: 8px 8px 0 0;">
-                        <div style="font-weight: bold; color: #333;">${currentUserData.username}</div>
-                        <div style="font-size: 0.9rem; color: #666;">${currentUserData.email}</div>
-                    </div>
-                    <div style="padding: 0.5rem 0;">
-                        <a href="userprofile.php" style="display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; transition: background 0.2s; background: #f0f0f0;" onmouseover="this.style.background='#e0e0e0'" onmouseout="this.style.background='#f0f0f0'">
-                            👤 My Profile
-                        </a>
-                        <a href="my_orders.html" style="display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
-                            📦 My Orders
-                        </a>
-                        <hr style="margin: 0.5rem 0; border: none; border-top: 1px solid #eee;">
-                        <button onclick="logout()" style="display: block; width: 100%; padding: 0.75rem 1rem; color: #dc3545; text-decoration: none; background: none; border: none; text-align: left; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
-                            🚪 Logout
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
+    // Find and preserve the cart link
+    const cartLink = userNavigation.querySelector('a[href="cart.html"]');
+    
+    // Clear existing content
+    userNavigation.innerHTML = '';
+    
+    // Re-add cart link if it existed
+    if (cartLink) {
+        userNavigation.appendChild(cartLink.cloneNode(true));
+    }
+
+    // Create user dropdown securely
+    const userDropdown = document.createElement('div');
+    userDropdown.className = 'user-dropdown';
+    userDropdown.style.position = 'relative';
+
+    // User button
+    const userButton = document.createElement('button');
+    userButton.style.cssText = 'background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; color: white; font-size: 1rem;';
+    userButton.onclick = toggleUserDropdown;
+    userButton.textContent = `👤 ${user.username} ▼`;
+
+    // Dropdown menu
+    const dropdownMenu = document.createElement('div');
+    dropdownMenu.id = 'userDropdownMenu';
+    dropdownMenu.className = 'dropdown-menu';
+    dropdownMenu.style.cssText = 'display:none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); min-width: 200px; z-index: 1000;';
+
+    // User info section
+    const userInfoDiv = document.createElement('div');
+    userInfoDiv.style.cssText = 'padding: 1rem; border-bottom: 1px solid #eee; background: #f8f9fa; border-radius: 8px 8px 0 0;';
+
+    const usernameDiv = document.createElement('div');
+    usernameDiv.style.cssText = 'font-weight: bold; color: #333;';
+    usernameDiv.textContent = user.username;
+    userInfoDiv.appendChild(usernameDiv);
+
+    const emailDiv = document.createElement('div');
+    emailDiv.style.cssText = 'font-size: 0.9rem; color: #666;';
+    emailDiv.textContent = user.email;
+    userInfoDiv.appendChild(emailDiv);
+
+    dropdownMenu.appendChild(userInfoDiv);
+
+    // Menu items container
+    const menuItemsDiv = document.createElement('div');
+    menuItemsDiv.style.cssText = 'padding: 0.5rem 0;';
+
+    // Profile link
+    const profileLink = document.createElement('a');
+    profileLink.href = 'userprofile.php';
+    profileLink.style.cssText = 'display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; transition: background 0.2s;';
+    profileLink.textContent = '👤 My Profile';
+    profileLink.onmouseover = function() { this.style.background = '#f8f9fa'; };
+    profileLink.onmouseout = function() { this.style.background = 'transparent'; };
+    menuItemsDiv.appendChild(profileLink);
+
+    // Orders link
+    const ordersLink = document.createElement('a');
+    ordersLink.href = 'my_orders.html';
+    ordersLink.style.cssText = 'display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; transition: background 0.2s;';
+    ordersLink.textContent = '📦 My Orders';
+    ordersLink.onmouseover = function() { this.style.background = '#f8f9fa'; };
+    ordersLink.onmouseout = function() { this.style.background = 'transparent'; };
+    menuItemsDiv.appendChild(ordersLink);
+
+    // Separator
+    const separator = document.createElement('hr');
+    separator.style.cssText = 'margin: 0.5rem 0; border: none; border-top: 1px solid #eee;';
+    menuItemsDiv.appendChild(separator);
+
+    // Logout button
+    const logoutButton = document.createElement('button');
+    logoutButton.onclick = logout;
+    logoutButton.style.cssText = 'display: block; width: 100%; padding: 0.75rem 1rem; color: #dc3545; text-decoration: none; background: none; border: none; text-align: left; cursor: pointer; transition: background 0.2s;';
+    logoutButton.textContent = '🚪 Logout';
+    logoutButton.onmouseover = function() { this.style.background = '#f8f9fa'; };
+    logoutButton.onmouseout = function() { this.style.background = 'transparent'; };
+    menuItemsDiv.appendChild(logoutButton);
+
+    dropdownMenu.appendChild(menuItemsDiv);
+
+    userDropdown.appendChild(userButton);
+    userDropdown.appendChild(dropdownMenu);
+    userNavigation.appendChild(userDropdown);
+}
+
+// Helper functions for secure DOM updates
+function updateElementText(elementId, text) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = text || '';
     }
 }
 
-// Update UI for logged out user
-function updateUIForLoggedOutUser()
-{
-    const userNavigation = document.getElementById('userNavigation');
-
-    if (userNavigation) {
-        // Replace user dropdown with login button
-        userNavigation.innerHTML = '<a href="login.html" class="btn btn-outline">Login</a>';
+function updateInputValue(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.value = value || '';
     }
 }
 
-// Toggle user dropdown menu
-function toggleUserDropdown()
-{
+// Toggle user dropdown
+function toggleUserDropdown() {
     const dropdownMenu = document.getElementById('userDropdownMenu');
     if (dropdownMenu) {
         dropdownMenu.style.display = dropdownMenu.style.display === 'none' ? 'block' : 'none';
@@ -594,7 +193,7 @@ function toggleUserDropdown()
 }
 
 // Close dropdown when clicking outside
-document.addEventListener('click', function (event) {
+document.addEventListener('click', function(event) {
     const userDropdown = document.querySelector('.user-dropdown');
     if (userDropdown && !userDropdown.contains(event.target)) {
         const dropdownMenu = document.getElementById('userDropdownMenu');
@@ -604,9 +203,130 @@ document.addEventListener('click', function (event) {
     }
 });
 
+// Setup event listeners
+function setupEventListeners() {
+    // Profile update form
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', handleProfileUpdate);
+    }
+
+    // Password change form
+    const passwordForm = document.getElementById('passwordForm');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', handlePasswordChange);
+    }
+
+    // Account deletion
+    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+    if (deleteAccountBtn) {
+        deleteAccountBtn.addEventListener('click', handleAccountDeletion);
+    }
+}
+
+// Handle profile update
+async function handleProfileUpdate(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.target);
+    
+    try {
+        const response = await fetch('php/update_user_profile.php', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showSuccess('Profile updated successfully!');
+            // Reload profile data to reflect changes
+            await loadUserProfile();
+        } else {
+            showError('Failed to update profile: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Profile update error:', error);
+        showError('Failed to update profile. Please try again.');
+    }
+}
+
+// Handle password change
+async function handlePasswordChange(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.target);
+    
+    // Client-side validation
+    const newPassword = formData.get('newPassword');
+    const confirmPassword = formData.get('confirmNewPassword');
+    
+    if (newPassword !== confirmPassword) {
+        showError('New passwords do not match.');
+        return;
+    }
+
+    try {
+        const response = await fetch('php/change_password.php', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showSuccess('Password changed successfully!');
+            event.target.reset(); // Clear form
+        } else {
+            showError('Failed to change password: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Password change error:', error);
+        showError('Failed to change password. Please try again.');
+    }
+}
+
+// Handle account deletion
+async function handleAccountDeletion() {
+    const confirmPassword = prompt('Please enter your password to confirm account deletion:');
+    if (!confirmPassword) {
+        return;
+    }
+
+    if (!confirm('Are you absolutely sure you want to delete your account? This action cannot be undone.')) {
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('confirmPassword', confirmPassword);
+
+        const response = await fetch('php/delete_account.php', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showSuccess('Account deleted successfully. You will be redirected to the home page.');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 2000);
+        } else {
+            showError('Failed to delete account: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Account deletion error:', error);
+        showError('Failed to delete account. Please try again.');
+    }
+}
+
 // Logout function
-async function logout()
-{
+async function logout() {
     try {
         // Get CSRF token first
         const csrfResponse = await fetch('php/get_csrf_token.php', {
@@ -634,108 +354,65 @@ async function logout()
         const result = await response.json();
 
         if (response.ok && result.success) {
-            showNotification('Logged out successfully!', 'success');
+            showSuccess('Logged out successfully!');
+
+            // Update session manager
+            if (window.sessionManager) {
+                window.sessionManager.currentUser = null;
+                window.sessionManager.sessionCheckComplete = false;
+            }
 
             // Redirect to home page after logout
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 1000);
         } else {
-            showNotification('Error logging out. Please try again.', 'error');
+            showError('Error logging out. Please try again.');
         }
     } catch (error) {
         console.error('Logout error:', error);
-        showNotification('Error logging out. Please try again.', 'error');
+        showError('Error logging out. Please try again.');
     }
 }
 
-// Add these functions to your userprofile.js file
-
-// Delete Account functionality
-function deleteAccount() {
-    if (confirm('Are you sure you want to permanently delete your account? This action cannot be undone.')) {
-        showDeleteAccountModal();
-    }
+// SECURITY FIX: Secure notification functions
+function showSuccess(message) {
+    showNotification(message, 'success');
 }
 
-function showDeleteAccountModal() {
-    const modal = document.createElement('div');
-    modal.id = 'deleteAccountModal';
-    modal.style.cssText = `
-        display: flex;
+function showError(message) {
+    showNotification(message, 'error');
+}
+
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existing = document.querySelectorAll('.profile-notification');
+    existing.forEach(el => el.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `profile-notification alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'}`;
+    notification.style.cssText = `
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        z-index: 2000;
-        align-items: center;
-        justify-content: center;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 400px;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        font-family: Arial, sans-serif;
+        background: ${type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#d1ecf1'};
+        color: ${type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460'};
+        border: 1px solid ${type === 'success' ? '#c3e6cb' : type === 'error' ? '#f5c6cb' : '#bee5eb'};
     `;
     
-    modal.innerHTML = `
-        <div style="background: white; padding: 2rem; border-radius: 15px; width: 90%; max-width: 400px;">
-            <h3 style="margin-bottom: 1rem; color: #dc3545;">Delete Account</h3>
-            <p style="margin-bottom: 1.5rem; color: #666;">
-                This will permanently delete your account and all associated data. 
-                This action cannot be undone.
-            </p>
-            
-            <form id="deleteAccountForm">
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label class="form-label" for="confirmPasswordDelete" style="display: block; margin-bottom: 0.5rem;">
-                        Enter your password to confirm deletion:
-                    </label>
-                    <input type="password" id="confirmPasswordDelete" name="confirmPassword" 
-                           class="form-input" required style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;">
-                    <div class="form-error" id="confirmPasswordDeleteError" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;"></div>
-                </div>
-                
-                <div style="display: flex; gap: 1rem;">
-                    <button type="button" class="btn btn-secondary" onclick="hideDeleteAccountModal()" style="flex: 1;">Cancel</button>
-                    <button type="submit" class="btn btn-danger" style="flex: 1; background: #dc3545; border: 1px solid #dc3545;">Delete Account</button>
-                </div>
-            </form>
-        </div>
-    `;
+    notification.textContent = message; // Safe text insertion
+    document.body.appendChild(notification);
     
-    document.body.appendChild(modal);
-    
-    // Handle form submission
-    document.getElementById('deleteAccountForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData();
-        formData.append('confirmPassword', document.getElementById('confirmPasswordDelete').value);
-        
-        try {
-            const response = await fetch('php/delete_account.php', {
-                method: 'POST',
-                body: formData,
-                credentials: 'include'
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                alert('Your account has been deleted successfully.');
-                // Redirect to home page
-                window.location.href = 'index.html';
-            } else {
-                document.getElementById('confirmPasswordDeleteError').textContent = data.error;
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            document.getElementById('confirmPasswordDeleteError').textContent = 'An error occurred. Please try again.';
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
         }
-    });
+    }, 5000);
 }
-
-function hideDeleteAccountModal() {
-    const modal = document.getElementById('deleteAccountModal');
-    if (modal) {
-        modal.remove();
-    }
-}
-

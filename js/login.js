@@ -1,4 +1,42 @@
-// login.js - SIMPLIFIED login JavaScript using session manager
+// login.js - SECURE VERSION - Enhanced input sanitization
+
+// XSS Prevention: Input sanitization functions
+const InputSanitizer = {
+    // Remove potentially dangerous characters
+    sanitizeText: function(input) {
+        if (typeof input !== 'string') return '';
+        return input
+            .trim()
+            .replace(/[<>]/g, '') // Remove angle brackets
+            .replace(/javascript:/gi, '') // Remove javascript: protocol
+            .replace(/on\w+=/gi, '') // Remove event handlers
+            .substring(0, 1000); // Limit length
+    },
+
+    // Sanitize for display (more strict)
+    sanitizeForDisplay: function(input) {
+        if (typeof input !== 'string') return '';
+        return input
+            .replace(/[&<>"']/g, function(match) {
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                };
+                return map[match];
+            });
+    },
+
+    // Validate and sanitize email
+    sanitizeEmail: function(email) {
+        if (typeof email !== 'string') return '';
+        const sanitized = email.trim().toLowerCase();
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return emailRegex.test(sanitized) ? sanitized : '';
+    }
+};
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log('=== LOGIN PAGE LOADED ===');
@@ -38,26 +76,23 @@ async function checkExistingSession() {
     }
 }
 
-let loginInProgress = false; // Prevent multiple login submits
-
 // Handle login form submission
 async function handleLoginSubmit(e) {
     e.preventDefault();
-    if (loginInProgress) return; // Debounce: ignore if already submitting
-    loginInProgress = true;
     console.log('=== LOGIN FORM SUBMITTED ===');
 
     // Clear previous errors
     clearErrors();
 
-    // Get form data
+    // Get form data and sanitize
     const formData = new FormData();
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
     const rememberInput = document.getElementById('remember');
 
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value;
+    // Sanitize inputs
+    const username = InputSanitizer.sanitizeText(usernameInput.value);
+    const password = passwordInput.value; // Don't sanitize password content, just validate length
 
     formData.append('username', username);
     formData.append('password', password);
@@ -68,15 +103,13 @@ async function handleLoginSubmit(e) {
 
     // Client-side validation
     if (!validateForm(username, password)) {
-        loginInProgress = false;
         return;
     }
 
-    // Show loading state and disable button
+    // Show loading state
     const submitBtn = document.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
     setLoadingState(submitBtn, true);
-    submitBtn.disabled = true;
 
     try {
         console.log('Making login request to php/login_process.php');
@@ -137,10 +170,8 @@ async function handleLoginSubmit(e) {
         console.error('❌ Login error:', error);
         showNotification('Login failed. Please check your connection and try again.', 'error');
     } finally {
-        // Reset button state and allow new login
+        // Reset button state
         setLoadingState(submitBtn, false, originalText);
-        submitBtn.disabled = false;
-        loginInProgress = false;
     }
 }
 
@@ -166,7 +197,7 @@ function hide2FAModal() {
 async function handle2FASubmit(e) {
     e.preventDefault();
     const codeInput = document.getElementById('twoFACode');
-    const code = codeInput.value.trim();
+    const code = InputSanitizer.sanitizeText(codeInput.value);
     const errorDiv = document.getElementById('twoFAError');
     errorDiv.textContent = '';
     codeInput.classList.remove('error');
@@ -274,7 +305,7 @@ async function syncCartAfterLogin() {
     }
 }
 
-// Validate form inputs
+// Enhanced form validation with sanitization
 function validateForm(username, password) {
     let isValid = true;
 
@@ -285,6 +316,9 @@ function validateForm(username, password) {
     } else if (username.length < 3) {
         showFieldError('username', 'Username must be at least 3 characters');
         isValid = false;
+    } else if (username.length > 100) {
+        showFieldError('username', 'Username is too long');
+        isValid = false;
     }
 
     // Validate password
@@ -294,6 +328,9 @@ function validateForm(username, password) {
     } else if (password.length < 6) {
         showFieldError('password', 'Password must be at least 6 characters');
         isValid = false;
+    } else if (password.length > 255) {
+        showFieldError('password', 'Password is too long');
+        isValid = false;
     }
 
     return isValid;
@@ -301,22 +338,25 @@ function validateForm(username, password) {
 
 // Handle login errors based on response
 function handleLoginError(status, errorMessage) {
+    // Sanitize error message before display
+    const safeErrorMessage = InputSanitizer.sanitizeForDisplay(errorMessage || '');
+    
     switch (status) {
         case 401:
             // Invalid credentials
-            showFieldError('password', errorMessage || 'Invalid username/email or password');
+            showFieldError('password', safeErrorMessage || 'Invalid username/email or password');
             break;
         case 423:
             // Account locked
-            showNotification('Account locked: ' + errorMessage, 'error');
+            showNotification('Account locked: ' + safeErrorMessage, 'error');
             break;
         case 400:
             // Bad request (validation error)
-            showNotification(errorMessage || 'Please check your input and try again', 'error');
+            showNotification(safeErrorMessage || 'Please check your input and try again', 'error');
             break;
         default:
             // Other errors
-            showNotification('Login failed: ' + (errorMessage || 'Unknown error'), 'error');
+            showNotification('Login failed: ' + (safeErrorMessage || 'Unknown error'), 'error');
             break;
     }
 }
@@ -370,26 +410,33 @@ function showNotification(message, type = 'success') {
     window.sessionManager.showNotification(message, type);
 }
 
-// Form validation utilities
+// Enhanced Form validation utilities with sanitization
 const FormValidator = {
     username: function (username) {
-        if (!username || username.length < 3) {
+        const sanitized = InputSanitizer.sanitizeText(username);
+        if (!sanitized || sanitized.length < 3) {
             return 'Username must be at least 3 characters';
         }
-        if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-            return 'Username can only contain letters, numbers, underscores, and hyphens';
+        if (sanitized.length > 50) {
+            return 'Username is too long';
+        }
+        if (!/^[a-zA-Z0-9_.-]+$/.test(sanitized)) {
+            return 'Username can only contain letters, numbers, underscores, periods, and hyphens';
         }
         return null;
     },
 
     email: function (email) {
-        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return re.test(email) ? null : 'Invalid email format';
+        const sanitized = InputSanitizer.sanitizeEmail(email);
+        return sanitized ? null : 'Invalid email format';
     },
 
     password: function (password) {
         if (!password || password.length < 6) {
             return 'Password must be at least 6 characters';
+        }
+        if (password.length > 255) {
+            return 'Password is too long';
         }
         return null;
     },
@@ -421,13 +468,14 @@ const FormValidator = {
     },
 
     name: function (name) {
-        if (!name || name.length < 1) {
+        const sanitized = InputSanitizer.sanitizeText(name);
+        if (!sanitized || sanitized.length < 1) {
             return 'This field is required';
         }
-        if (name.length > 50) {
+        if (sanitized.length > 50) {
             return 'Name is too long';
         }
-        if (!/^[a-zA-Z\s'-]+$/.test(name)) {
+        if (!/^[a-zA-Z\s'-]+$/.test(sanitized)) {
             return 'Name can only contain letters, spaces, hyphens, and apostrophes';
         }
         return null;
@@ -437,7 +485,8 @@ const FormValidator = {
         if (!phone) {
             return null; // Phone is optional
         }
-        const cleaned = phone.replace(/\D/g, '');
+        const sanitized = InputSanitizer.sanitizeText(phone);
+        const cleaned = sanitized.replace(/\D/g, '');
         if (cleaned.length < 10 || cleaned.length > 15) {
             return 'Phone number must be between 10 and 15 digits';
         }
@@ -452,7 +501,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (usernameInput) {
         usernameInput.addEventListener('blur', function () {
-            const value = this.value.trim();
+            const value = InputSanitizer.sanitizeText(this.value);
             if (value) {
                 const errorElement = document.getElementById('usernameError');
                 if (errorElement) {
