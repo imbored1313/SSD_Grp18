@@ -444,7 +444,8 @@ function showNotification(message, type = 'success') {
         font-family: Arial, sans-serif;
         font-size: 14px;
     `;
-
+    
+    // SAFE: Created using createElement and textContent — not vulnerable to XSS
     notification.textContent = message; // Safe text insertion
     document.body.appendChild(notification);
 

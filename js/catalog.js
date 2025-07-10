@@ -264,7 +264,7 @@ function showNotification(message, type = 'success') {
         font-size: 14px;
         transition: opacity 0.3s ease;
     `;
-    
+    // SAFE: Created using createElement and textContent — not vulnerable to XSS 
     notification.textContent = message;
     document.body.appendChild(notification);
     

@@ -389,6 +389,7 @@ function showNotification(message, type = 'info') {
         border: 1px solid ${type === 'success' ? '#c3e6cb' : type === 'error' ? '#f5c6cb' : '#bee5eb'};
     `;
     
+    // SAFE: Created using createElement and textContent — not vulnerable to XSS
     notification.textContent = message; // Safe text insertion
     document.body.appendChild(notification);
     

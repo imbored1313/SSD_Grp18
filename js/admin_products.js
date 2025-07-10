@@ -476,6 +476,7 @@ function showNotification(message, type = 'info') {
         font-family: Arial, sans-serif;
     `;
     
+    // SAFE: Created using createElement and textContent — not vulnerable to XSS
     notification.textContent = message; // Safe text insertion
     document.body.appendChild(notification);
     

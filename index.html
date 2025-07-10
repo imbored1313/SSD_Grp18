@@ -528,6 +528,7 @@
             `;
 
             // Use textContent to avoid XSS
+            // SAFE: Created using createElement and textContent — not vulnerable to XSS
             notification.textContent = message;
             document.body.appendChild(notification);
 
