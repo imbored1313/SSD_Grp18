@@ -4,7 +4,21 @@ require_once(__DIR__ . '/config.php');
 
 // Set proper headers
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+// Only allow requests from your trusted frontend origin (adjust as needed)
+$allowed_origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+// Update trusted origins to include your real frontend domain
+$trusted_origins = [
+    'https://electraedge.xyz',           // Production domain
+    'http://electraedge.xyz',            // In case of non-https access
+    'http://localhost:3000',             // Local dev
+    'http://localhost'                   // Plain localhost
+];
+if (in_array($allowed_origin, $trusted_origins)) {
+    header('Access-Control-Allow-Origin: ' . $allowed_origin);
+} else {
+    // Optionally, do not set the header or set to a safe default
+    header('Access-Control-Allow-Origin: https://your-frontend-domain.com');
+}
 header('Access-Control-Allow-Methods: GET');
 header('Access-Control-Allow-Headers: Content-Type');
 header('Access-Control-Allow-Credentials: true');
