@@ -62,23 +62,6 @@ async function handleLoginSubmit(e) {
         formData.append('remember', '1');
     }
 
-    // Fetch the CSRF token dynamically
-    try {
-        const csrfResponse = await fetch('/php/get_csrf_token.php', {
-            // Ensure the session cookie is sent
-            credentials: 'include'
-        });
-        const csrfData = await csrfResponse.json();
-        const csrfToken = csrfData.token;
-
-        // Add CSRF token to the form data
-        formData.append('csrf_token', csrfToken);
-    } catch (err) {
-        console.error('Error fetching CSRF token:', err);
-        showNotification('Error fetching CSRF token. Please try again.', 'error');
-        return;
-    }
-
     // Client-side validation
     if (!validateForm(username, password)) {
         return;

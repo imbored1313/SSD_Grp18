@@ -2,12 +2,7 @@
 
 require_once(__DIR__ . '/config.php');
 session_start();
-$oldCsrfToken = $_SESSION['csrf_token'] ?? null;
 session_regenerate_id(true);
-if ($oldCsrfToken !== null) {
-    $_SESSION['csrf_token'] = $oldCsrfToken;
-}
-
 // get_user_profile.php - Fetch user profile data from database
 
 header('Content-Type: application/json');

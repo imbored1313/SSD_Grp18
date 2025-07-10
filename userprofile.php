@@ -51,7 +51,6 @@
             <!-- Edit Mode -->
             <div id="editMode" style="display: none;">
                 <form id="profileForm">
-                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
                             <label class="form-label" for="firstName">First Name</label>
@@ -109,7 +108,6 @@
             <!-- Edit Mode -->
             <div id="addressEditMode" style="display: none;">
                 <form id="addressForm">
-                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                     <div class="form-group">
                         <label class="form-label" for="street">Street Address</label>
                         <input type="text" id="street" name="street" class="form-input" value="123 Electronics Street">
@@ -183,7 +181,6 @@
             <h2>Preferences</h2>
             
             <form id="preferencesForm">
-                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                 <div class="form-group">
                     <label style="display: flex; align-items: center; gap: 0.5rem;">
                         <input type="checkbox" id="emailNotifications" checked>
@@ -245,7 +242,6 @@
             <h3 style="margin-bottom: 1.5rem;">Change Password</h3>
             
             <form id="changePasswordForm">
-                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                 <div class="form-group">
                     <label class="form-label" for="currentPassword">Current Password</label>
                     <input type="password" id="currentPassword" name="currentPassword" class="form-input" required>

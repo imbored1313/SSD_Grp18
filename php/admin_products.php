@@ -2,12 +2,7 @@
 
 require_once(__DIR__ . '/config.php');
 session_start();
-$oldCsrfToken = $_SESSION['csrf_token'] ?? null;
 session_regenerate_id(true);
-if ($oldCsrfToken !== null) {
-    $_SESSION['csrf_token'] = $oldCsrfToken;
-}
-
 // Admin check
 if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admin') {
     http_response_code(403);
