@@ -1,4 +1,15 @@
-// js/admin_products.js - SECURE VERSION - XSS vulnerabilities fixed
+// js/admin_products.js - COMPLETE SECURE VERSION - XSS vulnerabilities fixed
+
+// XSS Prevention: HTML escaping function
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     loadProducts();
@@ -45,20 +56,6 @@ async function loadProducts() {
     }
 }
 
-// XSS Prevention: HTML escaping function
-function escapeHTML(str) {
-    if (typeof str !== 'string') {
-        return str === undefined || str === null ? '' : String(str);
-    }
-    return str.replace(/[&<>"']/g, tag => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-    }[tag]));
-}
-
 // SECURITY FIX: Secure table rendering function using DOM creation
 function renderProductsSecurely(products) {
     const tbody = document.querySelector('#productsTable tbody');
@@ -91,17 +88,17 @@ function createSecureProductRow(product) {
     const row = document.createElement('tr');
     row.dataset.id = product.product_id;
 
-    // ID cell
+    // ID cell - SECURE: Using textContent
     const idCell = document.createElement('td');
     idCell.textContent = product.product_id || '';
     row.appendChild(idCell);
 
-    // Name cell
+    // Name cell - SECURE: Using textContent
     const nameCell = document.createElement('td');
     nameCell.textContent = product.name || 'No name';
     row.appendChild(nameCell);
 
-    // Description cell
+    // Description cell - SECURE: Using textContent
     const descCell = document.createElement('td');
     const description = product.description || 'No description';
     const truncatedDesc = description.length > 50 ? 
@@ -110,12 +107,12 @@ function createSecureProductRow(product) {
     descCell.textContent = truncatedDesc;
     row.appendChild(descCell);
 
-    // Price cell
+    // Price cell - SECURE: Using textContent
     const priceCell = document.createElement('td');
     priceCell.textContent = `$${parseFloat(product.price || 0).toFixed(2)}`;
     row.appendChild(priceCell);
 
-    // Stock cell
+    // Stock cell - SECURE: Using textContent
     const stockCell = document.createElement('td');
     stockCell.textContent = product.stock || '0';
     row.appendChild(stockCell);
@@ -132,7 +129,6 @@ function createSecureProductRow(product) {
         img.style.cssText = 'max-width: 50px; max-height: 50px; object-fit: cover; border-radius: 4px;';
         img.onerror = function() {
             this.style.display = 'none';
-            this.parentElement.innerHTML = '';
             const span = document.createElement('span');
             span.className = 'text-muted';
             span.textContent = 'Image missing';
@@ -147,7 +143,7 @@ function createSecureProductRow(product) {
     }
     row.appendChild(imageCell);
 
-    // Added by cell
+    // Added by cell - SECURE: Using textContent
     const addedByCell = document.createElement('td');
     addedByCell.textContent = product.added_by_username || 'System';
     row.appendChild(addedByCell);
@@ -165,7 +161,9 @@ function createSecureProductRow(product) {
     const editIcon = document.createElement('i');
     editIcon.className = 'fas fa-edit';
     editBtn.appendChild(editIcon);
-    editBtn.appendChild(document.createTextNode(' Edit'));
+    
+    const editText = document.createTextNode(' Edit');
+    editBtn.appendChild(editText);
 
     actionsCell.appendChild(editBtn);
 
@@ -177,7 +175,9 @@ function createSecureProductRow(product) {
     const deleteIcon = document.createElement('i');
     deleteIcon.className = 'fas fa-trash';
     deleteBtn.appendChild(deleteIcon);
-    deleteBtn.appendChild(document.createTextNode(' Delete'));
+    
+    const deleteText = document.createTextNode(' Delete');
+    deleteBtn.appendChild(deleteText);
 
     actionsCell.appendChild(deleteBtn);
     row.appendChild(actionsCell);
@@ -237,13 +237,13 @@ async function deleteProduct(id) {
 
         const result = await response.json();
         if (result.success) {
-            showSuccess('Product deleted successfully');
+            showSuccessSecure('Product deleted successfully');
             await loadProducts();
         } else {
             throw new Error('Delete failed');
         }
     } catch (error) {
-        showError('Failed to delete product: ' + error.message);
+        showErrorSecure('Failed to delete product: ' + error.message);
     }
 }
 
@@ -310,7 +310,7 @@ async function showEditForm(id = null) {
                     }
                 }
             } catch (error) {
-                showError('Failed to load product: ' + error.message);
+                showErrorSecure('Failed to load product: ' + error.message);
                 return;
             }
         } else {
@@ -389,7 +389,7 @@ async function saveProduct() {
         }
 
         if (result.success) {
-            showSuccess(`Product ${isEdit ? 'updated' : 'created'} successfully`);
+            showSuccessSecure(`Product ${isEdit ? 'updated' : 'created'} successfully`);
             await loadProducts();
             
             // Close modal
@@ -404,7 +404,7 @@ async function saveProduct() {
             throw new Error(result.message || 'Operation failed');
         }
     } catch (error) {
-        showError(`Failed to ${isEdit ? 'update' : 'create'} product: ${error.message}`);
+        showErrorSecure(`Failed to ${isEdit ? 'update' : 'create'} product: ${error.message}`);
     }
 }
 
@@ -449,15 +449,15 @@ function hideLoading() {
 }
 
 // SECURITY FIX: Secure notification functions
-function showError(message) {
-    showNotification(message, 'error');
+function showErrorSecure(message) {
+    showNotificationSecure(message, 'error');
 }
 
-function showSuccess(message) {
-    showNotification(message, 'success');
+function showSuccessSecure(message) {
+    showNotificationSecure(message, 'success');
 }
 
-function showNotification(message, type = 'info') {
+function showNotificationSecure(message, type = 'info') {
     // Remove existing notifications
     const existing = document.querySelectorAll('.admin-notification');
     existing.forEach(el => el.remove());
@@ -474,10 +474,13 @@ function showNotification(message, type = 'info') {
         padding: 1rem;
         border-radius: 8px;
         font-family: Arial, sans-serif;
+        background: ${type === 'error' ? '#f8d7da' : type === 'success' ? '#d4edda' : '#d1ecf1'};
+        color: ${type === 'error' ? '#721c24' : type === 'success' ? '#155724' : '#0c5460'};
+        border: 1px solid ${type === 'error' ? '#f5c6cb' : type === 'success' ? '#c3e6cb' : '#bee5eb'};
     `;
     
-    // SAFE: Created using createElement and textContent — not vulnerable to XSS
-    notification.textContent = message; // Safe text insertion
+    // CRITICAL: Use textContent instead of innerHTML to prevent XSS
+    notification.textContent = String(message || ''); // Safe text insertion
     document.body.appendChild(notification);
     
     // Auto remove after 5 seconds
@@ -486,4 +489,17 @@ function showNotification(message, type = 'info') {
             notification.remove();
         }
     }, 5000);
+}
+
+// Keep original function names for backward compatibility
+function showError(message) {
+    showErrorSecure(message);
+}
+
+function showSuccess(message) {
+    showSuccessSecure(message);
+}
+
+function showNotification(message, type = 'info') {
+    showNotificationSecure(message, type);
 }
