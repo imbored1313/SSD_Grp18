@@ -115,9 +115,10 @@ try {
     echo json_encode(['success' => false, 'message' => 'Database connection error']);
     exit;
 } catch (Exception $e) {
-    error_log("General error in get_orders.php: " . $e->getMessage());
+    error_log("Get orders error: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
+    
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Server error', 'error' => $e->getMessage()]);
-    exit;
+    echo json_encode(['success' => false, 'message' => 'Failed to retrieve orders']);
 }
 ?>
