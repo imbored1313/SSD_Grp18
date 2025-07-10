@@ -1,29 +1,52 @@
-document.addEventListener('DOMContentLoaded', loadUsers);
+document.addEventListener('DOMContentLoaded', () => {
+    loadUsers();
+    loadCurrentUser();
+});
 
-function loadUsers()
-{
+function loadUsers() {
     fetch('php/admin_users.php?action=list', { credentials: 'include' })
     .then(res => res.json())
     .then(data => {
         const tbody = document.querySelector('#usersTable tbody');
         tbody.innerHTML = '';
+
         data.forEach(u => {
-            tbody.innerHTML += `
-            <tr>
-            <td>${escapeHTML(u.user_id)}</td>
-            <td>${escapeHTML(u.username)}</td>
-            <td>${escapeHTML(u.email)}</td>
-            <td>${escapeHTML(u.first_name)} ${escapeHTML(u.last_name)}</td>
-            <td>${escapeHTML(u.role)}</td>
-            <td>${u.is_verified ? 'Yes' : 'No'}</td>
-            <td>${escapeHTML(u.created_at)}</td>
-            <td class="action-buttons">
-              <button onclick="deleteUser(${u.user_id})" class="btn btn-danger btn-small">Delete</button>
-              <button onclick="toggleRole(${u.user_id}, '${escapeHTML(u.role)}')" class="btn btn-secondary btn-small">
-                ${u.role === 'admin' ? 'Demote to User' : 'Promote to Admin'}
-              </button>
-            </td>
-            </tr>`;
+            const tr = document.createElement('tr');
+
+            const fields = [
+                u.user_id,
+                u.username,
+                u.email,
+                `${u.first_name} ${u.last_name}`,
+                u.role,
+                u.is_verified ? 'Yes' : 'No',
+                u.created_at
+            ];
+
+            fields.forEach(value => {
+                const td = document.createElement('td');
+                td.textContent = value;
+                tr.appendChild(td);
+            });
+
+            const actionTd = document.createElement('td');
+            actionTd.className = 'action-buttons';
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-danger btn-small';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.onclick = () => deleteUser(u.user_id);
+
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'btn btn-secondary btn-small';
+            toggleBtn.textContent = u.role === 'admin' ? 'Demote to User' : 'Promote to Admin';
+            toggleBtn.onclick = () => toggleRole(u.user_id, u.role);
+
+            actionTd.appendChild(deleteBtn);
+            actionTd.appendChild(toggleBtn);
+            tr.appendChild(actionTd);
+
+            tbody.appendChild(tr);
         });
     })
     .catch(err => {
@@ -31,21 +54,7 @@ function loadUsers()
     });
 }
 
-function escapeHTML(str) {
-    if (typeof str !== 'string') {
-        return str === undefined || str === null ? '' : String(str);
-    }
-    return str.replace(/[&<>"']/g, tag => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-    }[tag]));
-}
-
-function deleteUser(id)
-{
+function deleteUser(id) {
     if (!confirm('Are you sure you want to delete this user?')) {
         return;
     }
@@ -62,8 +71,7 @@ function deleteUser(id)
     .catch(err => alert('Delete failed: ' + err.message));
 }
 
-function toggleRole(id, currentRole)
-{
+function toggleRole(id, currentRole) {
     const newRole = currentRole === 'admin' ? 'user' : 'admin';
     fetch(`php/admin_users.php?action=changerole&id=${id}&role=${newRole}`, { credentials: 'include' })
     .then(res => res.json())
@@ -78,8 +86,7 @@ function toggleRole(id, currentRole)
     .catch(err => alert('Role update failed: ' + err.message));
 }
 
-function loadCurrentUser()
-{
+function loadCurrentUser() {
     fetch('php/admin_users.php?action=currentUser', { credentials: 'include' })
     .then(res => res.json())
     .then(user => {
@@ -94,4 +101,3 @@ function loadCurrentUser()
         console.error('Failed to load current user:', err);
     });
 }
-
