@@ -82,9 +82,13 @@ try {
         'imagePath' => $webPath
     ]);
 } catch (Exception $e) {
+    // SECURE FIX: Log error details server-side only, don't expose to client
+    error_log("File upload error: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
+    
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage()
+        'message' => 'File upload failed'
     ]);
 }
