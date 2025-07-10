@@ -81,6 +81,8 @@ class EmailService
 
     private function getPasswordResetHTML($username, $resetCode)
     {
+        $safeUsername = htmlspecialchars($username, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $safeResetCode = htmlspecialchars($resetCode, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         return "
         <!DOCTYPE html>
         <html>
@@ -103,13 +105,13 @@ class EmailService
                     <h2>Password Reset Request</h2>
                 </div>
                 <div class='content'>
-                    <p>Hello <strong>{$username}</strong>,</p>
+                    <p>Hello <strong>{$safeUsername}</strong>,</p>
                     
                     <p>You requested a password reset for your ElectraEdge account. Use the verification code below to reset your password:</p>
                     
                     <div class='code-box'>
                         <div>Your Verification Code:</div>
-                        <div class='code'>{$resetCode}</div>
+                        <div class='code'>{$safeResetCode}</div>
                     </div>
                     
                     <div class='warning'>
@@ -133,12 +135,14 @@ class EmailService
 
     private function getPasswordResetText($username, $resetCode)
     {
+        $safeUsername = preg_replace('/[\r\n]+/', ' ', $username);
+        $safeResetCode = preg_replace('/[\r\n]+/', '', $resetCode);
         return "
-Hello {$username},
+Hello {$safeUsername},
 
 You requested a password reset for your ElectraEdge account.
 
-Your verification code is: {$resetCode}
+Your verification code is: {$safeResetCode}
 
 This code will expire in 15 minutes.
 
@@ -154,6 +158,8 @@ This is an automated message. Please do not reply.
 
     private function get2FAHTML($username, $code)
     {
+        $safeUsername = htmlspecialchars($username, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $safeCode = htmlspecialchars($code, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         return "
         <!DOCTYPE html>
         <html>
@@ -175,11 +181,11 @@ This is an automated message. Please do not reply.
                     <h2>2FA Verification</h2>
                 </div>
                 <div class='content'>
-                    <p>Hello <strong>{$username}</strong>,</p>
+                    <p>Hello <strong>{$safeUsername}</strong>,</p>
                     <p>Your login attempt requires a second step of verification. Please use the code below to complete your login:</p>
                     <div class='code-box'>
                         <div>Your 2FA Code:</div>
-                        <div class='code'>{$code}</div>
+                        <div class='code'>{$safeCode}</div>
                     </div>
                     <p>This code will expire in <strong>5 minutes</strong> for your security.</p>
                     <p>If you did not attempt to log in, you can safely ignore this email.</p>
@@ -196,6 +202,8 @@ This is an automated message. Please do not reply.
 
     private function get2FAText($username, $code)
     {
-        return "Hello {$username},\n\nYour ElectraEdge 2FA code is: {$code}\n\nThis code will expire in 5 minutes.\nIf you did not attempt to log in, you can ignore this email.\n\nBest regards,\nElectraEdge Team\n---\nThis is an automated message. Please do not reply.";
+        $safeUsername = preg_replace('/[\r\n]+/', ' ', $username);
+        $safeCode = preg_replace('/[\r\n]+/', '', $code);
+        return "Hello {$safeUsername},\n\nYour ElectraEdge 2FA code is: {$safeCode}\n\nThis code will expire in 5 minutes.\nIf you did not attempt to log in, you can ignore this email.\n\nBest regards,\nElectraEdge Team\n---\nThis is an automated message. Please do not reply.";
     }
 }
