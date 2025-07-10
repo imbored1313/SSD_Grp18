@@ -25,7 +25,7 @@ async function loadProducts() {
     try {
         showLoadingState();
         
-        const response = await fetch('php/get_products.php');
+        const response = await fetch('get_products.php');
         const data = await response.json();
         
         if (data.success && Array.isArray(data.products)) {
