@@ -17,8 +17,11 @@ jobs:
     outputs:
       workflow_start_time: ${{ steps.set_start_time.outputs.workflow_start_time }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Set workflow start time
+        id: set_start_time
+        run: echo "workflow_start_time=$(date -u +%s)" >> $GITHUB_OUTPUT
+      - name: Checkout code
+        uses: actions/checkout@v4
       
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -209,7 +212,11 @@ jobs:
         run: |
           start_time=${{ needs.lint.outputs.workflow_start_time }}
           end_time=$(date -u +%s)
-          duration=$((end_time - start_time))
+          if [ -z "$start_time" ]; then
+            duration=0
+          else
+            duration=$((end_time - start_time))
+          fi
           duration_fmt="$(printf '%dm %02ds' $((duration/60)) $((duration%60)))"
 
           commit_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
