@@ -25,7 +25,7 @@ async function loadProducts() {
     try {
         showLoadingState();
         
-        const response = await fetch('get_products.php');
+        const response = await fetch('php/get_products.php');
         const data = await response.json();
         
         if (data.success && Array.isArray(data.products)) {
@@ -198,7 +198,7 @@ function createSecureProductCard(product) {
         addToCartBtn.onmouseout = function() { this.style.background = '#2c5aa0'; };
         addToCartBtn.onclick = function(e) {
             e.stopPropagation();
-            addToCart(e, product.product_id, parseFloat(product.price || 0));
+            addToCart(product.product_id);
         };
     } else {
         addToCartBtn.style.opacity = '0.5';
@@ -417,59 +417,44 @@ function handleSort(event) {
     setupPagination();
 }
 
-// --- Unified Cart Logic (copied/adapted from index.js) ---
-let cart = [];
-
-// Load cart from storage on page load
-function loadCartFromStorage() {
+async function addToCart(productId) {
     try {
-        const stored = localStorage.getItem('cartData');
-        cart = stored ? JSON.parse(stored) : [];
-    } catch (e) {
-        cart = [];
+        // Check if user is logged in
+        if (!window.sessionManager || !window.sessionManager.isLoggedIn()) {
+            showNotificationSecure('Please log in to add items to cart', 'error');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1500);
+            return;
+        }
+
+        const response = await fetch('php/add_to_cart.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                product_id: parseInt(productId),
+                quantity: 1
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showNotificationSecure('Product added to cart!', 'success');
+            
+            // Update cart count in header
+            if (window.sessionManager && typeof window.sessionManager.updateCartCount === 'function') {
+                window.sessionManager.updateCartCount(data.cartCount || 0);
+            }
+        } else {
+            showNotificationSecure('Failed to add to cart: ' + (data.message || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Add to cart error:', error);
+        showNotificationSecure('Failed to add product to cart', 'error');
     }
 }
-
-function saveCartToStorage() {
-    localStorage.setItem('cartData', JSON.stringify(cart));
-}
-
-function updateCartCount() {
-    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    const cartCountElement = document.getElementById('cartCount');
-    if (cartCountElement) {
-        cartCountElement.textContent = totalItems;
-    }
-}
-
-// Add item to cart with authentication check
-async function addToCart(event, productId, price) {
-    if (event) event.stopPropagation();
-
-    // Check if user is logged in using session manager
-    if (!window.sessionManager || !(await window.sessionManager.requireLogin())) {
-        return; // Will redirect to login
-    }
-
-    // Add to cart logic
-    const existingItem = cart.find(item => item.id === productId);
-    if (existingItem) {
-        existingItem.quantity += 1;
-        showNotificationSecure('Increased quantity in cart!', 'info');
-    } else {
-        cart.push({ id: productId, price: price, quantity: 1 });
-        showNotificationSecure('Product added to cart!', 'success');
-    }
-    saveCartToStorage();
-    updateCartCount();
-}
-
-// On page load, load cart and update count
-loadCartFromStorage();
-updateCartCount();
-
-// Expose addToCart globally for button handlers
-window.addToCart = addToCart;
 
 function showLoadingState() {
     const container = document.getElementById('products-container');

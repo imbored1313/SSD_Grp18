@@ -11,7 +11,4 @@ $stmt->execute();
 $products = $stmt->fetchAll();
 
 header('Content-Type: application/json');
-echo json_encode([
-    'success' => true,
-    'products' => $products
-]);
+echo json_encode($products);

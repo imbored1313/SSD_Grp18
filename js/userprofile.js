@@ -265,7 +265,7 @@ async function handlePasswordChange(e)
         const response = await fetch('php/change_password.php', {
             method: 'POST',
             body: formData,
-            credentials: 'include'
+        credentials: 'include'
         });
 
         const result = await response.json();
