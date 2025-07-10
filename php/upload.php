@@ -2,22 +2,7 @@
 
 require_once(__DIR__ . '/config.php');
 session_start();
-if ($oldCsrfToken !== null) {
-    $_SESSION['csrf_token'] = $oldCsrfToken;
-}
 session_regenerate_id(true);
-if ($oldCsrfToken !== null) {
-    $_SESSION['csrf_token'] = $oldCsrfToken;
-}
-// CSRF Token Check
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Invalid CSRF token']);
-        exit;
-    }
-}
-
 // Admin check
 if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admin') {
     http_response_code(403);

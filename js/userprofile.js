@@ -142,10 +142,6 @@ async function handleProfileUpdate(e)
     formData.append('phone', document.getElementById('phone').value.trim());
     formData.append('verifyPassword', document.getElementById('verifyPassword').value.trim());
 
-    // Add CSRF token to FormData
-    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-    formData.append('csrf_token', csrfToken);
-
     // Client-side validation
     const firstName = formData.get('firstName');
     const lastName = formData.get('lastName');
