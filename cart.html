@@ -29,6 +29,12 @@
             </div>
         </div>
 
+        <button onclick="clearCart()"
+            style="background: #ffc107; color: #333; font-weight: bold; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; margin-top: 1rem; cursor: pointer;">
+            🗑️ Clear Cart
+        </button>
+
+
         <!-- PayPal button container -->
         <div id="paypal-button-container" style="max-width: 400px; margin: 2rem auto;"></div>
     </section>
@@ -87,10 +93,10 @@
                         .then(res => res.json())
                         .then(details => {
                             console.log('✅ PayPal payment captured:', details);
-                            
+
                             // Show success message with better UX
                             const customerName = details.payer?.name?.given_name || 'Customer';
-                            
+
                             // Create success overlay
                             const successOverlay = document.createElement('div');
                             successOverlay.style.cssText = `
@@ -105,7 +111,7 @@
                                 align-items: center;
                                 z-index: 10000;
                             `;
-                            
+
                             successOverlay.innerHTML = `
                                 <div style="background: white; padding: 3rem; border-radius: 12px; text-align: center; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
                                     <div style="font-size: 4rem; color: #28a745; margin-bottom: 1rem;">✅</div>
@@ -117,14 +123,14 @@
                                     <p style="color: #666; font-size: 0.9rem;">Redirecting to your orders...</p>
                                 </div>
                             `;
-                            
+
                             document.body.appendChild(successOverlay);
-                            
+
                             // Clear cart and redirect after 3 seconds
                             setTimeout(() => {
                                 localStorage.removeItem('cart');
-                                window.location.href = 
-                                'my_orders.html';
+                                window.location.href =
+                                    'my_orders.html';
                             }, 3000);
                         })
                         .catch(err => {
@@ -230,6 +236,31 @@
 
             document.getElementById('paypal-button-container').style.display = 'none';
         }
+
+        async function clearCart() {
+            if (!confirm("Are you sure you want to clear your entire cart?")) return;
+
+            try {
+                const response = await fetch('php/clear_cart.php', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log('✅ Cart cleared successfully');
+                    displayEmptyCart();
+                    updateCartCount(0);
+                } else {
+                    alert('Failed to clear cart: ' + (result.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('❌ Error clearing cart:', error);
+                alert('Error clearing cart. Please try again.');
+            }
+        }
+
     </script>
 
     <!-- Footer -->
