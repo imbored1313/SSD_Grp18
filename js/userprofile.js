@@ -328,23 +328,6 @@ async function handleAccountDeletion() {
 // Logout function
 async function logout() {
     try {
-        // Get CSRF token first
-        const csrfResponse = await fetch('php/get_csrf_token.php', {
-            method: 'GET',
-            credentials: 'include'
-        });
-        
-        if (!csrfResponse.ok) {
-            throw new Error('Failed to get CSRF token');
-        }
-        
-        const csrfData = await csrfResponse.json();
-        const csrfToken = csrfData.token;
-
-        // Create form data with CSRF token
-        const formData = new FormData();
-        formData.append('csrf_token', csrfToken);
-
         const response = await fetch('php/logout.php', {
             method: 'POST',
             credentials: 'include',
