@@ -7,43 +7,45 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPage = 1;
     let totalPages = 1;
 
-    function escapeHTML(str) {
-        if (typeof str !== 'string') return str;
-        return str.replace(/[&<>"']/g, match => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#39;'
-        }[match]));
-    }
-
     async function fetchLogs(page = 1) {
         try {
             const response = await fetch(`php/admin_dashboard.php?action=list&page=${page}`);
             const data = await response.json();
 
+            logsTableBody.innerHTML = ''; // Clear table
+
             if (data.success && Array.isArray(data.logs)) {
-                logsTableBody.innerHTML = data.logs.map(log => `
-                    <tr>
-                        <td>${escapeHTML(log.log_id)}</td>
-                        <td>${escapeHTML(log.username ?? 'Unknown')}</td>
-                        <td>${escapeHTML(log.action)}</td>
-                        <td>${escapeHTML(log.ip_addr)}</td>
-                        <td>${escapeHTML(log.timestamp)}</td>
-                    </tr>
-                `).join('');
+                data.logs.forEach(log => {
+                    const tr = document.createElement('tr');
+                    ['log_id', 'username', 'action', 'ip_addr', 'timestamp'].forEach(key => {
+                        const td = document.createElement('td');
+                        td.textContent = log[key] ?? 'Unknown';
+                        tr.appendChild(td);
+                    });
+                    logsTableBody.appendChild(tr);
+                });
 
                 currentPage = data.page;
                 totalPages = Math.ceil(data.total / data.pageSize);
                 updatePagination();
             } else {
-                logsTableBody.innerHTML = `<tr><td colspan="5">No logs found</td></tr>`;
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 5;
+                td.textContent = 'No logs found';
+                tr.appendChild(td);
+                logsTableBody.appendChild(tr);
                 currentPageDisplay.textContent = '';
             }
         } catch (err) {
             console.error('Error fetching logs:', err);
-            logsTableBody.innerHTML = `<tr><td colspan="5">Error loading logs</td></tr>`;
+            logsTableBody.innerHTML = '';
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 5;
+            td.textContent = 'Error loading logs';
+            tr.appendChild(td);
+            logsTableBody.appendChild(tr);
             currentPageDisplay.textContent = '';
         }
     }
