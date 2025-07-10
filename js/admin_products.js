@@ -238,21 +238,6 @@ async function saveProduct()
     };
 
     try {
-        // Fetch CSRF token
-        const csrfResponse = await fetch('/php/get_csrf_token.php', {
-            // Ensure the session cookie is sent
-            credentials: 'include'
-        });
-        const csrfData = await csrfResponse.json();
-        const csrfToken = csrfData.token;
-
-        // Add CSRF token to the form data
-        const formData = new FormData();
-        formData.append('csrf_token', csrfToken);
-
-        // Add other form data
-        formData.append('productData', JSON.stringify(productData));
-
         let imagePath = null;
 
         if (fileInput.files.length > 0) {
