@@ -7,8 +7,202 @@
     <link rel="stylesheet" href="website.css" />
     <script src="js/session_manager.js"></script>
     <style>
-        /* --- your CSS unchanged --- */
-        /* ... */
+        /* Enhanced Product Grid Styles - Wider Boxes */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Force exactly 3 columns on larger screens - Wider */
+        @media (min-width: 1200px) {
+            .product-grid {
+                grid-template-columns: repeat(3, 1fr);
+                max-width: 1350px;
+                gap: 3rem;
+            }
+        }
+
+        /* 2 columns on medium screens - Wider */
+        @media (min-width: 768px) and (max-width: 1199px) {
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+                max-width: 900px;
+                gap: 2.5rem;
+            }
+        }
+
+        /* 1 column on small screens - Wider */
+        @media (max-width: 767px) {
+            .product-grid {
+                grid-template-columns: 1fr;
+                max-width: 450px;
+                gap: 2rem;
+            }
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: fit-content;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 280px;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-image img {
+            transform: scale(1.05);
+        }
+
+        .product-info {
+            padding: 2rem;
+        }
+
+        .product-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #333;
+            line-height: 1.4;
+            height: 3.2rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .product-price {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #2c5aa0;
+            margin-bottom: 1.25rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: #2c5aa0;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #1e3f73;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .search-sort-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 3rem;
+            padding: 0 1rem;
+        }
+
+        .search-sort-container input,
+        .search-sort-container select {
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            transition: border-color 0.2s ease;
+            min-width: 200px;
+        }
+
+        .search-sort-container input:focus,
+        .search-sort-container select:focus {
+            outline: none;
+            border-color: #2c5aa0;
+        }
+
+        @media (max-width: 640px) {
+
+            .search-sort-container input,
+            .search-sort-container select {
+                width: 100%;
+                min-width: unset;
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .loading-state,
+        .error-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #666;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2c5aa0;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
@@ -67,12 +261,253 @@
         </div>
     </section>
 
-    <!-- Catalog/Product logic -->
+    <script>
+        let allProducts = [];
+        let filteredProducts = [];
+
+        // Load products on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            loadProducts();
+            initializeFilters();
+        });
+
+        // Load products from database
+        async function loadProducts() {
+            console.log('📦 Loading products from database...');
+
+            const loadingDiv = document.getElementById('loading-state');
+            const catalogDiv = document.getElementById('productCatalog');
+            const errorDiv = document.getElementById('error-state');
+            const noProductsDiv = document.getElementById('no-products-state');
+
+            // Show loading state
+            loadingDiv.style.display = 'block';
+            catalogDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            noProductsDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('get_products.php');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const products = await response.json();
+                console.log('✅ Products loaded:', products.length);
+
+                if (!products || products.length === 0) {
+                    showNoProducts();
+                    return;
+                }
+
+                allProducts = products;
+                filteredProducts = [...products];
+                displayProducts(filteredProducts);
+
+            } catch (error) {
+                console.error('❌ Error loading products:', error);
+                showError();
+            }
+        }
+
+        // Display products in grid
+        // SECURE VERSION: Create DOM elements instead of using innerHTML
+        function displayProducts(products) {
+            const loadingDiv = document.getElementById('loading-state');
+            const catalogDiv = document.getElementById('productCatalog');
+            const errorDiv = document.getElementById('error-state');
+            const noProductsDiv = document.getElementById('no-products-state');
+
+            if (!products || products.length === 0) {
+                showNoProducts();
+                return;
+            }
+
+            // SECURITY FIX: Clear content safely and build DOM elements
+            catalogDiv.innerHTML = ''; // Safe to clear
+
+            products.forEach(product => {
+                // Create product card using DOM methods (XSS-safe)
+                const productCard = createSecureProductCard(product);
+                catalogDiv.appendChild(productCard);
+            });
+
+            // Show products grid
+            loadingDiv.style.display = 'none';
+            catalogDiv.style.display = 'grid';
+            errorDiv.style.display = 'none';
+            noProductsDiv.style.display = 'none';
+
+            console.log('✅ Products displayed in grid:', products.length);
+        }
+
+        // Show error state
+        function showError() {
+            document.getElementById('loading-state').style.display = 'none';
+            document.getElementById('productCatalog').style.display = 'none';
+            document.getElementById('error-state').style.display = 'block';
+            document.getElementById('no-products-state').style.display = 'none';
+        }
+
+        // Show no products state
+        function showNoProducts() {
+            document.getElementById('loading-state').style.display = 'none';
+            document.getElementById('productCatalog').style.display = 'none';
+            document.getElementById('error-state').style.display = 'none';
+            document.getElementById('no-products-state').style.display = 'block';
+        }
+
+        // Initialize search and sort filters
+        function initializeFilters() {
+            const searchInput = document.getElementById('searchInput');
+            const sortSelect = document.getElementById('sortSelect');
+
+            // Search functionality
+            searchInput.addEventListener('input', function () {
+                filterAndDisplayProducts();
+            });
+
+            // Sort functionality
+            sortSelect.addEventListener('change', function () {
+                filterAndDisplayProducts();
+            });
+        }
+
+        // SECURITY FIX: Secure function to create product cards using DOM methods
+        function createSecureProductCard(product) {
+            // Create main product card
+            const productCard = document.createElement('div');
+            productCard.className = 'product-card';
+
+            // Create image container
+            const imageDiv = document.createElement('div');
+            imageDiv.className = 'product-image';
+
+            // Create image element
+            const img = document.createElement('img');
+
+            // Handle image path securely
+            let imageSrc = 'uploads/no-image.jpg';
+            if (product.image_path) {
+                if (product.image_path.startsWith('http') || product.image_path.startsWith('/uploads/')) {
+                    imageSrc = product.image_path;
+                } else {
+                    imageSrc = '/uploads/products/' + product.image_path;
+                }
+            }
+
+            img.src = imageSrc;
+            img.alt = 'Product Image'; // Safe, generic alt text
+            img.onerror = function () { this.src = 'uploads/no-image.jpg'; };
+
+            imageDiv.appendChild(img);
+
+            // Create product info container
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'product-info';
+
+            // Create product title (XSS-safe)
+            const titleH3 = document.createElement('h3');
+            titleH3.className = 'product-title';
+            titleH3.textContent = product.name || 'Unknown Product'; // textContent prevents XSS
+
+            // Create rating container
+            const ratingDiv = document.createElement('div');
+            ratingDiv.className = 'product-rating';
+
+            const starsSpan = document.createElement('span');
+            starsSpan.className = 'stars';
+            starsSpan.textContent = '⭐⭐⭐⭐⭐';
+
+            const stockSpan = document.createElement('span');
+            const stock = parseInt(product.stock || 0);
+            const isInStock = stock > 0;
+            stockSpan.textContent = isInStock ? `(${stock} in stock)` : '(Out of stock)';
+
+            ratingDiv.appendChild(starsSpan);
+            ratingDiv.appendChild(stockSpan);
+
+            // Create price
+            const priceDiv = document.createElement('div');
+            priceDiv.className = 'product-price';
+            const price = parseFloat(product.price || 0);
+            priceDiv.textContent = `$${price.toFixed(2)}`;
+
+            // Create button
+            const button = document.createElement('button');
+            button.className = 'btn btn-primary';
+
+            if (isInStock) {
+                button.textContent = 'Add to Cart';
+                button.onclick = function () { addToCart(product.product_id); };
+            } else {
+                button.textContent = 'Out of Stock';
+                button.disabled = true;
+                button.style.opacity = '0.6';
+            }
+
+            // Assemble the card
+            infoDiv.appendChild(titleH3);
+            infoDiv.appendChild(ratingDiv);
+            infoDiv.appendChild(priceDiv);
+            infoDiv.appendChild(button);
+
+            productCard.appendChild(imageDiv);
+            productCard.appendChild(infoDiv);
+
+            return productCard;
+        }
+
+        // Filter and display products
+        function filterAndDisplayProducts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const sortOrder = document.getElementById('sortSelect').value;
+
+            // Filter products
+            filteredProducts = allProducts.filter(product => {
+                const nameMatch = product.name.toLowerCase().includes(searchTerm);
+                const descMatch = product.description.toLowerCase().includes(searchTerm);
+                return nameMatch || descMatch;
+            });
+
+            // Sort products
+            if (sortOrder) {
+                filteredProducts.sort((a, b) => {
+                    switch (sortOrder) {
+                        case 'asc':
+                            return parseFloat(a.price) - parseFloat(b.price);
+                        case 'desc':
+                            return parseFloat(b.price) - parseFloat(a.price);
+                        case 'name':
+                            return a.name.localeCompare(b.name);
+                        case 'stock':
+                            return parseInt(b.stock) - parseInt(a.stock);
+                        default:
+                            return 0;
+                    }
+                });
+            }
+
+            displayProducts(filteredProducts);
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('sortSelect').value = '';
+            filteredProducts = [...allProducts];
+            displayProducts(filteredProducts);
+        }
+    </script>
+
+    <!-- Include catalog JavaScript for session management -->
     <script src="js/catalog.js"></script>
 
     <!-- Footer -->
     <div id="footer-placeholder"></div>
 
+    <!-- SECURE REPLACEMENT: -->
     <script>
         fetch("footer.html")
             .then(res => res.text())
@@ -97,4 +532,5 @@
     </script>
 
 </body>
+
 </html>
