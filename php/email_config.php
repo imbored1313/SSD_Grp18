@@ -55,8 +55,9 @@ class EmailService
             $this->mailer->clearAddresses();
             return $result;
         } catch (Exception $e) {
-            echo "ERROR: " . $e->getMessage() . " | " . $this->mailer->ErrorInfo;
-            exit;
+             error_log("Email Send Error: " . $e->getMessage() . " | " . $this->mailer->ErrorInfo);
+             file_put_contents(__DIR__ . '/mail-debug.log', date('[Y-m-d H:i:s] ') . $e->getMessage() . " | " . $this->mailer->ErrorInfo . "\n", FILE_APPEND);
+             return false;
         }
     }
 
@@ -72,8 +73,9 @@ class EmailService
             $this->mailer->clearAddresses();
             return $result;
         } catch (Exception $e) {
-            echo "ERROR: " . $e->getMessage() . " | " . $this->mailer->ErrorInfo;
-            exit;
+            error_log("Email Send Error: " . $e->getMessage() . " | " . $this->mailer->ErrorInfo);
+            file_put_contents(__DIR__ . '/mail-debug.log', date('[Y-m-d H:i:s] ') . $e->getMessage() . " | " . $this->mailer->ErrorInfo . "\n", FILE_APPEND);
+            return false;
         }
     }
 
