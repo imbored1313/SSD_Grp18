@@ -28,6 +28,9 @@ async function loadProducts() {
         const response = await fetch('php/get_products.php');
         const data = await response.json();
         
+        // Log the data to check if it's valid
+        console.log(data);
+        
         if (data.success && Array.isArray(data.products)) {
             allProducts = data.products;
             filteredProducts = [...allProducts];
