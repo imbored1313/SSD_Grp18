@@ -57,26 +57,6 @@ function escapeHTML(str) {
     }[tag]));
 }
 
-// NEW: Enhanced URL sanitization function
-function sanitizeImageUrl(url) {
-    if (!url || typeof url !== 'string') {
-        return '';
-    }
-    
-    // Remove any potential XSS vectors
-    const cleaned = url.replace(/[<>"']/g, '');
-    
-    // Validate that it's a reasonable URL format
-    try {
-        new URL(cleaned);
-        return cleaned;
-    } catch {
-        // If it's not a valid URL, treat it as a relative path
-        // Remove any dangerous characters that could break out of src attribute
-        return cleaned.replace(/[^\w\-_./:]/g, '');
-    }
-}
-
 function renderProducts(products)
 {
     const tbody = document.querySelector('#productsTable tbody');
@@ -95,69 +75,37 @@ function renderProducts(products)
         const row = document.createElement('tr');
         row.dataset.id = product.product_id;
 
-        // FIXED: Sanitize image URL to prevent XSS
-        let imageUrl = sanitizeImageUrl(product.image_path);
+        // Ensure image_path is a full URL only if not already
+        let imageUrl = product.image_path;
 
-        // FIXED: Create elements safely instead of using innerHTML with unsanitized data
-        const cells = [
-            escapeHTML(product.product_id),
-            escapeHTML(product.name) || 'No name',
-            product.description ?
+        row.innerHTML = `
+            <td>${escapeHTML(product.product_id)}</td>
+            <td>${escapeHTML(product.name) || 'No name'}</td>
+            <td>${product.description ?
                 escapeHTML(product.description.length > 50 ?
                     product.description.substring(0, 47) + '...' :
                     product.description) :
-                'No description',
-            '$' + parseFloat(product.price || 0).toFixed(2),
-            escapeHTML(product.stock),
-            '', // Image cell - will be handled separately
-            escapeHTML(product.added_by_username) || 'System',
-            '' // Action buttons - will be handled separately
-        ];
-
-        // Create cells safely
-        cells.forEach((cellContent, index) => {
-            const cell = document.createElement('td');
-            if (index === 5) { // Image cell
-                cell.className = 'text-center';
-                if (imageUrl) {
-                    const img = document.createElement('img');
-                    img.src = imageUrl;
-                    img.alt = escapeHTML(product.name) || 'Product image';
-                    img.className = 'product-image';
-                    img.onerror = function() {
-                        this.style.display = 'none';
-                        const span = document.createElement('span');
-                        span.className = 'text-muted';
-                        span.textContent = 'Image missing';
-                        this.parentElement.appendChild(span);
-                    };
-                    cell.appendChild(img);
-                } else {
-                    const span = document.createElement('span');
-                    span.className = 'text-muted';
-                    span.textContent = 'No image';
-                    cell.appendChild(span);
-                }
-            } else if (index === 7) { // Action buttons cell
-                cell.className = 'action-buttons';
-                
-                const editBtn = document.createElement('button');
-                editBtn.className = 'btn btn-sm btn-warning';
-                editBtn.dataset.action = 'edit';
-                editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit';
-                
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn btn-sm btn-danger';
-                deleteBtn.dataset.action = 'delete';
-                deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete';
-                
-                cell.appendChild(editBtn);
-                cell.appendChild(deleteBtn);
-            } else {
-                cell.innerHTML = cellContent;
-            }
-            row.appendChild(cell);
-        });
+                'No description'}</td>
+            <td>$${parseFloat(product.price || 0).toFixed(2)}</td>
+            <td>${escapeHTML(product.stock)}</td>
+            <td class="text-center">
+                ${imageUrl ?
+                    `<img src="${imageUrl}"
+                          alt="${escapeHTML(product.name) || 'Product image'}"
+                          class="product-image"
+                          onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\'text-muted\'>Image missing</span>'">` :
+                    '<span class="text-muted">No image</span>'}
+            </td>
+            <td>${escapeHTML(product.added_by_username) || 'System'}</td>
+            <td class="action-buttons">
+                <button class="btn btn-sm btn-warning" data-action="edit">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-danger" data-action="delete">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+            `;
 
         tbody.appendChild(row);
     });
@@ -247,35 +195,21 @@ async function showEditForm(id = null)
             form.elements.price.value = product.price;
             form.elements.stock.value = product.stock;
 
-            // FIXED: Show the preview safely
+            // ✅ Show the preview:
             if (product.image_path) {
-                const label = document.createElement('label');
-                label.className = 'form-label';
-                label.textContent = 'Current Image';
-                
-                const img = document.createElement('img');
-                img.src = sanitizeImageUrl(product.image_path);
-                img.alt = 'Current Image';
-                img.className = 'img-thumbnail mt-2';
-                img.style.maxHeight = '150px';
-                img.onerror = function() {
-                    this.onerror = null;
-                    this.src = 'https://via.placeholder.com/150?text=No+Image';
-                };
-                
-                previewContainer.appendChild(label);
-                previewContainer.appendChild(img);
+                previewContainer.innerHTML = `
+                    <label class="form-label">Current Image</label>
+                    <img src="${product.image_path}"
+                         alt="Current Image"
+                         class="img-thumbnail mt-2"
+                         style="max-height: 150px;"
+                         onerror="this.onerror=null;this.src='https://via.placeholder.com/150?text=No+Image';">
+                `;
             } else {
-                const label = document.createElement('label');
-                label.className = 'form-label';
-                label.textContent = 'Current Image';
-                
-                const div = document.createElement('div');
-                div.className = 'text-muted';
-                div.textContent = 'No image available';
-                
-                previewContainer.appendChild(label);
-                previewContainer.appendChild(div);
+                previewContainer.innerHTML = `
+                    <label class="form-label">Current Image</label>
+                    <div class="text-muted">No image available</div>
+                `;
             }
         } catch (error) {
             showError('Failed to load product: ' + error.message);
@@ -287,6 +221,7 @@ async function showEditForm(id = null)
 
     modal.show();
 }
+
 
 async function saveProduct()
 {
@@ -391,6 +326,8 @@ document.getElementById('image_file').addEventListener('change', function () {
         preview.appendChild(img);
     }
 });
+
+
 
 // Helper functions
 function truncateText(text, maxLength)
