@@ -251,14 +251,53 @@ function getStatusText(status) {
 
 function showError(message) {
     const ordersList = document.getElementById('orders-list');
-    ordersList.innerHTML = `
-        <div style="text-align: center; padding: 3rem; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <div style="font-size: 3rem; margin-bottom: 1rem; color: #dc3545;">⚠️</div>
-            <h3 style="color: #dc3545; margin-bottom: 1rem;">Error Loading Orders</h3>
-            <p style="color: #666; margin-bottom: 2rem;">${message}</p>
-            <button onclick="loadOrders()" style="background: #2c5aa0; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem;" onmouseover="this.style.background='#1e3f73'" onmouseout="this.style.background='#2c5aa0'">
-                Try Again
-            </button>
-        </div>
-    `;
+    // Create container
+    const container = document.createElement('div');
+    container.style.textAlign = 'center';
+    container.style.padding = '3rem';
+    container.style.background = 'white';
+    container.style.borderRadius = '12px';
+    container.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+
+    // Warning icon
+    const icon = document.createElement('div');
+    icon.style.fontSize = '3rem';
+    icon.style.marginBottom = '1rem';
+    icon.style.color = '#dc3545';
+    icon.textContent = '⚠️';
+    container.appendChild(icon);
+
+    // Error title
+    const title = document.createElement('h3');
+    title.style.color = '#dc3545';
+    title.style.marginBottom = '1rem';
+    title.textContent = 'Error Loading Orders';
+    container.appendChild(title);
+
+    // Error message (sanitized)
+    const msg = document.createElement('p');
+    msg.style.color = '#666';
+    msg.style.marginBottom = '2rem';
+    msg.textContent = message;
+    container.appendChild(msg);
+
+    // Try Again button
+    const btn = document.createElement('button');
+    btn.textContent = 'Try Again';
+    btn.style.background = '#2c5aa0';
+    btn.style.color = 'white';
+    btn.style.padding = '12px 24px';
+    btn.style.border = 'none';
+    btn.style.borderRadius = '6px';
+    btn.style.fontWeight = 'bold';
+    btn.style.cursor = 'pointer';
+    btn.style.fontSize = '1rem';
+    btn.onmouseover = function() { btn.style.background = '#1e3f73'; };
+    btn.onmouseout = function() { btn.style.background = '#2c5aa0'; };
+    btn.onclick = loadOrders;
+    container.appendChild(btn);
+
+    // Clear and append
+    ordersList.innerHTML = '';
+    ordersList.appendChild(container);
 }

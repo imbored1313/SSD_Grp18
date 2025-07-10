@@ -397,17 +397,17 @@
             // Remove existing notification first
             const existing = document.getElementById('home-notification');
             if (existing) existing.remove();
-            
+
             const notification = document.createElement('div');
             notification.id = 'home-notification';
-            
+
             const colors = {
                 success: '#28a745',
                 error: '#dc3545',
                 info: '#17a2b8',
                 warning: '#ffc107'
             };
-            
+
             notification.style.cssText = `
                 position: fixed;
                 top: 20px;
@@ -422,10 +422,11 @@
                 font-size: 14px;
                 transition: opacity 0.3s ease;
             `;
-            
+
+            // Use textContent to avoid XSS
             notification.textContent = message;
             document.body.appendChild(notification);
-            
+
             setTimeout(() => {
                 if (notification.parentNode) {
                     notification.style.opacity = '0';
