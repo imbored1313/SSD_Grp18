@@ -7,10 +7,7 @@ session_regenerate_id(true);
 // get_user_profile.php - Fetch user profile data from database
 
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET');
-header('Access-Control-Allow-Headers: Content-Type');
-header('Access-Control-Allow-Credentials: true');
+
 try {
 // Check if user is logged in
     if (!isset($_SESSION['user']) || !isset($_SESSION['user']['user_id'])) {
