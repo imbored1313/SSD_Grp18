@@ -55,8 +55,11 @@ class EmailService
             $this->mailer->clearAddresses();
             return $result;
         } catch (Exception $e) {
-            echo "ERROR: " . $e->getMessage() . " | " . $this->mailer->ErrorInfo;
-            exit;
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage() . " | " . $this->mailer->ErrorInfo
+            ]);
+        exit;
         }
     }
 
@@ -72,8 +75,11 @@ class EmailService
             $this->mailer->clearAddresses();
             return $result;
         } catch (Exception $e) {
-            echo "ERROR: " . $e->getMessage() . " | " . $this->mailer->ErrorInfo;
-            exit;
+            echo json_encode([
+                'success' => false,
+                'error' => $e->getMessage() . " | " . $this->mailer->ErrorInfo
+            ]);
+        exit;
         }
     }
 
