@@ -1,5 +1,5 @@
 <?php
-// php/check_session.php - MySQL schema specific version
+// php/check_session.php - Secure version without information exposure
 require_once(__DIR__ . '/config.php');
 
 // Set proper headers
@@ -12,11 +12,14 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
 header('Expires: 0');
 
-logSessionDebug("=== SESSION CHECK REQUEST START ===");
-logSessionDebug("Request Method: " . $_SERVER['REQUEST_METHOD']);
-logSessionDebug("Request URI: " . $_SERVER['REQUEST_URI']);
-logSessionDebug("User Agent: " . ($_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'));
-logSessionDebug("Remote IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'Unknown'));
+// Secure logging - only in development mode
+function secureLog($message) {
+    if (defined('DEVELOPMENT_MODE') && DEVELOPMENT_MODE === true) {
+        error_log("[SESSION_CHECK] " . $message);
+    }
+}
+
+secureLog("Session check request from " . ($_SERVER['REMOTE_ADDR'] ?? 'Unknown'));
 
 try {
     // Check if this is a valid GET request
@@ -33,21 +36,18 @@ try {
     $user = getUserFromSession();
     
     if ($user && isset($user['user_id'])) {
-        logSessionDebug("✅ Valid session found for user: " . $user['username']);
+        secureLog("Valid session found for user: " . $user['username']);
         
-        // Verify session against database using exact MySQL schema
+        // Verify session against database
         try {
             $database = new Database();
             $db = $database->getConnection();
             
             if ($db) {
-                // Check if user still exists and is active using exact Users table schema
-                // Users table: user_id, username, email, password_hash, first_name, last_name, phone, role, is_verified, created_at, last_login
+                // Check if user still exists and is active
                 $query = "SELECT user_id, username, email, first_name, last_name, phone, role, is_verified, last_login
                          FROM Users 
                          WHERE user_id = :user_id";
-                
-                logSessionDebug("User verification query: " . $query);
                 
                 $stmt = $db->prepare($query);
                 $stmt->bindParam(':user_id', $user['user_id'], PDO::PARAM_INT);
@@ -71,7 +71,7 @@ try {
                     // Update session with fresh data
                     setUserSession($userData);
                     
-                    // Optional: Check if session token exists and is valid in Sessions table
+                    // Optional: Check if session token exists and is valid
                     $sessionTokenValid = true;
                     try {
                         $tokenQuery = "SELECT session_id, expiry_time FROM Sessions 
@@ -86,87 +86,79 @@ try {
                             $expiryTime = strtotime($sessionRecord['expiry_time']);
                             if ($expiryTime < time()) {
                                 $sessionTokenValid = false;
-                                logSessionDebug("⚠️ Session token expired");
+                                secureLog("Session token expired for user: " . $user['username']);
                             }
                         }
                     } catch (Exception $tokenError) {
-                        logSessionDebug("⚠️ Could not check session token: " . $tokenError->getMessage());
+                        // Log error securely without exposing details
+                        secureLog("Session token validation failed: " . $tokenError->getMessage());
                         // Don't fail the session check for token validation errors
                     }
                     
-                    logSessionDebug("✅ Session verified against database for user: " . $dbUser['username']);
+                    secureLog("Session verified against database for user: " . $dbUser['username']);
                     
+                    // Return success response WITHOUT exposing internal details
                     echo json_encode([
                         'success' => true,
                         'user' => $userData,
                         'timestamp' => time(),
-                        'session_id' => session_id(),
-                        'verified_against_db' => true,
-                        'session_token_valid' => $sessionTokenValid,
-                        'mysql_schema' => true
+                        'verified' => true
                     ]);
                 } else {
                     // User no longer exists in database, invalidate session
-                    logSessionDebug("❌ User no longer exists in database, invalidating session");
+                    secureLog("User no longer exists, invalidating session for user_id: " . $user['user_id']);
                     clearUserSession();
                     
                     echo json_encode([
                         'success' => false,
-                        'message' => 'User account no longer exists',
-                        'session_id' => session_id(),
-                        'session_cleared' => true
+                        'message' => 'Session expired'
                     ]);
                 }
             } else {
-                // Database connection failed, but don't invalidate session
-                logSessionDebug("⚠️ Database connection failed, but keeping session");
+                // Database connection failed, but don't expose details
+                secureLog("Database connection failed during session check");
                 
+                // Return session data without DB verification (graceful degradation)
                 echo json_encode([
                     'success' => true,
                     'user' => $user,
                     'timestamp' => time(),
-                    'session_id' => session_id(),
-                    'verified_against_db' => false,
-                    'db_error' => 'Database connection failed'
+                    'verified' => false
                 ]);
             }
         } catch (Exception $dbError) {
-            // Database error, but don't invalidate session
-            logSessionDebug("⚠️ Database verification failed, but keeping session: " . $dbError->getMessage());
+            // Database error - log securely, don't expose details
+            secureLog("Database verification failed: " . $dbError->getMessage());
             
+            // Return session data without DB verification (graceful degradation)
             echo json_encode([
                 'success' => true,
                 'user' => $user,
                 'timestamp' => time(),
-                'session_id' => session_id(),
-                'verified_against_db' => false,
-                'db_error' => $dbError->getMessage()
+                'verified' => false
             ]);
         }
     } else {
-        logSessionDebug("❌ No valid session data found");
+        secureLog("No valid session data found");
         
+        // Clean response without exposing session contents
         echo json_encode([
             'success' => false,
             'message' => 'User not logged in',
-            'timestamp' => time(),
-            'session_id' => session_id(),
-            'session_data' => $_SESSION // For debugging
+            'timestamp' => time()
         ]);
     }
 
 } catch (Exception $e) {
-    logSessionDebug("❌ Exception in session check: " . $e->getMessage());
-    logSessionDebug("❌ Stack trace: " . $e->getTraceAsString());
+    // Log error securely without exposing details
+    secureLog("Exception in session check: " . $e->getMessage());
     
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Internal server error',
-        'message' => 'An error occurred while checking session: ' . $e->getMessage(),
-        'timestamp' => time()
+        'error' => 'Internal server error'
     ]);
 }
 
-logSessionDebug("=== SESSION CHECK REQUEST END ===");
+secureLog("Session check request completed");
 ?>
