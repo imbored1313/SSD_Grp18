@@ -38,6 +38,8 @@ const InputSanitizer = {
     }
 };
 
+let loginInProgress = false;
+
 document.addEventListener('DOMContentLoaded', function () {
     console.log('=== LOGIN PAGE LOADED ===');
 
@@ -79,6 +81,8 @@ async function checkExistingSession() {
 // Handle login form submission
 async function handleLoginSubmit(e) {
     e.preventDefault();
+    if (loginInProgress) return; // Prevent double submit
+    loginInProgress = true;
     console.log('=== LOGIN FORM SUBMITTED ===');
 
     // Clear previous errors
@@ -172,6 +176,7 @@ async function handleLoginSubmit(e) {
     } finally {
         // Reset button state
         setLoadingState(submitBtn, false, originalText);
+        loginInProgress = false;
     }
 }
 
@@ -535,7 +540,7 @@ document.addEventListener('keydown', function (e) {
         const loginForm = document.getElementById('loginForm');
         if (loginForm) {
             const submitButton = loginForm.querySelector('button[type="submit"]');
-            if (submitButton && !submitButton.disabled) {
+            if (submitButton && !submitButton.disabled && !loginInProgress) {
                 submitButton.click();
             }
         }
