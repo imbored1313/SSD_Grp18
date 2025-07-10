@@ -22,77 +22,69 @@ jobs:
         run: echo "workflow_start_time=$(date -u +%s)" >> $GITHUB_OUTPUT
       - name: Checkout code
         uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-        
-    - name: Install Node.js dependencies
-      run: npm ci
-      
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: ${{ env.PHP_VERSION }}
-        extensions: mysqli, pdo, pdo_mysql
-        tools: composer
-        
-    - name: Install PHP dependencies
-      run: |
-        cd php
-        composer install --no-dev --optimize-autoloader
-        
-    - name: Lint JavaScript files
-      run: |
-        echo "Checking JavaScript syntax..."
-        for file in js/*.js; do
-          if [ -f "$file" ]; then
-            echo "Linting $file"
-            node -c "$file" || exit 1
-          fi
-        done
-        
-    - name: Lint PHP files
-      run: |
-        echo "Checking PHP syntax..."
-        find php -name "*.php" -type f -exec php -l {} \; || exit 1
-        
-    - name: Check HTML files
-      run: |
-        echo "Checking HTML files..."
-        for file in *.html; do
-          if [ -f "$file" ]; then
-            echo "Validating $file"
-            # Basic HTML validation - check for common issues
-            if grep -q "<html" "$file" && grep -q "</html>" "$file"; then
-              echo "✓ $file has proper HTML structure"
-            else
-              echo "⚠ $file may have HTML structure issues"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install Node.js dependencies
+        run: npm ci
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mysqli, pdo, pdo_mysql
+          tools: composer
+      - name: Install PHP dependencies
+        run: |
+          cd php
+          composer install --no-dev --optimize-autoloader
+      - name: Lint JavaScript files
+        run: |
+          echo "Checking JavaScript syntax..."
+          for file in js/*.js; do
+            if [ -f "$file" ]; then
+              echo "Linting $file"
+              node -c "$file" || exit 1
             fi
-          fi
-        done
-        
-    - name: Check CSS files
-      run: |
-        echo "Checking CSS files..."
-        for file in *.css; do
-          if [ -f "$file" ]; then
-            echo "Validating $file"
-            # Basic CSS validation
-            if grep -q "{" "$file" && grep -q "}" "$file"; then
-              echo "✓ $file has CSS structure"
-            else
-              echo "⚠ $file may have CSS structure issues"
+          done
+      - name: Lint PHP files
+        run: |
+          echo "Checking PHP syntax..."
+          find php -name "*.php" -type f -exec php -l {} \; || exit 1
+      - name: Check HTML files
+        run: |
+          echo "Checking HTML files..."
+          for file in *.html; do
+            if [ -f "$file" ]; then
+              echo "Validating $file"
+              # Basic HTML validation - check for common issues
+              if grep -q "<html" "$file" && grep -q "</html>" "$file"; then
+                echo "✓ $file has proper HTML structure"
+              else
+                echo "⚠ $file may have HTML structure issues"
+              fi
             fi
-          fi
-        done
-    - name: Set Lint Job Status
-      if: always()
-      run: |
-        echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
-      id: lint_status
+          done
+      - name: Check CSS files
+        run: |
+          echo "Checking CSS files..."
+          for file in *.css; do
+            if [ -f "$file" ]; then
+              echo "Validating $file"
+              # Basic CSS validation
+              if grep -q "{" "$file" && grep -q "}" "$file"; then
+                echo "✓ $file has CSS structure"
+              else
+                echo "⚠ $file may have CSS structure issues"
+              fi
+            fi
+          done
+      - name: Set Lint Job Status
+        if: always()
+        run: |
+          echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+        id: lint_status
 
   test:
     name: Run Tests
