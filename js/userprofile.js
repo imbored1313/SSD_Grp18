@@ -48,7 +48,40 @@ document.addEventListener('DOMContentLoaded', function () {
             fetchCartCount();
         }
     });
+
+    // Fetch and display user profile data
+    fetchUserProfile();
 });
+
+function fetchUserProfile() {
+    fetch('php/get_user_profile.php', {
+        method: 'GET',
+        credentials: 'include'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.user) {
+            // Populate profile fields
+            const user = data.user;
+            document.getElementById('displayName').textContent = `${escapeHTML(user.first_name)} ${escapeHTML(user.last_name)}`.trim() || escapeHTML(user.username);
+            document.getElementById('fullNameDisplay').textContent = `${escapeHTML(user.first_name)} ${escapeHTML(user.last_name)}`.trim();
+            document.getElementById('emailDisplay').textContent = escapeHTML(user.email);
+            document.getElementById('phoneDisplay').textContent = escapeHTML(user.phone);
+        } else {
+            setProfileError('Failed to load profile data.');
+        }
+    })
+    .catch(() => {
+        setProfileError('Failed to load profile data.');
+    });
+}
+
+function setProfileError(msg) {
+    document.getElementById('displayName').textContent = msg;
+    document.getElementById('fullNameDisplay').textContent = msg;
+    document.getElementById('emailDisplay').textContent = msg;
+    document.getElementById('phoneDisplay').textContent = msg;
+}
 
 // Handle session changes
 function handleSessionChange(event, userData) {
