@@ -319,20 +319,6 @@ function removeFromCart(productId) {
     showNotification('Item removed from cart', 'info');
 }
 
-// View product details
-function viewProduct(productId) {
-    const productNames = {
-        'smartphone': 'ElectraPhone Pro Max',
-        'laptop': 'UltraBook Elite X1',
-        'headphones': 'SoundWave Pro Wireless',
-        'smartwatch': 'TimeSync Smart Watch',
-        'tablet': 'TabletPro Ultra 12',
-        'speaker': 'BoomBox Smart Speaker'
-    };
-    
-    showNotification(`Viewing ${productNames[productId]} details...`, 'info');
-}
-
 // Checkout function
 function checkout() {
     if (cart.length === 0) {
