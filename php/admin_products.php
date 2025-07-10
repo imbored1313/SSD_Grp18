@@ -70,7 +70,7 @@ try {
                 $data['description'] ?? null,
                 $data['price'],
                 $data['stock'],
-                isset($data['image_path']) ? basename($data['image_path']) : null,
+                isset($data['image_path']) ? $data['image_path'] : null,
                 $_SESSION['user']['user_id']
             ]);
 
