@@ -3,16 +3,6 @@
 require_once(__DIR__ . '/config.php');
 session_start();
 session_regenerate_id(true);
-
-// CSRF Token Check
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Invalid CSRF token']);
-        exit;
-    }
-}
-
 // update_user_profile.php - Update user profile data in database
 
 header('Content-Type: application/json');

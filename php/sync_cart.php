@@ -8,16 +8,6 @@ if (session_status() === PHP_SESSION_NONE) {
 
 header('Content-Type: application/json');
 
-// CSRF Token Check
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Invalid CSRF token']);
-        exit;
-    }
-}
-
-
 if (!isset($_SESSION['user']['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Not logged in']);
     exit;

@@ -4,15 +4,6 @@ require_once(__DIR__ . '/config.php');
 session_start();
 session_regenerate_id(true);
 
-// CSRF Token Check
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Invalid CSRF token']);
-        exit;
-    }
-}
-
 // Rate Limiting logic for reset request
 $now = time();
 $lastRequest = $_SESSION['last_reset_request'] ?? 0;

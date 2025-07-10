@@ -6,16 +6,6 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
     header('Location: error.html?code=403');
     exit;
 }
-
-// CSRF Token Check
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Invalid CSRF token']);
-        exit;
-    }
-}
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -45,7 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="product-form-container card shadow rounded p-4" style="max-width: 900px; margin: 0 auto; background: #fff;">
                 <form id="productForm">
-                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                     <div class="mb-3">
                         <label for="name" class="form-label">Product Name*</label>
                         <input type="text" class="form-control" id="name" name="name" required>
