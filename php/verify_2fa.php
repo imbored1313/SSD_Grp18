@@ -57,6 +57,13 @@ $_SESSION['user'] = [
     'role' => $user['role'],
     'is_verified' => $user['is_verified']
 ];
+$_SESSION['user_id'] = $user['user_id'];
+$_SESSION['username'] = $user['username'];
+$_SESSION['email'] = $user['email'];
+$_SESSION['first_name'] = $user['first_name'];
+$_SESSION['last_name'] = $user['last_name'];
+$_SESSION['role'] = $user['role'];
+$_SESSION['is_verified'] = $user['is_verified'];
 
 // Create session record in Sessions table
 $sessionToken = bin2hex(random_bytes(32));

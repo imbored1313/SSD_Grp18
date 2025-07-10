@@ -56,7 +56,7 @@ try {
     }
 
     // Get user ID from session
-    $user_id = isset($_SESSION['user']['user_id']) ? $_SESSION['user']['user_id'] : null;
+    $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
     if (!$user_id) {
         http_response_code(401);
         echo json_encode(['success' => false, 'message' => 'User not logged in.']);
