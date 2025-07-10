@@ -1,3 +1,4 @@
+<?php session_start(); ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -223,6 +224,16 @@
                 <button class="btn btn-danger w-100" onclick="deleteAccount()">Delete Account</button>
             </div>
         </div>
+
+        <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
+            <!-- Admin Management -->
+            <div class="profile-section">
+                <h2>Admin Management</h2>
+                <div style="display: grid; gap: 1rem;">
+                    <a href="admin_dashboard.php" class="btn btn-outline w-100">Admin Dashboard</a>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- Change Password Modal -->
