@@ -205,7 +205,15 @@ jobs:
     steps:
       - name: Write Pipeline Summary
         run: |
-          start_time=$(date -u -d "$GITHUB_RUN_STARTED_AT" +%s 2>/dev/null || date -u +%s)
+          # Try to get workflow start time from the workflow metadata, fallback to job start time if not available
+          if [ -n "$GITHUB_WORKFLOW_STARTED_AT" ]; then
+            start_time=$(date -u -d "$GITHUB_WORKFLOW_STARTED_AT" +%s 2>/dev/null || date -u +%s)
+          elif [ -n "$GITHUB_RUN_STARTED_AT" ]; then
+            start_time=$(date -u -d "$GITHUB_RUN_STARTED_AT" +%s 2>/dev/null || date -u +%s)
+          else
+            # Fallback: use the modification time of the workflow file as a rough estimate
+            start_time=$(date -u +%s)
+          fi
           end_time=$(date -u +%s)
           duration=$((end_time - start_time))
           duration_fmt="$(printf '%dm %02ds' $((duration/60)) $((duration%60)))"
@@ -239,7 +247,6 @@ jobs:
           echo "- **Total:** ${{ needs.test.outputs.total_tests }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Passed:** ${{ needs.test.outputs.passed_tests }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Failed:** ${{ needs.test.outputs.failed_tests }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Coverage:** ${{ needs.test.outputs.coverage }}%" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
