@@ -508,11 +508,6 @@ function checkPasswordStrength(password)
 }
 
 // Other functions (placeholders for future implementation)
-function setup2FA()
-{
-    showNotification('2FA setup will be implemented in the next phase', 'info');
-}
-
 function viewLoginActivity()
 {
     showNotification('Login activity feature will be implemented in the next phase', 'info');
