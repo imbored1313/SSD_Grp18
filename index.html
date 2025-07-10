@@ -4,6 +4,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- ADDITIONAL SECURITY: Add Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self'; 
+    script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://js.paypal.com; 
+    style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; 
+    img-src 'self' data: https:; 
+    connect-src 'self' https://api-m.sandbox.paypal.com https://api-m.paypal.com;
+    frame-src https://www.sandbox.paypal.com https://www.paypal.com;
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+">
+    <!-- SECURITY ENHANCEMENT: Add these security headers via meta tags -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
     <title>ElectraEdge - Premium Electronics Shop</title>
     <link rel="stylesheet" href="website.css">
     <script src="js/session_manager.js"></script>
@@ -14,7 +31,7 @@
     <div id="header-placeholder"></div>
 
     <script src="js/header.js"></script>
-    
+
 
     <!-- Hero Section -->
     <section class="hero">
@@ -23,7 +40,8 @@
             <p>Discover premium electronics with cutting-edge technology and unbeatable prices</p>
             <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
                 <a href="catalog.html" class="btn btn-primary btn-large">Shop Now</a>
-                <a href="register.html" class="btn btn-secondary btn-large" id="join-electraedge-btn">Join ElectraEdge</a>
+                <a href="register.html" class="btn btn-secondary btn-large" id="join-electraedge-btn">Join
+                    ElectraEdge</a>
             </div>
         </div>
     </section>
@@ -35,12 +53,19 @@
 
             <!-- Loading state -->
             <div id="featured-loading" style="text-align: center; padding: 3rem;">
-                <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #2c5aa0; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem;"></div>
+                <div
+                    style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #2c5aa0; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem;">
+                </div>
                 <p style="color: #666;">Loading featured products...</p>
                 <style>
                     @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
+                        0% {
+                            transform: rotate(0deg);
+                        }
+
+                        100% {
+                            transform: rotate(360deg);
+                        }
                     }
                 </style>
             </div>
@@ -54,15 +79,20 @@
             <div id="featured-error" style="display: none; text-align: center; padding: 3rem;">
                 <div style="font-size: 3rem; margin-bottom: 1rem; color: #dc3545;">⚠️</div>
                 <h3 style="color: #dc3545; margin-bottom: 1rem;">Unable to Load Products</h3>
-                <p style="color: #666; margin-bottom: 2rem;">We're having trouble loading our featured products. Please try again later.</p>
-                <button onclick="loadFeaturedProducts()" style="background: #2c5aa0; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                <p style="color: #666; margin-bottom: 2rem;">We're having trouble loading our featured products. Please
+                    try again later.</p>
+                <button onclick="loadFeaturedProducts()"
+                    style="background: #2c5aa0; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
                     Try Again
                 </button>
             </div>
 
             <!-- View All Products Link -->
             <div style="text-align: center; margin-top: 3rem;">
-                <a href="catalog.html" style="display: inline-block; background: #f8f9fa; color: #2c5aa0; padding: 1rem 2rem; text-decoration: none; border-radius: 8px; font-weight: bold; border: 2px solid #2c5aa0; transition: all 0.2s ease;" onmouseover="this.style.background='#2c5aa0'; this.style.color='white'" onmouseout="this.style.background='#f8f9fa'; this.style.color='#2c5aa0'">
+                <a href="catalog.html"
+                    style="display: inline-block; background: #f8f9fa; color: #2c5aa0; padding: 1rem 2rem; text-decoration: none; border-radius: 8px; font-weight: bold; border: 2px solid #2c5aa0; transition: all 0.2s ease;"
+                    onmouseover="this.style.background='#2c5aa0'; this.style.color='white'"
+                    onmouseout="this.style.background='#f8f9fa'; this.style.color='#2c5aa0'">
                     View All Products →
                 </a>
             </div>
@@ -132,13 +162,33 @@
     </section>
 
     <!-- Footer -->
-    <div id="footer-placeholder"></div>
-
+    <!-- SECURE REPLACEMENT: -->
     <script>
+        // SECURITY FIX: Secure footer loading
         fetch("footer.html")
             .then(res => res.text())
             .then(data => {
-                document.getElementById("footer-placeholder").innerHTML = data;
+                // Use DOMParser to safely parse HTML content
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(data, 'text/html');
+                const footerContent = doc.body;
+
+                const footerPlaceholder = document.getElementById("footer-placeholder");
+                if (footerPlaceholder) {
+                    // Clear existing content
+                    footerPlaceholder.innerHTML = '';
+                    // Safely append parsed content
+                    while (footerContent.firstChild) {
+                        footerPlaceholder.appendChild(footerContent.firstChild);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading footer:', error);
+                const footerPlaceholder = document.getElementById("footer-placeholder");
+                if (footerPlaceholder) {
+                    footerPlaceholder.textContent = 'Footer could not be loaded';
+                }
             });
     </script>
 
@@ -166,7 +216,8 @@
 
             <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                 <button class="btn btn-secondary w-100" onclick="toggleCart()">Continue Shopping</button>
-                <a href="cart.html" class="btn btn-primary w-100" style="text-align: center; text-decoration: none;">Go to Cart</a>
+                <a href="cart.html" class="btn btn-primary w-100" style="text-align: center; text-decoration: none;">Go
+                    to Cart</a>
             </div>
         </div>
     </div>
@@ -179,18 +230,18 @@
 
     <script>
         // Load featured products on page load
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             console.log('=== HOME PAGE LOADED ===');
-            
+
             // Load featured products first
             loadFeaturedProducts();
-            
+
             // Set up session change listeners
             window.sessionManager.onSessionChange(handleSessionChange);
-            
+
             // Initialize other features
             initializePageFeatures();
-            
+
             // Hide 'Join ElectraEdge' button if user is logged in
             window.sessionManager.checkSession().then(() => {
                 if (window.sessionManager.isLoggedIn()) {
@@ -203,35 +254,35 @@
         // Load featured products from database
         async function loadFeaturedProducts() {
             console.log('🔄 Loading featured products from database...');
-            
+
             const loadingDiv = document.getElementById('featured-loading');
             const productsDiv = document.getElementById('featuredProducts');
             const errorDiv = document.getElementById('featured-error');
-            
+
             // Show loading state
             loadingDiv.style.display = 'block';
             productsDiv.style.display = 'none';
             errorDiv.style.display = 'none';
-            
+
             try {
                 const response = await fetch('get_products.php');
-                
+
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                
+
                 const products = await response.json();
                 console.log('📦 Products received:', products);
-                
+
                 if (!products || products.length === 0) {
                     throw new Error('No products available');
                 }
-                
+
                 // Take only the first 3 products for featured section
                 const featuredProducts = products.slice(0, 3);
-                
+
                 displayFeaturedProducts(featuredProducts);
-                
+
             } catch (error) {
                 console.error('❌ Error loading featured products:', error);
                 showFeaturedError();
@@ -239,60 +290,113 @@
         }
 
         // Display featured products
+        // SECURE VERSION: Create DOM elements instead of using innerHTML
         function displayFeaturedProducts(products) {
             const loadingDiv = document.getElementById('featured-loading');
             const productsDiv = document.getElementById('featuredProducts');
             const errorDiv = document.getElementById('featured-error');
-            
-            let productsHTML = '';
-            
+
+            // SECURITY FIX: Clear content safely and build DOM elements
+            productsDiv.innerHTML = ''; // Safe to clear
+
             products.forEach(product => {
-                // Handle image path
-                let imageSrc = 'uploads/no-image.jpg';
-                if (product.image_path) {
-                    if (product.image_path.startsWith('http') || product.image_path.startsWith('/uploads/')) {
-                        imageSrc = product.image_path;
-                    } else {
-                        imageSrc = '/uploads/products/' + product.image_path;
-                    }
-                }
-                
-                const price = parseFloat(product.price);
-                const isInStock = parseInt(product.stock) > 0;
-                
-                productsHTML += `
-                    <div class="product-card">
-                        <div class="product-image">
-                            <img src="${imageSrc}" alt="${product.name}" 
-                                 style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;"
-                                 onerror="this.src='uploads/no-image.jpg'" />
-                        </div>
-                        <div class="product-info">
-                            <h3 class="product-title">${product.name}</h3>
-                            <div class="product-rating">
-                                <span class="stars">⭐⭐⭐⭐⭐</span>
-                                <span>(Featured)</span>
-                            </div>
-                            <div class="product-price">$${price.toFixed(2)}</div>
-                            <button class="btn btn-primary w-100" 
-                                    ${isInStock ? '' : 'disabled'} 
-                                    onclick="addToCartFromFeatured(event, ${product.product_id})"
-                                    style="${isInStock ? '' : 'opacity: 0.6; cursor: not-allowed;'}">
-                                ${isInStock ? 'Add to Cart' : 'Out of Stock'}
-                            </button>
-                        </div>
-                    </div>
-                `;
+                // Create product card using DOM methods (XSS-safe)
+                const productCard = createSecureFeaturedCard(product);
+                productsDiv.appendChild(productCard);
             });
-            
-            productsDiv.innerHTML = productsHTML;
-            
+
             // Hide loading, show products
             loadingDiv.style.display = 'none';
             productsDiv.style.display = 'grid';
             errorDiv.style.display = 'none';
-            
+
             console.log('✅ Featured products displayed successfully');
+        }
+
+        // SECURITY FIX: Secure function to create featured product cards
+        function createSecureFeaturedCard(product) {
+            // Create main product card
+            const productCard = document.createElement('div');
+            productCard.className = 'product-card';
+
+            // Create image container
+            const imageDiv = document.createElement('div');
+            imageDiv.className = 'product-image';
+
+            // Create image element
+            const img = document.createElement('img');
+
+            // Handle image path securely
+            let imageSrc = 'uploads/no-image.jpg';
+            if (product.image_path) {
+                if (product.image_path.startsWith('http') || product.image_path.startsWith('/uploads/')) {
+                    imageSrc = product.image_path;
+                } else {
+                    imageSrc = '/uploads/products/' + product.image_path;
+                }
+            }
+
+            img.src = imageSrc;
+            img.alt = 'Product Image'; // Safe, generic alt text
+            img.style.cssText = 'width: 100%; height: 200px; object-fit: cover; border-radius: 8px;';
+            img.onerror = function () { this.src = 'uploads/no-image.jpg'; };
+
+            imageDiv.appendChild(img);
+
+            // Create product info container
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'product-info';
+
+            // Create product title (XSS-safe)
+            const titleH3 = document.createElement('h3');
+            titleH3.className = 'product-title';
+            titleH3.textContent = product.name || 'Unknown Product'; // textContent prevents XSS
+
+            // Create rating container
+            const ratingDiv = document.createElement('div');
+            ratingDiv.className = 'product-rating';
+
+            const starsSpan = document.createElement('span');
+            starsSpan.className = 'stars';
+            starsSpan.textContent = '⭐⭐⭐⭐⭐';
+
+            const featuredSpan = document.createElement('span');
+            featuredSpan.textContent = '(Featured)';
+
+            ratingDiv.appendChild(starsSpan);
+            ratingDiv.appendChild(featuredSpan);
+
+            // Create price
+            const priceDiv = document.createElement('div');
+            priceDiv.className = 'product-price';
+            const price = parseFloat(product.price || 0);
+            priceDiv.textContent = `$${price.toFixed(2)}`;
+
+            // Create button
+            const button = document.createElement('button');
+            button.className = 'btn btn-primary w-100';
+
+            const isInStock = parseInt(product.stock || 0) > 0;
+
+            if (isInStock) {
+                button.textContent = 'Add to Cart';
+                button.onclick = function (event) { addToCartFromFeatured(event, product.product_id); };
+            } else {
+                button.textContent = 'Out of Stock';
+                button.disabled = true;
+                button.style.cssText = 'opacity: 0.6; cursor: not-allowed;';
+            }
+
+            // Assemble the card
+            infoDiv.appendChild(titleH3);
+            infoDiv.appendChild(ratingDiv);
+            infoDiv.appendChild(priceDiv);
+            infoDiv.appendChild(button);
+
+            productCard.appendChild(imageDiv);
+            productCard.appendChild(infoDiv);
+
+            return productCard;
         }
 
         // Show error state
@@ -300,7 +404,7 @@
             const loadingDiv = document.getElementById('featured-loading');
             const productsDiv = document.getElementById('featuredProducts');
             const errorDiv = document.getElementById('featured-error');
-            
+
             loadingDiv.style.display = 'none';
             productsDiv.style.display = 'none';
             errorDiv.style.display = 'block';
@@ -310,16 +414,16 @@
         async function addToCartFromFeatured(event, productId) {
             // Prevent card click event
             event.stopPropagation();
-            
+
             console.log('=== ADD TO CART CLICKED (FEATURED PRODUCT) ===');
             console.log('Product ID:', productId);
-            
+
             // Check if user is logged in using session manager
             const loginRequired = await window.sessionManager.requireLogin();
             if (!loginRequired) {
                 return; // Will redirect to login
             }
-            
+
             // User is authenticated, add to database
             await addItemToDatabase(productId);
         }
@@ -327,42 +431,42 @@
         // Add item to database (same as catalog)
         async function addItemToDatabase(productId) {
             console.log('✅ Adding product to database:', productId);
-            
+
             try {
                 // Show loading state
                 showNotification('Adding to cart...', 'info');
-                
+
                 const response = await fetch('php/add_to_cart.php', {
                     method: 'POST',
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        product_id: parseInt(productId), 
-                        quantity: 1 
+                    body: JSON.stringify({
+                        product_id: parseInt(productId),
+                        quantity: 1
                     })
                 });
 
                 console.log('Add to cart response status:', response.status);
-                
+
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
                 const data = await response.json();
                 console.log('Add to cart response:', data);
-                
+
                 if (data.success) {
                     console.log('✅ Product successfully added to cart in database');
                     showNotification(`${data.product_name || 'Product'} added to cart!`, 'success');
-                    
+
                     // Update cart count in header
                     updateCartCountInHeader();
-                    
+
                 } else {
                     console.error('❌ Add to cart failed:', data.message);
                     showNotification('Failed to add to cart: ' + (data.message || 'Unknown error'), 'error');
                 }
-                
+
             } catch (error) {
                 console.error('💥 Add to cart error:', error);
                 showNotification('Failed to add to cart. Please try again.', 'error');
@@ -376,7 +480,7 @@
                     method: 'GET',
                     credentials: 'include'
                 });
-                
+
                 if (response.ok) {
                     const data = await response.json();
                     if (data.success) {
@@ -442,4 +546,5 @@
 
     <script src="js/index.js"></script>
 </body>
+
 </html>
