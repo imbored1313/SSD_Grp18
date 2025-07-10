@@ -77,10 +77,14 @@ try {
 
     // Return relative path for web access
     $webPath = 'uploads/' . $filename;
-    echo json_encode([
-        'success' => true,
-        'imagePath' => $webPath
-    ]);
+    catch (Exception $e) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'File upload failed: ' . $e->getMessage() // ← add this
+        ]);
+    }
+
 } catch (Exception $e) {
     // SECURE FIX: Log error details server-side only, don't expose to client
     error_log("File upload error: " . $e->getMessage());

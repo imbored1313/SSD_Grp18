@@ -138,7 +138,7 @@ try {
                 $stmt = $db->prepare("SELECT image_path FROM Products WHERE product_id = ?");
                 $stmt->execute([$id]);
                 $existing = $stmt->fetch(PDO::FETCH_ASSOC);
-                $image_path = isset($existing['image_path']) ? basename($existing['image_path']) : null;
+                $image_path = isset($existing['image_path']) ? $existing['image_path'] : null;
             }
 
             $stmt = $db->prepare("
