@@ -49,6 +49,7 @@ trivy-results.sarif
 # Docker
 .dockerignore
 Dockerfile
+php/Dockerfile
 docker-compose.yml
 
 # Cache
