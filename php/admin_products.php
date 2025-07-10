@@ -199,6 +199,9 @@ try {
             echo json_encode(['success' => false, 'message' => 'Invalid action']);
     }
 } catch (Exception $e) {
+    error_log("Admin products error: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
+    
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Operation failed']);
 }

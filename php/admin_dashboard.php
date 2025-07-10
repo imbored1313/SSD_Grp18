@@ -59,6 +59,9 @@ try {
         'pageSize' => $pageSize
     ]);
 } catch (Exception $e) {
+    error_log("Admin dashboard error: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
+    
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Dashboard operation failed']);
 }

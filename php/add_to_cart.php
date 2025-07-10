@@ -91,12 +91,13 @@ try {
     ]);
     
 } catch (Exception $e) {
-    logSessionDebug("❌ Add to cart error: " . $e->getMessage());
+    error_log("Add to cart error: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
     
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage()
+        'error' => 'Failed to add item to cart'
     ]);
 }
 

@@ -1,5 +1,5 @@
 <?php
-// login_process.php - CLEANED VERSION
+// login_process.php - SECURE VERSION
 require_once(__DIR__ . '/config.php');
 require_once(__DIR__ . '/email_config.php');
 session_start();
@@ -61,9 +61,30 @@ try {
         $_SESSION['2fa_expires'] = time() + 300; // 5 minutes
         $_SESSION['2fa_verified'] = false;
 
-        // Send 2FA code via email
+        // SECURITY FIX: Sanitize email content to prevent injection
+        $safeEmail = filter_var($user['email'], FILTER_SANITIZE_EMAIL);
+        $safeUsername = htmlspecialchars($user['username'], ENT_QUOTES, 'UTF-8');
+
+        // Validate email format
+        if (!filter_var($safeEmail, FILTER_VALIDATE_EMAIL)) {
+            error_log("Invalid email format detected during 2FA: " . $user['email']);
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Authentication failed']);
+            exit;
+        }
+
+        // Validate username doesn't contain email injection patterns
+        if (preg_match('/[\r\n\0]/', $user['username']) || 
+            preg_match('/(?:to|cc|bcc|subject|content-type):/i', $user['username'])) {
+            error_log("Potential email injection attempt detected: " . $user['username']);
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Authentication failed']);
+            exit;
+        }
+
+        // Send 2FA code via email with sanitized data
         $emailService = new EmailService();
-        $emailSent = $emailService->send2FAEmail($user['email'], $user['username'], $twoFACode);
+        $emailSent = $emailService->send2FAEmail($safeEmail, $safeUsername, $twoFACode);
         if (!$emailSent) {
             http_response_code(500);
             echo json_encode(['success' => false, 'error' => 'Failed to send 2FA code. Please try again.']);
@@ -89,8 +110,11 @@ try {
         echo json_encode(['success' => false, 'error' => 'Invalid credentials']);
     }
 } catch (Exception $e) {
+    // SECURITY FIX: Log error details server-side only, don't expose to client
     error_log("Login process error: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
+    
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Server error: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => 'Authentication failed']);
 }
 ?>

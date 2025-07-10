@@ -34,12 +34,13 @@ try {
     ]);
     
 } catch (Exception $e) {
-    logSessionDebug("❌ Clear cart error: " . $e->getMessage());
+    error_log("Clear cart error: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
     
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage()
+        'error' => 'Failed to clear cart'
     ]);
 }
 

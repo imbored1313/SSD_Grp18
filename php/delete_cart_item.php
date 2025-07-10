@@ -55,12 +55,13 @@ try {
     ]);
     
 } catch (Exception $e) {
-    logSessionDebug("❌ Delete cart item error: " . $e->getMessage());
+    error_log("Delete cart item error: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
     
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage()
+        'error' => 'Failed to remove item from cart'
     ]);
 }
 
