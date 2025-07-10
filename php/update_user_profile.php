@@ -103,9 +103,6 @@ try {
         $_SESSION['user']['first_name'] = $firstName;
         $_SESSION['user']['last_name'] = $lastName;
         $_SESSION['user']['email'] = $email;
-        $_SESSION['first_name'] = $firstName;
-        $_SESSION['last_name'] = $lastName;
-        $_SESSION['email'] = $email;
     // Log the profile update
         $logQuery = "INSERT INTO AuditLogs (user_id, action, timestamp, ip_addr) 
                      VALUES (:user_id, 'PROFILE_UPDATED', NOW(), :ip_addr)";
