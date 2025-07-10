@@ -54,6 +54,18 @@ try {
 
     // Verify password
     if (password_verify($password, $user['password_hash'])) {
+        // 2FA rate limiting: only allow sending a new code every 30 seconds
+        $now = time();
+        $last2FASent = $_SESSION['last_2fa_sent'] ?? 0;
+        if ($now - $last2FASent < 30) {
+            http_response_code(429);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Please wait before requesting another 2FA code. Check your email for the previous code.'
+            ]);
+            exit;
+        }
+        $_SESSION['last_2fa_sent'] = $now;
         // Generate 2FA code
         $twoFACode = sprintf('%06d', mt_rand(100000, 999999));
         $_SESSION['2fa_code'] = $twoFACode;

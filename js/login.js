@@ -38,9 +38,13 @@ async function checkExistingSession() {
     }
 }
 
+let loginInProgress = false; // Prevent multiple login submits
+
 // Handle login form submission
 async function handleLoginSubmit(e) {
     e.preventDefault();
+    if (loginInProgress) return; // Debounce: ignore if already submitting
+    loginInProgress = true;
     console.log('=== LOGIN FORM SUBMITTED ===');
 
     // Clear previous errors
@@ -64,13 +68,15 @@ async function handleLoginSubmit(e) {
 
     // Client-side validation
     if (!validateForm(username, password)) {
+        loginInProgress = false;
         return;
     }
 
-    // Show loading state
+    // Show loading state and disable button
     const submitBtn = document.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
     setLoadingState(submitBtn, true);
+    submitBtn.disabled = true;
 
     try {
         console.log('Making login request to php/login_process.php');
@@ -104,9 +110,6 @@ async function handleLoginSubmit(e) {
             // Clear form
             document.getElementById('loginForm').reset();
 
-            // Clear form
-            document.getElementById('loginForm').reset();
-
             // Sync localStorage cart to database after login
             await syncCartAfterLogin();
 
@@ -134,8 +137,10 @@ async function handleLoginSubmit(e) {
         console.error('❌ Login error:', error);
         showNotification('Login failed. Please check your connection and try again.', 'error');
     } finally {
-        // Reset button state
+        // Reset button state and allow new login
         setLoadingState(submitBtn, false, originalText);
+        submitBtn.disabled = false;
+        loginInProgress = false;
     }
 }
 
