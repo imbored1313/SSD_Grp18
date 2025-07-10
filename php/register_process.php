@@ -117,7 +117,12 @@ try {
         http_response_code(500);
         echo json_encode(['error' => 'Registration failed']);
     }
+// NEW (SECURE):
 } catch (Exception $e) {
+    // SECURE FIX: Log error details server-side only, don't expose to client
+    error_log("Registration error: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
+    
     http_response_code(500);
-    echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Registration failed']);
 }

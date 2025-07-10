@@ -86,13 +86,16 @@ try {
         'product_name' => $product['name']
     ]);
     
+// NEW (SECURE):
 } catch (Exception $e) {
-    logSessionDebug("❌ Update cart error: " . $e->getMessage());
+    // SECURE FIX: Log error details server-side only, don't expose to client
+    error_log("Update cart error: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
     
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage()
+        'error' => 'Cart update failed'
     ]);
 }
 
