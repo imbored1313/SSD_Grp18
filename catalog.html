@@ -499,17 +499,6 @@
             filteredProducts = [...allProducts];
             displayProducts(filteredProducts);
         }
-
-        // Add to cart function (placeholder - implement with your existing logic)
-        function addToCart(productId) {
-            console.log('Adding product to cart:', productId);
-            // This should call your existing addToCart logic from catalog.js
-            if (window.addToCart && typeof window.addToCart === 'function') {
-                window.addToCart(productId);
-            } else {
-                alert('Add to cart functionality will be implemented here');
-            }
-        }
     </script>
 
     <!-- Include catalog JavaScript for session management -->
