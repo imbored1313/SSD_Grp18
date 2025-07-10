@@ -1,9 +1,18 @@
 <?php
 // php/get_cart.php - CORRECTED for your exact database schema
-error_reporting(E_ALL);
 ini_set('display_errors', 1);
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/error_log.txt');
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Instead of logging to a file, echo the error message (TEMPORARY for debug!)
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    http_response_code(500);
+    echo json_encode([
+        "success" => false,
+        "error" => "PHP Error: $errstr in $errfile on line $errline"
+    ]);
+    exit;
+});
 
 
 require_once(__DIR__ . '/config.php');
