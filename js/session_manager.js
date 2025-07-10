@@ -112,7 +112,6 @@ class SessionManager {
             const response = await fetch('php/logout.php', {
                 method: 'POST',
                 credentials: 'include',
-                body: formData
             });
 
             const result = await response.json();
