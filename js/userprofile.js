@@ -308,10 +308,10 @@ function handleAddressUpdate(e)
         const country = document.getElementById('country').options[document.getElementById('country').selectedIndex].text;
 
         document.getElementById('addressDisplay').innerHTML = `
-            < p > < strong > Primary Address: < / strong > < / p >
-            < p > ${street} < br >
-            ${city}, ${state} ${zipCode} < br >
-            ${country} < / p >
+            <p><strong>Primary Address:</strong></p>
+            <p>${street}<br>
+            ${city}, ${state} ${zipCode}<br>
+            ${country}</p>
         `;
 
         submitBtn.classList.remove('loading');
