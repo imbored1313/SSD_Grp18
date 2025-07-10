@@ -14,6 +14,8 @@ jobs:
   lint:
     name: Lint Code
     runs-on: ubuntu-latest
+    outputs:
+      workflow_start_time: ${{ steps.set_start_time.outputs.workflow_start_time }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -205,15 +207,7 @@ jobs:
     steps:
       - name: Write Pipeline Summary
         run: |
-          # Try to get workflow start time from the workflow metadata, fallback to job start time if not available
-          if [ -n "$GITHUB_WORKFLOW_STARTED_AT" ]; then
-            start_time=$(date -u -d "$GITHUB_WORKFLOW_STARTED_AT" +%s 2>/dev/null || date -u +%s)
-          elif [ -n "$GITHUB_RUN_STARTED_AT" ]; then
-            start_time=$(date -u -d "$GITHUB_RUN_STARTED_AT" +%s 2>/dev/null || date -u +%s)
-          else
-            # Fallback: use the modification time of the workflow file as a rough estimate
-            start_time=$(date -u +%s)
-          fi
+          start_time=${{ needs.lint.outputs.workflow_start_time }}
           end_time=$(date -u +%s)
           duration=$((end_time - start_time))
           duration_fmt="$(printf '%dm %02ds' $((duration/60)) $((duration%60)))"
