@@ -6,6 +6,16 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
     header('Location: error.html?code=403');
     exit;
 }
+
+// CSRF Token Check
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Invalid CSRF token']);
+        exit;
+    }
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
