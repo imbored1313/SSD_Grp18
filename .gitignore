@@ -1,6 +1,8 @@
 # Database files
 electraedge.sql
 php/config.php
+php/config.php.bak
+
 # Dependencies
 node_modules/
 vendor/
