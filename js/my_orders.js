@@ -146,7 +146,16 @@ function displayOrders(orders) {
         `;
     });
 
-    ordersList.innerHTML = ordersHTML;
+    // Sanitize and render ordersHTML safely
+    ordersList.innerHTML = '';
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = ordersHTML;
+    // Remove any <script> tags that may have been injected
+    Array.from(tempDiv.querySelectorAll('script')).forEach(el => el.remove());
+    // Append only safe nodes
+    while (tempDiv.firstChild) {
+        ordersList.appendChild(tempDiv.firstChild);
+    }
 }
 
 function generateOrderItems(items) {
