@@ -54,7 +54,7 @@ try {
 
     // Verify password
     if (password_verify($password, $user['password_hash'])) {
-        // 2FA rate limiting: only allow sending a new code every 30 seconds
+        // 2FA rate limiting: only allow sending a code every 30 seconds
         $now = time();
         $last2FASent = $_SESSION['last_2fa_sent'] ?? 0;
         if ($now - $last2FASent < 30) {
@@ -66,12 +66,19 @@ try {
             exit;
         }
         $_SESSION['last_2fa_sent'] = $now;
-        // Generate 2FA code
-        $twoFACode = sprintf('%06d', mt_rand(100000, 999999));
-        $_SESSION['2fa_code'] = $twoFACode;
-        $_SESSION['2fa_user_id'] = $user['user_id'];
-        $_SESSION['2fa_expires'] = time() + 300; // 5 minutes
-        $_SESSION['2fa_verified'] = false;
+
+        // Only generate a new code if there is no code or it is expired
+        $reuseCode = false;
+        if (isset($_SESSION['2fa_code'], $_SESSION['2fa_expires']) && $now < $_SESSION['2fa_expires']) {
+            $twoFACode = $_SESSION['2fa_code'];
+            $reuseCode = true;
+        } else {
+            $twoFACode = sprintf('%06d', mt_rand(100000, 999999));
+            $_SESSION['2fa_code'] = $twoFACode;
+            $_SESSION['2fa_user_id'] = $user['user_id'];
+            $_SESSION['2fa_expires'] = $now + 300; // 5 minutes
+            $_SESSION['2fa_verified'] = false;
+        }
 
         // SECURITY FIX: Sanitize email content to prevent injection
         $safeEmail = filter_var($user['email'], FILTER_SANITIZE_EMAIL);
