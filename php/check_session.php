@@ -1,4 +1,5 @@
 <?php
+session_start();
 // php/check_session.php - Secure version without information exposure
 require_once(__DIR__ . '/config.php');
 
