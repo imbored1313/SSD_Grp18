@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,13 +8,15 @@
     <link rel="stylesheet" href="website.css">
     <script src="js/session_manager.js"></script>
 </head>
+
 <body>
     <!-- Header -->
     <div id="header-placeholder"></div>
     <script src="js/header.js"></script>
 
     <section class="container" style="padding: 4rem 0;">
-        <a href="my_orders.html" style="color:#2c5aa0; text-decoration:none; font-size:1em;">&larr; Back to My Orders</a>
+        <a href="my_orders.html" style="color:#2c5aa0; text-decoration:none; font-size:1em;">&larr; Back to My
+            Orders</a>
         <h2 style="text-align: center; margin-bottom: 2rem;">Order Details</h2>
         <div id="order-detail">
             <!-- Order details will be loaded here by JS -->
@@ -26,9 +29,24 @@
         fetch("footer.html")
             .then(res => res.text())
             .then(data => {
-                document.getElementById("footer-placeholder").innerHTML = data;
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(data, 'text/html');
+                const footerPlaceholder = document.getElementById("footer-placeholder");
+                if (footerPlaceholder) {
+                    // Remove <script> tags as a safety layer
+                    doc.querySelectorAll('script').forEach(el => el.remove());
+                    footerPlaceholder.innerHTML = ''; // Clear existing
+                    Array.from(doc.body.childNodes).forEach(node => {
+                        footerPlaceholder.appendChild(node);
+                    });
+                }
+            })
+            .catch(err => {
+                console.error("Failed to load footer:", err);
             });
+
     </script>
     <script src="js/order_detail.js"></script>
 </body>
-</html> 
+
+</html>

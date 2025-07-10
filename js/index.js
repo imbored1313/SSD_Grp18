@@ -4,16 +4,16 @@
 let cart = [];
 
 // Initialize page on load
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('=== HOME PAGE LOADED ===');
-    
+
     // Load cart from storage
     loadCartFromStorage();
     updateCartCount();
-    
+
     // Set up session change listeners
     window.sessionManager.onSessionChange(handleSessionChange);
-    
+
     // Initialize other features
     initializePageFeatures();
 });
@@ -32,38 +32,38 @@ function initializePageFeatures() {
     // Newsletter subscription handler
     const newsletterForm = document.getElementById('newsletterForm');
     if (newsletterForm) {
-        newsletterForm.addEventListener('submit', function(e) {
+        newsletterForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            
+
             const email = document.getElementById('newsletterEmail').value.trim();
-            
+
             if (!email) {
                 showNotification('Please enter your email address', 'warning');
                 return;
             }
-            
+
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 showNotification('Please enter a valid email address', 'error');
                 return;
             }
-            
+
             // Simulate API call
             showNotification('Thank you for subscribing to our newsletter!', 'success');
             document.getElementById('newsletterEmail').value = '';
         });
     }
-    
+
     // Add smooth scrolling behavior
     document.documentElement.style.scrollBehavior = 'smooth';
-    
+
     // Add animation classes to elements as they come into view
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
     };
-    
-    const observer = new IntersectionObserver(function(entries) {
+
+    const observer = new IntersectionObserver(function (entries) {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.style.opacity = '1';
@@ -71,7 +71,7 @@ function initializePageFeatures() {
             }
         });
     }, observerOptions);
-    
+
     // Observe product cards for animation
     document.querySelectorAll('.product-card').forEach(card => {
         card.style.opacity = '0';
@@ -84,10 +84,10 @@ function initializePageFeatures() {
 // Update UI for logged in user
 function updateUIForLoggedInUser(user) {
     console.log('=== UPDATING UI FOR LOGGED IN USER (HOME) ===');
-    
+
     const navActions = document.querySelector('.nav-actions');
     const loginButton = navActions ? navActions.querySelector('a[href="login.html"]') : null;
-    
+
     if (loginButton && user) {
         loginButton.outerHTML = `
             <div class="user-dropdown" style="position: relative;">
@@ -122,10 +122,10 @@ function updateUIForLoggedInUser(user) {
 // Update UI for logged out user
 function updateUIForLoggedOutUser() {
     console.log('=== UPDATING UI FOR LOGGED OUT USER (HOME) ===');
-    
+
     const navActions = document.querySelector('.nav-actions');
     const userDropdown = navActions ? navActions.querySelector('.user-dropdown') : null;
-    
+
     if (userDropdown) {
         userDropdown.outerHTML = '<a href="login.html" class="btn btn-outline">Login</a>';
     }
@@ -140,7 +140,7 @@ function toggleUserDropdown() {
 }
 
 // Close dropdown when clicking outside
-document.addEventListener('click', function(event) {
+document.addEventListener('click', function (event) {
     const userDropdown = document.querySelector('.user-dropdown');
     if (userDropdown && !userDropdown.contains(event.target)) {
         const dropdownMenu = document.getElementById('userDropdownMenu');
@@ -159,19 +159,19 @@ async function logout() {
 async function addToCart(event, productId, price) {
     // Prevent card click event
     event.stopPropagation();
-    
+
     console.log('=== ADD TO CART CLICKED (HOME PAGE) ===');
     console.log('Product ID:', productId, 'Price:', price);
-    
+
     // Check if user is logged in using session manager
     const loginRequired = await window.sessionManager.requireLogin();
     if (!loginRequired) {
         return; // Will redirect to login
     }
-    
+
     // User is authenticated, proceed with adding to cart
     console.log('✅ User authenticated, adding to cart');
-    
+
     const productNames = {
         'smartphone': 'ElectraPhone Pro Max',
         'laptop': 'UltraBook Elite X1',
@@ -180,7 +180,7 @@ async function addToCart(event, productId, price) {
         'tablet': 'TabletPro Ultra 12',
         'speaker': 'BoomBox Smart Speaker'
     };
-    
+
     const productEmojis = {
         'smartphone': '📱',
         'laptop': '💻',
@@ -189,10 +189,10 @@ async function addToCart(event, productId, price) {
         'tablet': '📟',
         'speaker': '🔊'
     };
-    
+
     // Add to homepage cart (for modal display)
     const existingItem = cart.find(item => item.id === productId);
-    
+
     if (existingItem) {
         existingItem.quantity += 1;
         showNotification(`Increased quantity of ${productNames[productId]}!`, 'info');
@@ -206,16 +206,16 @@ async function addToCart(event, productId, price) {
         });
         showNotification(`${productNames[productId]} added to cart!`, 'success');
     }
-    
+
     // Add to shared cart storage (for catalog/cart pages)
     let sharedCart = JSON.parse(localStorage.getItem('cart')) || [];
     const productIdStr = productId.toString();
-    
+
     if (!sharedCart.includes(productIdStr)) {
         sharedCart.push(productIdStr);
         localStorage.setItem('cart', JSON.stringify(sharedCart));
     }
-    
+
     // Update both cart systems
     updateCartCount();
     saveCartToStorage();
@@ -225,7 +225,7 @@ async function addToCart(event, productId, price) {
 function updateCartCount() {
     const sharedCart = JSON.parse(localStorage.getItem('cart')) || [];
     const totalItems = sharedCart.length;
-    
+
     const cartCountElement = document.getElementById('cartCount');
     if (cartCountElement) {
         cartCountElement.textContent = totalItems;
@@ -250,43 +250,89 @@ function toggleCart() {
 function updateCartDisplay() {
     const cartItems = document.getElementById('cartItems');
     const totalAmount = document.getElementById('totalAmount');
-    
+
     if (!cartItems || !totalAmount) return;
-    
+
+    // Clear previous content
+    cartItems.innerHTML = '';
+    totalAmount.textContent = '$0.00';
+
     if (cart.length === 0) {
-        cartItems.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">Your cart is empty</p>';
-        totalAmount.textContent = '$0.00';
+        const emptyMsg = document.createElement('p');
+        emptyMsg.style.cssText = 'text-align: center; color: #666; padding: 2rem;';
+        emptyMsg.textContent = 'Your cart is empty';
+        cartItems.appendChild(emptyMsg);
         return;
     }
-    
-    let cartHTML = '';
+
     let total = 0;
-    
+
     cart.forEach(item => {
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
-        
-        cartHTML += `
-            <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-bottom: 1px solid #eee;">
-                <div style="font-size: 2rem;">${item.emoji}</div>
-                <div style="flex: 1;">
-                    <h4 style="margin-bottom: 0.5rem;">${item.name}</h4>
-                    <p style="color: #666;">$${item.price.toFixed(2)} each</p>
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <button onclick="changeQuantity('${item.id}', -1)" style="background: #f8f9fa; border: 1px solid #ddd; width: 30px; height: 30px; border-radius: 4px; cursor: pointer;">-</button>
-                    <span style="min-width: 30px; text-align: center;">${item.quantity}</span>
-                    <button onclick="changeQuantity('${item.id}', 1)" style="background: #f8f9fa; border: 1px solid #ddd; width: 30px; height: 30px; border-radius: 4px; cursor: pointer;">+</button>
-                </div>
-                <div style="font-weight: bold; min-width: 80px; text-align: right;">$${itemTotal.toFixed(2)}</div>
-                <button onclick="removeFromCart('${item.id}')" style="background: #dc3545; color: white; border: none; width: 30px; height: 30px; border-radius: 4px; cursor: pointer; margin-left: 0.5rem;">×</button>
-            </div>
-        `;
+
+        const itemDiv = document.createElement('div');
+        itemDiv.style.cssText = 'display: flex; align-items: center; gap: 1rem; padding: 1rem; border-bottom: 1px solid #eee;';
+
+        const emojiDiv = document.createElement('div');
+        emojiDiv.style.fontSize = '2rem';
+        emojiDiv.textContent = item.emoji;
+        itemDiv.appendChild(emojiDiv);
+
+        const infoDiv = document.createElement('div');
+        infoDiv.style.flex = '1';
+
+        const nameH4 = document.createElement('h4');
+        nameH4.style.marginBottom = '0.5rem';
+        nameH4.textContent = item.name;
+        infoDiv.appendChild(nameH4);
+
+        const priceP = document.createElement('p');
+        priceP.style.color = '#666';
+        priceP.textContent = `$${item.price.toFixed(2)} each`;
+        infoDiv.appendChild(priceP);
+
+        itemDiv.appendChild(infoDiv);
+
+        const qtyDiv = document.createElement('div');
+        qtyDiv.style.cssText = 'display: flex; align-items: center; gap: 0.5rem;';
+
+        const minusBtn = document.createElement('button');
+        minusBtn.textContent = '-';
+        minusBtn.style.cssText = 'background: #f8f9fa; border: 1px solid #ddd; width: 30px; height: 30px; border-radius: 4px; cursor: pointer;';
+        minusBtn.onclick = () => changeQuantity(item.id, -1);
+        qtyDiv.appendChild(minusBtn);
+
+        const qtySpan = document.createElement('span');
+        qtySpan.style.cssText = 'min-width: 30px; text-align: center;';
+        qtySpan.textContent = item.quantity;
+        qtyDiv.appendChild(qtySpan);
+
+        const plusBtn = document.createElement('button');
+        plusBtn.textContent = '+';
+        plusBtn.style.cssText = 'background: #f8f9fa; border: 1px solid #ddd; width: 30px; height: 30px; border-radius: 4px; cursor: pointer;';
+        plusBtn.onclick = () => changeQuantity(item.id, 1);
+        qtyDiv.appendChild(plusBtn);
+
+        itemDiv.appendChild(qtyDiv);
+
+        const totalDiv = document.createElement('div');
+        totalDiv.style.cssText = 'font-weight: bold; min-width: 80px; text-align: right;';
+        totalDiv.textContent = `$${itemTotal.toFixed(2)}`;
+        itemDiv.appendChild(totalDiv);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '×';
+        removeBtn.style.cssText = 'background: #dc3545; color: white; border: none; width: 30px; height: 30px; border-radius: 4px; cursor: pointer; margin-left: 0.5rem;';
+        removeBtn.onclick = () => removeFromCart(item.id);
+        itemDiv.appendChild(removeBtn);
+
+        cartItems.appendChild(itemDiv);
     });
-    
-    cartItems.innerHTML = cartHTML;
+
     totalAmount.textContent = `$${total.toFixed(2)}`;
 }
+
 
 // Change item quantity
 function changeQuantity(productId, change) {
@@ -307,12 +353,12 @@ function changeQuantity(productId, change) {
 function removeFromCart(productId) {
     // Remove from homepage cart
     cart = cart.filter(item => item.id !== productId);
-    
+
     // Remove from shared cart
     let sharedCart = JSON.parse(localStorage.getItem('cart')) || [];
     sharedCart = sharedCart.filter(id => id !== productId.toString());
     localStorage.setItem('cart', JSON.stringify(sharedCart));
-    
+
     updateCartCount();
     updateCartDisplay();
     saveCartToStorage();
@@ -325,7 +371,7 @@ function checkout() {
         showNotification('Your cart is empty!', 'warning');
         return;
     }
-    
+
     // Check if user is logged in before checkout
     if (!window.sessionManager.isLoggedIn()) {
         showNotification('Please login to continue with checkout', 'warning');
@@ -334,10 +380,10 @@ function checkout() {
         }, 1500);
         return;
     }
-    
+
     const user = window.sessionManager.getUser();
     showNotification('Redirecting to secure checkout...', 'info');
-    
+
     // Simulate checkout process
     setTimeout(() => {
         alert('Thank you for your purchase, ' + user.username + '! Your order has been placed.');
@@ -356,17 +402,17 @@ function showNotification(message, type = 'success') {
     // Remove existing notification first
     const existing = document.getElementById('home-notification');
     if (existing) existing.remove();
-    
+
     const notification = document.createElement('div');
     notification.id = 'home-notification';
-    
+
     const colors = {
         success: '#28a745',
         error: '#dc3545',
         info: '#17a2b8',
         warning: '#ffc107'
     };
-    
+
     notification.style.cssText = `
         position: fixed;
         top: 20px;
@@ -380,10 +426,10 @@ function showNotification(message, type = 'success') {
         font-family: Arial, sans-serif;
         font-size: 14px;
     `;
-    
+
     notification.textContent = message;
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
         if (notification.parentNode) {
             notification.remove();
@@ -406,11 +452,11 @@ function loadCartFromStorage() {
     try {
         const sharedCart = JSON.parse(localStorage.getItem('cart')) || [];
         const savedCart = localStorage.getItem('electraedge_cart');
-        
+
         if (savedCart) {
             cart = JSON.parse(savedCart);
         }
-        
+
         // Sync carts if they're out of sync
         if (sharedCart.length > 0 && cart.length === 0) {
             sharedCart.forEach(productId => {
@@ -424,7 +470,7 @@ function loadCartFromStorage() {
             });
             saveCartToStorage();
         }
-        
+
         updateCartCount();
         console.log('✅ Cart loaded from storage');
     } catch (error) {
@@ -433,14 +479,14 @@ function loadCartFromStorage() {
 }
 
 // Handle window resize and modal interactions
-window.addEventListener('resize', function() {
+window.addEventListener('resize', function () {
     if (window.innerWidth < 768) {
         const modal = document.getElementById('cartModal');
         if (modal && modal.style.display === 'flex') {
             modal.style.display = 'none';
         }
     }
-    
+
     const dropdownMenu = document.getElementById('userDropdownMenu');
     if (dropdownMenu) {
         dropdownMenu.style.display = 'none';
@@ -448,10 +494,10 @@ window.addEventListener('resize', function() {
 });
 
 // Close modal when clicking outside
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const cartModal = document.getElementById('cartModal');
     if (cartModal) {
-        cartModal.addEventListener('click', function(e) {
+        cartModal.addEventListener('click', function (e) {
             if (e.target === this) {
                 toggleCart();
             }
@@ -460,13 +506,13 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Keyboard accessibility
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
         const modal = document.getElementById('cartModal');
         if (modal && modal.style.display === 'flex') {
             toggleCart();
         }
-        
+
         const dropdownMenu = document.getElementById('userDropdownMenu');
         if (dropdownMenu && dropdownMenu.style.display === 'block') {
             dropdownMenu.style.display = 'none';

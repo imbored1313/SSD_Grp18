@@ -1,11 +1,11 @@
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function () {
     console.log('🚀 My Orders page loading...');
-    
+
     // Wait for session check to complete
     if (window.sessionManager && window.sessionManager.sessionCheckInProgress) {
         await window.sessionManager.waitForSessionCheck();
     }
-    
+
     // Check if user is logged in
     if (!window.sessionManager || !window.sessionManager.isLoggedIn()) {
         console.log('❌ User not logged in, redirecting...');
@@ -13,14 +13,23 @@ document.addEventListener('DOMContentLoaded', async function() {
         window.location.href = 'login.html';
         return;
     }
-    
+
     console.log('✅ User is logged in, loading orders...');
     loadOrders();
 });
 
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function loadOrders() {
     const ordersList = document.getElementById('orders-list');
-    
+
     // Show loading state
     ordersList.innerHTML = `
         <div style="text-align: center; padding: 3rem;">
@@ -43,40 +52,40 @@ function loadOrders() {
             'Content-Type': 'application/json'
         }
     })
-    .then(response => {
-        console.log('📥 Response status:', response.status);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('📦 Orders data received:', data);
-        
-        if (!data.success) {
-            throw new Error(data.message || 'Failed to load orders');
-        }
-        
-        if (!data.orders || data.orders.length === 0) {
-            displayNoOrders();
-            return;
-        }
-        
-        displayOrders(data.orders);
-    })
-    .catch(error => {
-        console.error('❌ Error loading orders:', error);
-        showError(error.message || 'Failed to load orders. Please try again.');
-    });
+        .then(response => {
+            console.log('📥 Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('📦 Orders data received:', data);
+
+            if (!data.success) {
+                throw new Error(data.message || 'Failed to load orders');
+            }
+
+            if (!data.orders || data.orders.length === 0) {
+                displayNoOrders();
+                return;
+            }
+
+            displayOrders(data.orders);
+        })
+        .catch(error => {
+            console.error('❌ Error loading orders:', error);
+            showError(error.message || 'Failed to load orders. Please try again.');
+        });
 }
 
 function displayOrders(orders) {
     const ordersList = document.getElementById('orders-list');
-    
+
     console.log(`🎨 Displaying ${orders.length} orders`);
-    
+
     let ordersHTML = '';
-    
+
     orders.forEach(order => {
         const orderDate = new Date(order.order_date).toLocaleDateString('en-US', {
             year: 'numeric',
@@ -88,7 +97,7 @@ function displayOrders(orders) {
 
         const statusColor = getStatusColor(order.status);
         const statusText = getStatusText(order.status);
-        
+
         // Use total_amount from your database schema
         const totalAmount = parseFloat(order.total_amount || order.grand_total || 0);
 
@@ -149,13 +158,18 @@ function displayOrders(orders) {
     // Sanitize and render ordersHTML safely
     ordersList.innerHTML = '';
     const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = ordersHTML;
-    // Remove any <script> tags that may have been injected
-    Array.from(tempDiv.querySelectorAll('script')).forEach(el => el.remove());
-    // Append only safe nodes
-    while (tempDiv.firstChild) {
-        ordersList.appendChild(tempDiv.firstChild);
-    }
+    const parser = new DOMParser();
+    const parsedDoc = parser.parseFromString(ordersHTML, 'text/html');
+
+    // Remove unsafe tags (script, iframe, object)
+    ['script', 'iframe', 'object'].forEach(selector => {
+        parsedDoc.querySelectorAll(selector).forEach(el => el.remove());
+    });
+
+    // Append nodes safely
+    Array.from(parsedDoc.body.childNodes).forEach(node => {
+        ordersList.appendChild(node);
+    });
 }
 
 function generateOrderItems(items) {
@@ -164,7 +178,7 @@ function generateOrderItems(items) {
     }
 
     let itemsHTML = '';
-    
+
     items.forEach(item => {
         let imageSrc = 'uploads/no-image.jpg';
         if (item.product_image) {
@@ -301,8 +315,8 @@ function showError(message) {
     btn.style.fontWeight = 'bold';
     btn.style.cursor = 'pointer';
     btn.style.fontSize = '1rem';
-    btn.onmouseover = function() { btn.style.background = '#1e3f73'; };
-    btn.onmouseout = function() { btn.style.background = '#2c5aa0'; };
+    btn.onmouseover = function () { btn.style.background = '#1e3f73'; };
+    btn.onmouseout = function () { btn.style.background = '#2c5aa0'; };
     btn.onclick = loadOrders;
     container.appendChild(btn);
 

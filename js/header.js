@@ -17,12 +17,21 @@ document.addEventListener('DOMContentLoaded', function () {
     fetch('header.html')
         .then(res => res.text())
         .then(data => {
-            placeholder.innerHTML = data;
+            // SECURITY FIX: Parse HTML safely to prevent XSS
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(data, 'text/html');
+
+            // Clear placeholder and append parsed nodes
+            placeholder.innerHTML = '';
+            Array.from(doc.body.childNodes).forEach(node => {
+                placeholder.appendChild(node);
+            });
+
             highlightActiveTab();
-            
+
             // Set up session change listeners
             window.sessionManager.onSessionChange(handleSessionChange);
-            
+
             // Initial check for existing session
             if (window.sessionManager.isLoggedIn()) {
                 handleSessionChange('login', window.sessionManager.getUser());
@@ -71,13 +80,14 @@ function fetchCartCount() {
         method: 'GET',
         credentials: 'include'
     })
-    .then(res => res.json())
-    .then(data => {
-        const count = data.success ? data.cartCount || 0 : 0;
-        updateCartCount(count);
-    })
-    .catch(() => updateCartCount(0));
+        .then(res => res.json())
+        .then(data => {
+            const count = data.success ? data.cartCount || 0 : 0;
+            updateCartCount(count);
+        })
+        .catch(() => updateCartCount(0));
 }
+
 
 function updateCartCount(count = 0) {
     const span = document.getElementById('cartCount');
@@ -93,10 +103,10 @@ function renderUserDropdownSecurely(user) {
 
     // Find and preserve the cart link
     const cartLink = nav.querySelector('a[href="cart.html"]');
-    
+
     // Clear existing content
     nav.innerHTML = '';
-    
+
     // Re-add cart link if it existed
     if (cartLink) {
         nav.appendChild(cartLink.cloneNode(true));
@@ -144,8 +154,8 @@ function renderUserDropdownSecurely(user) {
     profileLink.href = 'userprofile.php';
     profileLink.style.cssText = 'display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; transition: background 0.2s;';
     profileLink.textContent = '👤 My Profile';
-    profileLink.onmouseover = function() { this.style.background = '#f8f9fa'; };
-    profileLink.onmouseout = function() { this.style.background = 'transparent'; };
+    profileLink.onmouseover = function () { this.style.background = '#f8f9fa'; };
+    profileLink.onmouseout = function () { this.style.background = 'transparent'; };
     menuItemsDiv.appendChild(profileLink);
 
     // Orders link
@@ -153,8 +163,8 @@ function renderUserDropdownSecurely(user) {
     ordersLink.href = 'my_orders.html';
     ordersLink.style.cssText = 'display: block; padding: 0.75rem 1rem; color: #333; text-decoration: none; transition: background 0.2s;';
     ordersLink.textContent = '📦 My Orders';
-    ordersLink.onmouseover = function() { this.style.background = '#f8f9fa'; };
-    ordersLink.onmouseout = function() { this.style.background = 'transparent'; };
+    ordersLink.onmouseover = function () { this.style.background = '#f8f9fa'; };
+    ordersLink.onmouseout = function () { this.style.background = 'transparent'; };
     menuItemsDiv.appendChild(ordersLink);
 
     // Separator
@@ -167,8 +177,8 @@ function renderUserDropdownSecurely(user) {
     logoutButton.onclick = logout;
     logoutButton.style.cssText = 'display: block; width: 100%; padding: 0.75rem 1rem; color: #dc3545; text-decoration: none; background: none; border: none; text-align: left; cursor: pointer; transition: background 0.2s;';
     logoutButton.textContent = '🚪 Logout';
-    logoutButton.onmouseover = function() { this.style.background = '#f8f9fa'; };
-    logoutButton.onmouseout = function() { this.style.background = 'transparent'; };
+    logoutButton.onmouseover = function () { this.style.background = '#f8f9fa'; };
+    logoutButton.onmouseout = function () { this.style.background = 'transparent'; };
     menuItemsDiv.appendChild(logoutButton);
 
     dropdownMenu.appendChild(menuItemsDiv);
@@ -185,10 +195,10 @@ function renderLoginButtonSecurely() {
 
     // Find and preserve the cart link
     const cartLink = nav.querySelector('a[href="cart.html"]');
-    
+
     // Clear existing content
     nav.innerHTML = '';
-    
+
     // Re-add cart link if it existed
     if (cartLink) {
         nav.appendChild(cartLink.cloneNode(true));
@@ -219,7 +229,7 @@ function toggleUserDropdown() {
 }
 
 // Close dropdown when clicking outside
-document.addEventListener('click', function(event) {
+document.addEventListener('click', function (event) {
     const userDropdown = document.querySelector('.user-dropdown');
     if (userDropdown && !userDropdown.contains(event.target)) {
         const dropdownMenu = document.getElementById('userDropdownMenu');

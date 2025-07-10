@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>`;
         // Notes/FAQ
         if (order.notes) {
-            html += `<div style="background:#f8f9fa; border-radius:8px; padding:1em; margin-bottom:2em; color:#555;">Note from seller: ${order.notes}</div>`;
+            html += `<div style="background:#f8f9fa; border-radius:8px; padding:1em; margin-bottom:2em; color:#555;">Note from seller: ${escapeHTML(order.notes)}</div>`;
         }
         html += `<div style="background:#f8f9fa; border-radius:8px; padding:1em; color:#888; font-size:0.97em;">For questions about returns, shipping, or customs, please see our <a href="#" style="color:#2c5aa0;">FAQs</a>.</div>`;
         orderDetail.innerHTML = html;
@@ -126,3 +126,13 @@ document.addEventListener('DOMContentLoaded', function() {
         orderDetail.innerHTML = '<div style="color:#c00;">Failed to load order details. Please try again later.</div>';
     });
 }); 
+
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
