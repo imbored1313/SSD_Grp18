@@ -48,6 +48,8 @@ trivy-results.sarif
 
 # Docker
 .dockerignore
+Dockerfile
+docker-compose.yml
 
 # Cache
 .phpunit.cache/
