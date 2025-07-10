@@ -25,6 +25,7 @@ if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role']) !== 'admi
                 <li><a href="admin_dashboard.php"><i class="fas fa-chart-line me-2"></i>Dashboard</a></li>
                 <li><a href="admin_products.php"><i class="fas fa-box-open me-2"></i>Products</a></li>
                 <li><a href="admin_users.php"><i class="fas fa-users me-2"></i>Users</a></li>
+                <li><a href="admin_orders.php"><i class="fas fa-shopping-basket"></i>Orders</a></li>
             </ul>
         </aside>
         <main class="admin-content">
