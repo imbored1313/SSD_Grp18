@@ -1,4 +1,4 @@
-name: Snyk Security
+name: Snyk Dependency Scan
 
 on:
   push:
@@ -10,26 +10,25 @@ permissions:
   contents: read
 
 jobs:
-  snyk:
-    permissions:
-      contents: read
-      security-events: write
+  snyk-sca:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Snyk CLI
-        uses: snyk/actions/setup@master
+      - uses: snyk/actions/setup@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      - name: Snyk Code (SAST)
-        run: snyk code test --sarif > snyk-code.sarif
+      - name: Snyk Open Source JSON report
+        run: snyk test --json > snyk-sca.json
 
-      - name: Snyk Open Source (SCA)
-        run: snyk test
+      - name: Install snyk-to-html
+        run: npm install -g snyk-to-html
 
-      - name: Upload Snyk SARIF to GitHub
-        uses: github/codeql-action/upload-sarif@v3
+      - name: Convert JSON to HTML
+        run: snyk-to-html -i snyk-sca.json -o snyk-sca-report.html
+
+      - name: Upload Snyk HTML report
+        uses: actions/upload-artifact@v4
         with:
-          sarif_file: snyk-code.sarif
+          name: snyk-sca-report
+          path: snyk-sca-report.html
