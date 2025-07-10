@@ -2,11 +2,7 @@
 
 require_once(__DIR__ . '/config.php');
 session_start();
-$oldCsrfToken = $_SESSION['csrf_token'] ?? null;
 session_regenerate_id(true);
-if ($oldCsrfToken !== null) {
-    $_SESSION['csrf_token'] = $oldCsrfToken;
-}
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -59,6 +55,7 @@ try {
 // Clear session data
         session_unset();
         session_destroy();
+        setcookie(session_name(), '', time() - 3600, '/'); // Expire the session cookie
         echo json_encode([
             'success' => true,
             'message' => 'Logged out successfully'
