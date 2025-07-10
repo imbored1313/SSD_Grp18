@@ -156,7 +156,17 @@ function displayCartItems(items) {
         </div>
     `;
 
-    cartContainer.innerHTML = cartHTML;
+
+    // Sanitize and render cartHTML safely
+    cartContainer.innerHTML = '';
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = cartHTML;
+    // Remove any <script> tags that may have been injected
+    Array.from(tempDiv.querySelectorAll('script')).forEach(el => el.remove());
+    // Append only safe nodes
+    while (tempDiv.firstChild) {
+        cartContainer.appendChild(tempDiv.firstChild);
+    }
 
     console.log('✅ Cart items successfully displayed!');
 
