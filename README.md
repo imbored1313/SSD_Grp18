@@ -146,12 +146,6 @@
 
 ---
 
-## License
-
-This project is open source and available for use under the terms of the repository license.
-
----
-
 ## Authors
 
 - Group 18 
