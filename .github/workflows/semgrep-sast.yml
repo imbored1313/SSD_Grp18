@@ -14,7 +14,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -24,9 +25,8 @@ jobs:
       - name: Install Semgrep
         run: python3 -m pip install --upgrade pip semgrep
 
-      - name: Run Semgrep SAST (HTML)
-        run: semgrep ci --config=auto --html --output=semgrep-report.html
-        continue-on-error: true
+      - name: Run Semgrep SAST (HTML Report)
+        run: semgrep scan --config=auto --output=semgrep-report.html --html || true
 
       - name: Upload Semgrep HTML report
         uses: actions/upload-artifact@v4
