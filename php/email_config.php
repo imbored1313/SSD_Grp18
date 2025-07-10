@@ -81,6 +81,8 @@ class EmailService
 
     private function getPasswordResetHTML($username, $resetCode)
     {
+        $safeUsername = htmlspecialchars($username, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $safeResetCode = htmlspecialchars($resetCode, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         return "
         <!DOCTYPE html>
         <html>
@@ -103,13 +105,13 @@ class EmailService
                     <h2>Password Reset Request</h2>
                 </div>
                 <div class='content'>
-                    <p>Hello <strong>{$username}</strong>,</p>
+                    <p>Hello <strong>{$safeUsername}</strong>,</p>
                     
                     <p>You requested a password reset for your ElectraEdge account. Use the verification code below to reset your password:</p>
                     
                     <div class='code-box'>
                         <div>Your Verification Code:</div>
-                        <div class='code'>{$resetCode}</div>
+                        <div class='code'>{$safeResetCode}</div>
                     </div>
                     
                     <div class='warning'>
@@ -133,12 +135,14 @@ class EmailService
 
     private function getPasswordResetText($username, $resetCode)
     {
+        $safeUsername = preg_replace('/[^\w\s\-]/u', '', $username); // allow only safe chars
+        $safeResetCode = preg_replace('/[^\d]/', '', $resetCode); // digits only
         return "
-Hello {$username},
+Hello {$safeUsername},
 
 You requested a password reset for your ElectraEdge account.
 
-Your verification code is: {$resetCode}
+Your verification code is: {$safeResetCode}
 
 This code will expire in 15 minutes.
 
