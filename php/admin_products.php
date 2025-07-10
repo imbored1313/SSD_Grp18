@@ -192,6 +192,7 @@ try {
             echo json_encode(['success' => $success]);
 
             break;
+            
         default:
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Invalid action']);
