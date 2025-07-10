@@ -10,15 +10,6 @@ header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 header('Access-Control-Allow-Credentials: true');
 
-// CSRF Token Check
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Invalid CSRF token']);
-        exit;
-    }
-}
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'error' => 'Method not allowed']);
@@ -55,7 +46,6 @@ try {
 // Clear session data
         session_unset();
         session_destroy();
-        setcookie(session_name(), '', time() - 3600, '/'); // Expire the session cookie
         echo json_encode([
             'success' => true,
             'message' => 'Logged out successfully'

@@ -109,27 +109,10 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('email').classList.add('error');
             return;
         }
-        
-        // Fetch CSRF token
-        let csrfToken = '';
-        try {
-            const csrfResponse = await fetch('/php/get_csrf_token.php', {
-                method: 'GET',
-                credentials: 'include'
-            });
-            const csrfData = await csrfResponse.json();
-            csrfToken = csrfData.token;
-        } catch (err) {
-            console.error('Error fetching CSRF token:', err);
-            alert('Error fetching CSRF token');
-            return;
-        }
 
         const formData = new FormData();
         formData.append('email', email);
-        // Append CSRF token to the form data
-        formData.append('csrf_token', csrfToken);
-
+        
         // Add loading state
         const submitBtn = this.querySelector('button[type="submit"]');
         const originalText = submitBtn.textContent;

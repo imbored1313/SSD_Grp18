@@ -142,24 +142,6 @@ async function handleProfileUpdate(e)
     formData.append('phone', document.getElementById('phone').value.trim());
     formData.append('verifyPassword', document.getElementById('verifyPassword').value.trim());
 
-    // Fetch CSRF token
-    let csrfToken = '';
-    try {
-        const csrfResponse = await fetch('/php/get_csrf_token.php', {
-        method: 'GET',
-        credentials: 'include' // Ensure session cookies are sent
-        });
-        const csrfData = await csrfResponse.json();
-        csrfToken = csrfData.token;
-    } catch (err) {
-        console.error('Error fetching CSRF token:', err);
-        alert('Error fetching CSRF token');
-        return;
-    }
-
-    // Add CSRF token to FormData
-    formData.append('csrf_token', csrfToken);
-
     // Client-side validation
     const firstName = formData.get('firstName');
     const lastName = formData.get('lastName');
