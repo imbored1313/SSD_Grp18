@@ -5,6 +5,10 @@ session_start();
 session_regenerate_id(true);
 
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST');
+header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Credentials: true');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
