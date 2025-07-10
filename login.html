@@ -53,6 +53,28 @@
         </div>
     </div>
 
+    <!-- 2FA Modal Popup -->
+    <div id="twoFAModal" class="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); align-items:center; justify-content:center;">
+        <div class="auth-card" style="max-width:400px; margin:auto; position:relative;">
+            <div class="auth-header">
+                <h2>Two-Factor Authentication</h2>
+                <p>Enter the 6-digit code sent to your email</p>
+            </div>
+            <form id="twoFAForm" autocomplete="off">
+                <div class="form-group">
+                    <label class="form-label" for="twoFACode">2FA Code</label>
+                    <input type="text" id="twoFACode" name="twoFACode" class="form-input" maxlength="6" pattern="\d{6}" placeholder="Enter 6-digit code" required>
+                    <div class="form-error" id="twoFAError"></div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Verify</button>
+                <div class="auth-link" style="margin-top:1rem;">
+                    <a href="#" id="resend2FA">Didn't get a code? Resend</a>
+                </div>
+            </form>
+            <button id="close2FAModal" style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:1.2em; cursor:pointer;">&times;</button>
+        </div>
+    </div>
+
     <!-- External JavaScript -->
     <script src="js/login.js"></script>
 </body>

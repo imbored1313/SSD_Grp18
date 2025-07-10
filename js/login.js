@@ -122,6 +122,9 @@ async function handleLoginSubmit(e) {
                     window.location.href = 'index.html';
                 }
             }, 1000);
+        } else if (result['2fa_required']) {
+            show2FAModal();
+            showNotification(result.message || '2FA required. Please check your email.', 'info');
         } else {
             console.log('❌ Login failed:', result.error);
             handleLoginError(response.status, result.error);
@@ -135,6 +138,105 @@ async function handleLoginSubmit(e) {
         setLoadingState(submitBtn, false, originalText);
     }
 }
+
+// Show 2FA modal
+function show2FAModal() {
+    const modal = document.getElementById('twoFAModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.getElementById('twoFACode').value = '';
+        document.getElementById('twoFAError').textContent = '';
+    }
+}
+
+// Hide 2FA modal
+function hide2FAModal() {
+    const modal = document.getElementById('twoFAModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Handle 2FA form submission
+async function handle2FASubmit(e) {
+    e.preventDefault();
+    const codeInput = document.getElementById('twoFACode');
+    const code = codeInput.value.trim();
+    const errorDiv = document.getElementById('twoFAError');
+    errorDiv.textContent = '';
+    codeInput.classList.remove('error');
+
+    if (!/^\d{6}$/.test(code)) {
+        errorDiv.textContent = 'Please enter a valid 6-digit code.';
+        codeInput.classList.add('error');
+        return;
+    }
+
+    // Show loading state
+    const submitBtn = document.querySelector('#twoFAForm button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    setLoadingState(submitBtn, true, 'Verifying...');
+
+    try {
+        const response = await fetch('php/verify_2fa.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            credentials: 'include',
+            body: `code=${encodeURIComponent(code)}`
+        });
+        const result = await response.json();
+        if (result.success) {
+            hide2FAModal();
+            showNotification('Login successful! Redirecting...', 'success');
+            // Sync cart and update session manager
+            await syncCartAfterLogin();
+            window.sessionManager.currentUser = result.user;
+            window.sessionManager.notifyCallbacks('login', result.user);
+            setTimeout(() => {
+                if (result.user && result.user.role && result.user.role.toLowerCase() === 'admin') {
+                    window.location.href = 'admin_dashboard.php';
+                } else {
+                    window.location.href = 'index.html';
+                }
+            }, 1000);
+        } else {
+            errorDiv.textContent = result.error || 'Invalid 2FA code.';
+            codeInput.classList.add('error');
+        }
+    } catch (err) {
+        errorDiv.textContent = 'Failed to verify code. Please try again.';
+        codeInput.classList.add('error');
+    } finally {
+        setLoadingState(submitBtn, false, originalText);
+    }
+}
+
+// Handle resend 2FA code (re-submit login form to trigger backend resend)
+document.addEventListener('DOMContentLoaded', function () {
+    const resend2FA = document.getElementById('resend2FA');
+    if (resend2FA) {
+        resend2FA.addEventListener('click', async function (e) {
+            e.preventDefault();
+            resend2FA.textContent = 'Resending...';
+            // Re-submit login form to trigger backend resend
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                await handleLoginSubmit(new Event('submit'));
+            }
+            setTimeout(() => { resend2FA.textContent = "Didn't get a code? Resend"; }, 2000);
+        });
+    }
+    // Close modal
+    const closeBtn = document.getElementById('close2FAModal');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', hide2FAModal);
+    }
+    // 2FA form submit
+    const twoFAForm = document.getElementById('twoFAForm');
+    if (twoFAForm) {
+        twoFAForm.addEventListener('submit', handle2FASubmit);
+    }
+});
 
 // Sync cart after successful login
 async function syncCartAfterLogin() {

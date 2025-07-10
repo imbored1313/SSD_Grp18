@@ -60,6 +60,23 @@ class EmailService
         }
     }
 
+    public function send2FAEmail($toEmail, $username, $code)
+    {
+        try {
+            $this->mailer->addAddress($toEmail, $username);
+            $this->mailer->isHTML(true);
+            $this->mailer->Subject = 'ElectraEdge - Your 2FA Verification Code';
+            $this->mailer->Body = $this->get2FAHTML($username, $code);
+            $this->mailer->AltBody = $this->get2FAText($username, $code);
+            $result = $this->mailer->send();
+            $this->mailer->clearAddresses();
+            return $result;
+        } catch (Exception $e) {
+            error_log("2FA Email Send Error: " . $e->getMessage());
+            return false;
+        }
+    }
+
     private function getPasswordResetHTML($username, $resetCode)
     {
         return "
@@ -131,5 +148,52 @@ ElectraEdge Team
 ---
 This is an automated message. Please do not reply.
         ";
+    }
+
+    private function get2FAHTML($username, $code)
+    {
+        return "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                .code-box { background: #fff; border: 2px dashed #667eea; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px; }
+                .code { font-size: 32px; font-weight: bold; color: #667eea; letter-spacing: 5px; }
+                .footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h1>⚡ ElectraEdge</h1>
+                    <h2>2FA Verification</h2>
+                </div>
+                <div class='content'>
+                    <p>Hello <strong>{$username}</strong>,</p>
+                    <p>Your login attempt requires a second step of verification. Please use the code below to complete your login:</p>
+                    <div class='code-box'>
+                        <div>Your 2FA Code:</div>
+                        <div class='code'>{$code}</div>
+                    </div>
+                    <p>This code will expire in <strong>5 minutes</strong> for your security.</p>
+                    <p>If you did not attempt to log in, you can safely ignore this email.</p>
+                    <p>Best regards,<br>
+                    <strong>ElectraEdge Team</strong></p>
+                </div>
+                <div class='footer'>
+                    <p>This is an automated message. Please do not reply to this email.</p>
+                </div>
+            </div>
+        </body>
+        </html>";
+    }
+
+    private function get2FAText($username, $code)
+    {
+        return "Hello {$username},\n\nYour ElectraEdge 2FA code is: {$code}\n\nThis code will expire in 5 minutes.\nIf you did not attempt to log in, you can ignore this email.\n\nBest regards,\nElectraEdge Team\n---\nThis is an automated message. Please do not reply.";
     }
 }
