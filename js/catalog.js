@@ -16,11 +16,6 @@ const itemsPerPage = 9;
 let allProducts = [];
 let filteredProducts = [];
 
-document.addEventListener('DOMContentLoaded', function() {
-    loadProducts();
-    setupEventListeners();
-});
-
 async function loadProducts() {
     try {
         showLoadingState();
@@ -582,4 +577,8 @@ function debounce(func, wait) {
     };
 }
 
-window.addToCart = addToCart;
+document.addEventListener("DOMContentLoaded", function () {
+    loadProducts();
+    setupEventListeners();
+    initializeFilters();
+});
